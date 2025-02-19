@@ -1,8 +1,8 @@
-import MainpageComponent from "@/app/MainpageComponent";
+import MainPageComponent from "@/app/MainPageComponent";
 export default function Home() {
   return (
       <>
-    <MainpageComponent/>
+    <MainPageComponent/>
       </>
   )
 }
