@@ -20,7 +20,7 @@ const Footer = () => {
     },]
     const router = useRouter();
     return (
-        <div className="absolute bottom-0 w-screen">
+        <div className="bottom-0 w-screen overflow-x-hidden">
             <div className="flex-row gap-24 bg-white text-black flex justify-center">
                 {FooterData.map((item, key) => (<div key={key} className="flex flex-col gap-1">
                     <div className="font-bold">{item.head}</div>

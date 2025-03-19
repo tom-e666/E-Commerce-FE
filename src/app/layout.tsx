@@ -4,6 +4,7 @@ import "./globals.css";
 import Menubar from "@/app/Menubar";
 import Footer from "@/app/Footer";
 import Provider from "./provider";
+import { Toaster } from "@/components/ui/sonner"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,10 +30,11 @@ export default function RootLayout({
     <html lang="en-vi">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Provider>
-          <div className="flex flex-col w-screen min-h-screen justify-center items-center">
+          <div className="flex flex-col w-full min-h-screen justify-center items-center">
             <Menubar />
-            <div className="flex flex-grow min-w-screen justify-center items-center">
+            <div className="flex flex-grow w-full justify-center items-center">
               {children}
+              <Toaster />
             </div>
             <Footer />
           </div>
