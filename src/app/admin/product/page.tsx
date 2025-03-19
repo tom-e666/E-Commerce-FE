@@ -1,7 +1,7 @@
 "use client";
 
 import { AgGridReact } from 'ag-grid-react';
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import type { ColDef } from "ag-grid-community";
 import { AllCommunityModule, ModuleRegistry } from "ag-grid-community";
 import { Product, getMockProducts } from '@/mockData';
