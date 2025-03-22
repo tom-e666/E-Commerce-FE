@@ -35,8 +35,6 @@ export default function Page() {
             [key]: !prev[key], // Toggle the visibility of the specific field
         }));
     };
-
-    // Handle input changes
     const handleInputChange = (key: string, value: any) => {
         setProduct((prev) => {
             if (!prev) return prev;
