@@ -3,28 +3,29 @@ import { useRouter } from "next/navigation";
 
 const Footer = () => {
     const FooterData = [{
-        head: "About us",
-        choices: [{ title: "Gioi thieu", href: "#" }, { title: "Tuyen dung", href: "#" }, { title: "Lien he", href: "#" }]
+        head: "Về GearnVn",
+        choices: [{ title: "Giới thiệu", href: "#" }, { title: "Tuyển dụng", href: "#" }, { title: "Liên hệ", href: "#" }]
     }, {
-        head: "Chinh sach",
-        choices: [{ title: "Gioi thieu", href: "#" }, { title: "Tuyen dung", href: "#" }, { title: "Lien he", href: "#" }]
+        head: "Chính sách",
+        choices: [{ title: "Giới thiệu", href: "#" }, { title: "Tuyển dụng", href: "#" }, { title: "Liên hệ", href: "#" }]
     }, {
-        head: "Thong tin",
-        choices: [{ title: "Gioi thieu", href: "#" }, { title: "Tuyen dung", href: "#" }, { title: "Lien he", href: "#" }]
+        head: "Thông tin",
+        choices: [{ title: "Giới thiệu", href: "#" }, { title: "Tuyển dụng", href: "#" }, { title: "Liên hệ", href: "#" }]
     }, {
-        head: "Tong dai",
-        choices: [{ title: "Gioi thieu", href: "#" }, {
-            title: "Tuyen dung <a>089924298</a>",
-            href: "#"
-        }, { title: "Lien he", href: "#" }]
+        head:
+            <>
+                Tổng đài hỗ trợ <span className=" font-normal">(8:00 - 21:00)</span>
+            </>,
+        choices: [{ title: "Mua hàng: 1900.5301", href: "#" }, { title: "Bảo hành: 1900.5301", href: "#" }, { title: "Khiếu nại: 1900.5301", href: "#" }]
     },]
     const router = useRouter();
     return (
         <div className="bottom-0 w-screen overflow-x-hidden">
             <div className="flex-row gap-24 bg-white text-black flex justify-center">
                 {FooterData.map((item, key) => (<div key={key} className="flex flex-col gap-1">
-                    <div className="font-bold">{item.head}</div>
-                    {item.choices.map((subitem, key) => (<div className="hover:text-blue-500" key={key} onClick={() => {
+                    <div className="font-medium ">{item.head}</div>
+                   
+                    {item.choices.map((subitem, key) => (<div className="hover:text-blue-500 text-sm " key={key} onClick={() => {
                         router.push(subitem.href)
                     }}>
                         {subitem.title}
