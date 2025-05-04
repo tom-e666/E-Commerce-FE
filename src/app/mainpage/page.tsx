@@ -1,23 +1,8 @@
 'use client'
-import React, {useEffect} from "react";
-import Image from "next/image";
+import React from "react";
 
-interface BannerProps
-{
-    id:string,
-    path:string,
-    redirect?:string,
-}
-const mockData:BannerProps[]=[
-    {id:"1",path:"https://file.hstatic.net/200000722513/file/thang_01_laptop_banner_side_web_6d0e637fae384e25959c50330a51bb0a.png",redirect:"/homepage"}
-]
-export default function Page(){
-    const [BannerData,setBannerData]=React.useState<BannerProps[]>([]);
 
-    useEffect(() => {
-        //load banner data from the firestore for quicker response
-        setBannerData(mockData)
-    }, []);
+export default function Page() {
     return (
         <div
             className="w-screen h-screen overflow-y-auto scroll-auto flex flex-col items-center justify-center bg-pink-400 gap-1">

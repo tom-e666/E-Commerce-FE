@@ -1,16 +1,12 @@
 'use client';
 
-import { ApolloProvider, ApolloClient, InMemoryCache } from "@apollo/client";
+import { ApolloProvider } from "@apollo/client";
 import React from 'react';
-import { JSX } from "react/jsx-runtime";
+import { apolloClient } from "@/services/apollo/client";
 
-const client = new ApolloClient({
-  uri: 'http://127.0.0.1:8000/graphql',
-  cache: new InMemoryCache(),
-});
-const Provider = ({children}:{children: React.ReactNode}): JSX.Element => {
-    return(
-        <ApolloProvider client={client}>{children}</ApolloProvider>
-    );
+const Provider = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <ApolloProvider client={apolloClient}>{children}</ApolloProvider>
+  );
 }
 export default Provider;

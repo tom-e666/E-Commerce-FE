@@ -27,7 +27,6 @@ export default function Page() {
     if (!product) {
         return <div>Loading...</div>;
     }
-
     // Toggle visibility of a field
     const toggleVisibility = (key: string) => {
         setVisibility((prev) => ({
@@ -36,10 +35,10 @@ export default function Page() {
         }));
     };
     const handleInputChange = (key: string, value: any) => {
-        setProduct((prev) => {
+        setProduct((prev) => {  
             if (!prev) return prev;
 
-            const updatedProduct = { ...prev };
+            const updatedProduct = { ...prev }; 
 
             const keys = key.split('.');
             let current = updatedProduct;
