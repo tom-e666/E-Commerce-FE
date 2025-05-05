@@ -1,9 +1,9 @@
 'use client'
-const MainPageComponent=()=>{
+import SharedLayoutAnimation from "@/components/ui/SharedLayoutAnimation";
+export default function MainPageComponent() {
     return (
-        <div className="w-screen scroll-auto bg-green-400">
-
+        <div className="w-screen h-fit scroll-auto bg-green-400 flex justify-center ">
+            <SharedLayoutAnimation />
         </div>
     )
 }
-export default MainPageComponent

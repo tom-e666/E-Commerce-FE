@@ -1,8 +1,6 @@
 import { useState } from "react";
-import { login,logout } from "@/services/auth/mutation";
+import { login,logout } from "@/services/auth/endpoints";
 import { useAuthContext } from "@/contexts/AuthContext";
-
-
 export const useAuth = () => {
   const [loading, setLoading] = useState(false);
   const [refresh_token,setRefreshToken]=useState<string | null>(null);

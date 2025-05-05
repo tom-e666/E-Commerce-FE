@@ -1,6 +1,6 @@
 'use client'
 import { useContext, createContext, useState, useEffect } from "react"
-import { refreshToken } from "@/services/auth/mutation";
+import { refreshToken } from "@/services/auth/endpoints";
 interface User {
     id: string,
     full_name: string
