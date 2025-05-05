@@ -16,11 +16,12 @@ export const useAuth = () => {
             user,
             access_token,
             refresh_token,
+            expires_at
                 } = response.data.login;
             console.log(code);
           if (code === 200) {
             setRefreshToken(refresh_token);
-            await onSuccessLogIn(user,access_token,refresh_token);      
+            await onSuccessLogIn(user,access_token,refresh_token,expires_at);      
             return "Login successful";
           } else if(code === 401) {
             throw new Error("Thông tin đăng nhập không chính xác");
