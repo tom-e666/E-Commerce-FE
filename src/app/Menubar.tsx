@@ -9,7 +9,9 @@ import MenuIcon from '@mui/icons-material/Menu';
 import SearchIcon from '@mui/icons-material/Search';
 
 import { Button } from "@/components/ui/button";
+import { useAuthContext } from "@/contexts/AuthContext";
 const Menubar = () => {
+    const { user } = useAuthContext();
     const router = useRouter();
     return (
         <div className="flex flex-col w-full h-fit ">
@@ -67,11 +69,14 @@ const Menubar = () => {
 
                 </div>
                 <div className="h-full w-20 flex justify-center items-center" onClick={() => { router.push("/login") }}>
-                    <Button variant={"outline"}
+                    {!user && <Button variant={"outline"}
                         className="bg-transparent border-0"
                         onClick={() => { router.push("/login") }}
                     >                        Login
-                    </Button>
+                    </Button>}
+                    {user && <Button variant={"outline"}
+                        className="bg-transparent border-0"
+                    >Xin chào, {user.full_name.split(" ").pop()}</Button>}
                 </div>
             </div>
 

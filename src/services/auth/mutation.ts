@@ -67,6 +67,33 @@ export const logout = async (refresh_token: string) => {
     }
   });
 }
+export const REFRESHTOKEN_MUTATION = gql`
+mutation refresh_token(
+  $refresh_token:String!
+){
+{
+  refreshToken(
+    refresh_token:$refresh_token
+  ){
+    code
+    access_token
+    refresh_token
+    user{
+      id
+      full_name
+    }
+  }
+}
+}
+`;
+export const refreshToken = async (refresh_token: string) => {
+return apolloClient.mutate({
+  mutation: REFRESHTOKEN_MUTATION,
+  variables: {
+    refresh_token
+  }
+});
+}
 
 
 
