@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 const Page = () => {
   const [username, setusername] = React.useState<string>('');
   const [password, setPassword] = React.useState<string>('');
@@ -11,7 +12,18 @@ const Page = () => {
   const router = useRouter();
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await login(username, password).then()
+    const loadingToastId = toast.loading("Đang đăng nhập");
+    try {
+      await login(username, password);
+      toast.dismiss(loadingToastId);
+      toast.success("Đăng nhập thành công");
+      setTimeout(() => {
+        router.push("/");
+      }, 1000);
+    } catch (error) {
+      toast.dismiss(loadingToastId);
+      toast.error(error.message);
+    }
   };
   return (
     <div className="w-full min-h-screen flex flex-col items-center justify-center bg-white border-s-orange-600">

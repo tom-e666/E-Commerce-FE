@@ -8,8 +8,7 @@ import IconButton from '@mui/material/IconButton';
 import MenuIcon from '@mui/icons-material/Menu';
 import SearchIcon from '@mui/icons-material/Search';
 
-import { Button, OutlineButton } from "@/components/ui/button";
-import { MailOpen } from "lucide-react";
+import { Button } from "@/components/ui/button";
 const Menubar = () => {
     const router = useRouter();
     return (
