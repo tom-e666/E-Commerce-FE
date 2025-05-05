@@ -13,14 +13,6 @@ const allIngredients = [
 
 const [tomato, lettuce, cheese] = allIngredients
 const tabs = [tomato, lettuce, cheese]
-interface Type {
-    icon: string;
-    label: string;
-}
-interface Product {
-
-}
-
 export default function SharedLayoutAnimation() {
     const [selectedTab, setSelectedTab] = useState(tabs[0])
     return (

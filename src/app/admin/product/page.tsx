@@ -8,14 +8,13 @@ import { Product, getMockProducts } from '@/mockData';
 import { themeQuartz, iconSetQuartzBold } from 'ag-grid-community';
 import EditIcon from '@mui/icons-material/Edit';
 
-// to use myTheme in an application, pass it to the theme grid option
 const myTheme = themeQuartz
     .withPart(iconSetQuartzBold)
     .withParams({
         browserColorScheme: "light",
         headerFontSize: 14
     });
-// Register AG Grid modules
+// Register AG Grid 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 const GridComponent = () => {
