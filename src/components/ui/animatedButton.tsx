@@ -26,7 +26,7 @@ const AnimatedButton: React.FC<AnimatedButtonProps> = ({ onClick, children }) =>
             onClick={onClick}
             style={{
                 padding: '10px 20px',
-                fontSize: '24px',
+                fontSize: '14px',
                 fontWeight: 'bold',
                 cursor: 'pointer',
                 border: 'none',
@@ -35,6 +35,7 @@ const AnimatedButton: React.FC<AnimatedButtonProps> = ({ onClick, children }) =>
                 color: 'white',
                 outline: 'none',
                 width: 'fit-content',
+                height: '40px'
             }}
         >
             {children}
