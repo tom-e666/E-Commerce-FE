@@ -74,6 +74,7 @@ export default function BrandManagement() {
             forceUpdate();
         }
     };
+
     const handleRowClick = (event) => {
         setSelectedBrand(event.data);
         setOpenForm(true);

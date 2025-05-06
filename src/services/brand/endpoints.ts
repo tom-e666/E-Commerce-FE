@@ -43,7 +43,7 @@ export const createBrand = async (name: string) => {
 };
 
 export const UPDATE_BRAND_MUTATION = gql`
-  mutation UpdateBrand($id: String!, $name: String!) {
+  mutation UpdateBrand($id: ID!, $name: String!) {
     updateBrand(id: $id, name: $name) {
       code
       message
@@ -66,7 +66,7 @@ export const updateBrand = async (id: string, name: string) => {
 };
 
 export const DELETE_BRAND_MUTATION = gql`
-  mutation DeleteBrand($id: String!) {
+  mutation DeleteBrand($id: ID!) {
     deleteBrand(id: $id) {
       code
       message
