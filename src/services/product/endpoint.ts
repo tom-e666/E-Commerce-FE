@@ -248,6 +248,7 @@ export const deleteProduct = async (id: string) => {
     throw error;
   }
 };
+//@ts-expect-error dynamic type
 function cleanInputObject(obj:any){
   if (!obj) return obj;
   

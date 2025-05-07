@@ -62,6 +62,7 @@ export default function BrandManagement() {
             success: "Tải danh sách thương hiệu thành công",
             error: "Không thể tải danh sách thương hiệu"
         })
+
     }, []);
 
     const loadBrands = async () => {
@@ -74,7 +75,7 @@ export default function BrandManagement() {
             forceUpdate();
         }
     };
-
+    //@ts-expect-error dynamic type
     const handleRowClick = (event) => {
         setSelectedBrand(event.data);
         setOpenForm(true);
@@ -107,6 +108,7 @@ export default function BrandManagement() {
                 <AgGridReact
                     key={`brands-${forceUpdateKey}`}
                     rowData={gridData}
+                    //@ts-expect-error dynamic type
                     columnDefs={colDefs}
                     onRowClicked={handleRowClick}
                     pagination={true}

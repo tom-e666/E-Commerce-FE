@@ -55,7 +55,7 @@ export default function AdminPage() {
 
                         <div className="rounded-xl shadow-lg bg-white p-4 flex flex-col items-center">
                             <h2 className="text-xl font-bold mb-2">Đơn hàng</h2>
-                            <div className="flex-1 w-full flex justify-center items-center mb-3">
+                            <div className="flex-1  w-full flex justify-center items-center mb-3">
                                 <Image
                                     src="/order.png"
                                     alt="Orders"

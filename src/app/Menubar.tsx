@@ -10,9 +10,22 @@ import SearchIcon from '@mui/icons-material/Search';
 
 import { Button } from "@/components/ui/button";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/hooks/useAuth";
 const Menubar = () => {
     const { user } = useAuthContext();
     const router = useRouter();
+    const { logout } = useAuth();
+    const handleLogout = async () => {
+        try {
+            await logout();
+            setTimeout(() => {
+                router.push("/login");
+            }, 100);
+        } catch (error) {
+            console.log(error)
+        }
+    }
     return (
         <div className="flex flex-col w-full h-fit ">
             <div className="w-screen h-20 top-0 bg-gray-900 text-white font-semibold flex justify-center items-center gap-6">
@@ -74,9 +87,27 @@ const Menubar = () => {
                         onClick={() => { router.push("/login") }}
                     >                        Login
                     </Button>}
-                    {user && <Button variant={"outline"}
-                        className="bg-transparent border-0"
-                    >Xin chào, {user.full_name.split(" ").pop()}</Button>}
+                    {user && (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant={"outline"} className="bg-transparent border-0">
+                                    Xin chào, {user.full_name.split(" ").pop()}
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                                <DropdownMenuItem onClick={() => router.push("/profile")}>
+                                    Trang cá nhân
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => router.push("/orders")}>
+                                    Đơn hàng của tôi
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={handleLogout}>
+                                    Đăng xuất
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
                 </div>
             </div>
 
