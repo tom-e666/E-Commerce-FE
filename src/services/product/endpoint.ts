@@ -251,7 +251,7 @@ export const deleteProduct = async (id: string) => {
 //@ts-expect-error dynamic type
 function cleanInputObject(obj:any){
   if (!obj) return obj;
-  
+
   if (Array.isArray(obj)) {
     return obj.map(cleanInputObject);
   }

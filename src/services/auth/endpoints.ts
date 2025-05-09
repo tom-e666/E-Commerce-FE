@@ -79,7 +79,7 @@ mutation refresh_token( $refresh_token:String!){
     expires_at
   }
 }`;
-export const refreshToken = async (refresh_token: string) => {
+export const refreshTokenAPI = async (refresh_token: string) => {
 return apolloClient.mutate({
   mutation: REFRESHTOKEN_MUTATION,
   variables: {

@@ -2,6 +2,8 @@
 import { useState } from "react";
 import { login,logout, signup } from "@/services/auth/endpoints";
 import { useAuthContext } from "@/contexts/AuthContext";
+import {resetApolloClient}from "@/services/apollo/client";
+
 export const useAuth = () => {
   const [loading, setLoading] = useState(false);
   const {refresh_token,onSuccessLogIn,onSuccessLogout}= useAuthContext();
@@ -37,6 +39,7 @@ export const useAuth = () => {
           throw new Error("Lỗi logic. Người dùng chưa đăng nhập");
         await logout(refresh_token);
         await onSuccessLogout();
+        resetApolloClient();
       }catch (error)
       {
         console.log(error);
