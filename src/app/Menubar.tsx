@@ -76,7 +76,7 @@ const Menubar = () => {
                 <div className="h-full w-20 flex justify-center items-center">
                     <Button variant={"outline"}
                         className="bg-transparent border-0"
-                        onClick={() => { router.push("/Cart") }}
+                        onClick={() => { router.push("/cart") }}
                     >                        Cart
                     </Button>
 

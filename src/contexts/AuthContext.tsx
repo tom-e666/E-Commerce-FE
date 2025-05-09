@@ -1,6 +1,6 @@
 'use client'
 import { useContext, createContext, useState, useEffect } from "react"
-import { refreshToken } from "@/services/auth/endpoints";
+import { refreshTokenAPI } from "@/services/auth/endpoints";
 interface User {
     id: string,
     full_name: string
@@ -50,7 +50,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             if (now > next_expire) {
                 (async () => {
                     try {
-                        const res = await refreshToken(storedRefreshToken);
+                        const res = await refreshTokenAPI(storedRefreshToken);
                         const { code, user, access_token, refresh_token, expires_at } = res.data;
                         if (code === 200) {
                             onSuccessLogIn(JSON.parse(user), access_token, refresh_token, expires_at);
