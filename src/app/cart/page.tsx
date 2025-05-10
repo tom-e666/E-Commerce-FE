@@ -50,25 +50,39 @@ export default function CartPage() {
 
         setIsUpdating(productId);
         try {
-            await updateQuantity(productId, newQuantity)
-        } finally {
+            const response = await updateQuantity(productId, newQuantity)
+            toast.success(response);
+        } catch (error) {
+            // @ts-expect-error catch error
+            toast.error(error.message);
+        }
+        finally {
+
             setIsUpdating(null);
         }
     };
-
     const handleRemoveItem = async (productId: string) => {
         setIsUpdating(productId);
         try {
-            await removeFromCart(productId);
+            const response = await removeFromCart(productId);
+            toast.success(response);
+        } catch (error) {
+            // @ts-expect-error catch error
+            toast.error(error.message);
         } finally {
             setIsUpdating(null);
         }
     };
 
     const handleClearCart = async () => {
-        await clearCart();
+        try {
+            const response = await clearCart();
+            toast.success(response);
+        } catch (error) {
+            // @ts-expect-error catch error
+            toast.error(error.message);
+        }
     };
-
     const handleCheckout = () => {
         router.push('/checkout');
     };
@@ -113,7 +127,7 @@ export default function CartPage() {
                             Bạn chưa thêm sản phẩm nào vào giỏ hàng
                         </p>
                         <Button asChild>
-                            <Link href="/products">Tiếp tục mua sắm</Link>
+                            <Link href="/">Tiếp tục mua sắm</Link>
                         </Button>
                     </CardContent>
                 </Card>
@@ -159,8 +173,8 @@ export default function CartPage() {
                                                 <Image
                                                     src={item.product.image || "/laptop.png"}
                                                     alt={item.product.name || "Sản phẩm"}
-                                                    layout="fill"
-                                                    style={{ objectFit: "cover" }}
+                                                    fill
+                                                // style={{ objectFit: "cover" }}
                                                 />
                                             </div>
                                             <div>

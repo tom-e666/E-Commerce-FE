@@ -30,12 +30,11 @@ export const useCart = () => {
         setLoading(true);
         try {
             const response = await getCartItems();
-            if(response.data===undefined)
+            if(!response.data)
             {
-                
+                throw new Error("Không thể lấy giỏ hàng");
             }
             const { code, cart_items } = response.data.getCartItems;
-            
             if (code === 200) {
                 if(cart_items)
                     setCartItems(cart_items);
@@ -45,9 +44,8 @@ export const useCart = () => {
             } else {
                 throw new Error("Không thể lấy giỏ hàng");
             }
-        } catch (error) {
-            console.error("Error fetching cart:", error);
-            return Promise.reject("Không thể lấy giỏ hàng");
+        } catch {
+            throw new Error("Không thể lấy giỏ hàng");
         } finally {
             setLoading(false);
         }
@@ -58,38 +56,40 @@ export const useCart = () => {
         setLoading(true);
         try {
             const response = await addToCartAPI(productId, quantity);
-            const { code} = response.addCartItem;
+            if(response.data===undefined)
+                throw new Error("Không thể thêm sản phẩm vào giỏ hàng");
+
+            const { code} = response.data.addCartItem;
             
             if (code === 200) {
-                await getCart(); // Lấy lại thông tin giỏ hàng sau khi thêm
                 return "Đã thêm sản phẩm vào giỏ hàng";
             } else {
-                
                 throw new Error("Không thể thêm sản phẩm vào giỏ hàng");
             }
-        } catch (error) {
-            console.error("Error adding item to cart:", error);
-            return Promise.reject("Không thể thêm sản phẩm vào giỏ hàng");
+        } catch {
+            throw new Error("Không thể thêm sản phẩm vào giỏ hàng");
+            
         } finally {
             setLoading(false);
         }
     };
-
     const handleRemoveFromCart = async (productId: string) => {
         setLoading(true);
         try {
             const response = await removeFromCartAPI(productId);
-            const { code } = response.removeCartItem;
-            
+            if (response.data===undefined)
+            {
+                throw new Error("Không thể xóa sản phẩm khỏi giỏ hàng");
+            }
+            const { code } = response.data.removeCartItem;
             if (code === 200) {
                 setCartItems(prev => prev.filter(item => item.product.product_id !== productId));
                 return "Đã xóa sản phẩm khỏi giỏ hàng";
             } else {
                 throw new Error("Không thể xóa sản phẩm khỏi giỏ hàng");
             }
-        } catch (error) {
-            console.error("Error removing item from cart:", error);
-            return Promise.reject("Không thể xóa sản phẩm khỏi giỏ hàng");
+        } catch  {
+            throw new Error("Không thể xóa sản phẩm khỏi giỏ hàng");
         } finally {
             setLoading(false);
         }
@@ -103,8 +103,9 @@ export const useCart = () => {
             }
             
             const response = await updateCartItemQuantityAPI(productId, quantity);
-            const { code } = response.addCartItem; // Sử dụng addCartItem vì chung endpoint
-            
+            if(response.data===undefined)
+                throw new Error("Không thể cập nhật số lượng sản phẩm");
+            const { code } = response.data.addCartItem; 
             if (code === 200) {
                 setCartItems(prev => 
                     prev.map(item => 
@@ -117,9 +118,8 @@ export const useCart = () => {
             } else {
                 throw new Error("Không thể cập nhật số lượng sản phẩm");
             }
-        } catch (error) {
-            console.error("Error updating item quantity:", error);
-            return Promise.reject("Không thể cập nhật số lượng sản phẩm");
+        } catch {
+            throw new Error("Không thể cập nhật số lượng sản phẩm");
         } finally {
             setLoading(false);
         }
@@ -136,9 +136,8 @@ export const useCart = () => {
             
             setCartItems([]);
             return "Đã xóa toàn bộ giỏ hàng";
-        } catch (error) {
-            console.error("Error clearing cart:", error);
-            return Promise.reject("Không thể xóa toàn bộ giỏ hàng");
+        } catch{
+            throw new Error ("Không thể xóa toàn bộ giỏ hàng")
         } finally {
             setLoading(false);
         }
@@ -148,7 +147,7 @@ export const useCart = () => {
         toast.promise(getCart(), {
             loading: "Đang tải giỏ hàng...",
             success: (message) => message,
-            error: (message) => message
+            error: (error) => error.message
         });
     }, []);
 
