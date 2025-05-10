@@ -54,9 +54,12 @@ export const getCartItems = async () => {
         requiresAuth: true
       }
     });
-    return response.data;
+        if (!response) {
+      console.log("Empty response received");
+      return { getCartItems: { code: 401, message: "Unauthorized", cart_items: null } };
+    }
+    return response;
   } catch (error) {
-    console.error('Error fetching cart items:', error);
     throw error;
   }
 };
@@ -71,7 +74,7 @@ export const addToCart = async (productId: string, quantity: number = 1) => {
         requiresAuth: true
       }
     });
-    return response.data;
+    return response;
   } catch (error) {
     console.error('Error adding item to cart:', error);
     throw error;
@@ -88,7 +91,7 @@ export const removeFromCart = async (productId: string) => {
         requiresAuth: true
       }
     });
-    return response.data;
+    return response;
   } catch (error) {
     console.error('Error removing item from cart:', error);
     throw error;
@@ -105,7 +108,7 @@ export const updateCartItemQuantity = async (productId: string, quantity: number
         requiresAuth: true
       }
     });
-    return response.data;
+    return response;
   } catch (error) {
     console.error('Error updating cart item quantity:', error);
     throw error;

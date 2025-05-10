@@ -30,7 +30,11 @@ export const useCart = () => {
         setLoading(true);
         try {
             const response = await getCartItems();
-            const { code, cart_items } = response.getCartItems;
+            if(response.data===undefined)
+            {
+                
+            }
+            const { code, cart_items } = response.data.getCartItems;
             
             if (code === 200) {
                 if(cart_items)

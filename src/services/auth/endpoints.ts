@@ -76,6 +76,9 @@ mutation refresh_token( $refresh_token:String!){
     access_token
     refresh_token
     user
+    {
+      full_name
+    }
     expires_at
   }
 }`;

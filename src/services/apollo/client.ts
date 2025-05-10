@@ -1,7 +1,8 @@
 import { ApolloClient, InMemoryCache, HttpLink, from, ApolloLink } from "@apollo/client";
 import { onError } from "@apollo/client/link/error";
 import { refreshTokenAPI } from "../auth/endpoints";
-
+import { Observable } from "@apollo/client";
+import { toast } from "sonner";
 const getTokens = () => {
   if (typeof window === 'undefined') return { accessToken: null, refreshToken: null };
   return {
@@ -13,22 +14,22 @@ const getTokens = () => {
 const errorLink = onError(({ graphQLErrors, networkError, operation, forward }) => {
   if (graphQLErrors) {
     for (const error of graphQLErrors) {
-      console.log('GraphQL Error:', error);
       if (
         error.extensions?.code === 'UNAUTHENTICATED' || 
         error.message.includes('token') || 
-        error.message.includes('authentication')
+        error.message.includes('authentication')||
+        error.message.includes('Unauthenticated.')
       ) {
         const { refreshToken } = getTokens();
         
         if (!refreshToken) {
-          console.log('No refresh token available, redirect to login');
-          window.location.href = '/login';
+          toast.error('Vui lòng đăng nhập lại');
+          setTimeout(()=>{
+            window.location.href = '/login';
+          },2000);
           return;
         }
-        
         return new Promise(resolve => {
-          
           refreshTokenAPI(refreshToken)
             .then(newAccessToken => {
               // Cập nhật header authorization cho request hiện tại
@@ -39,20 +40,15 @@ const errorLink = onError(({ graphQLErrors, networkError, operation, forward }) 
                   authorization: `Bearer ${newAccessToken}`,
                 },
               });
-              // Thực hiện lại request
               resolve(forward(operation));
             })
-            .catch(err => {
-              // Xử lý lỗi refresh token
-              console.error('Failed to refresh token:', err);
-              window.location.href = '/login';
+            .catch(()=>{
               resolve(forward(operation));
             });
         });
       }
     }
   }
-  
   if (networkError) {
     console.log('Network Error:', networkError);
     // Xử lý lỗi mạng nếu cần
@@ -62,7 +58,12 @@ const errorLink = onError(({ graphQLErrors, networkError, operation, forward }) 
 // Link thêm token vào mọi request
 const authLink = new ApolloLink((operation, forward) => {
   const { accessToken } = getTokens();
-  
+  const { requiresAuth } = operation.getContext();
+  if (requiresAuth && !accessToken) {
+      return new Observable(observer => {        
+          observer.complete();
+      });
+  }
   operation.setContext({
     headers: {
       authorization: accessToken ? `Bearer ${accessToken}` : '',

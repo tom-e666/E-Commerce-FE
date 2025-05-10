@@ -3,7 +3,7 @@ import ParallaxProductGrid from "@/components/ui/Parallax";
 import { useProduct } from "@/hooks/useProduct"
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-
+import { addToCart as addToCartAPI } from "@/services/cart/endpoint";
 export default function MainPageComponent() {
     const { products, getProducts } = useProduct();
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
@@ -31,7 +31,11 @@ export default function MainPageComponent() {
     }, []);
 
     const addToCart = async (id: string) => {
-        toast.success(`Đã thêm sản phẩm ${id} vào giỏ hàng!`);
+        toast.promise(addToCartAPI(id), {
+            loading: "Đang thêm sản phẩm vào giỏ hàng...",
+            success: "Thêm sản phẩm vào giỏ hàng thành công",
+            error: "Không thể thêm sản phẩm vào giỏ hàng"
+        });
     };
 
     const gradientAngle = Math.round((mousePosition.x / 100) * 360);
