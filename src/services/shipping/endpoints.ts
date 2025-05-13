@@ -13,6 +13,7 @@ export const GET_SHIPPING_BY_ORDER = gql`
         carrier
         estimated_date
         status
+        address
       }
     }
   }
@@ -29,6 +30,7 @@ export const GET_SHIPPINGS_LIST = gql`
         carrier
         estimated_date
         status
+        address
       }
     }
   }
@@ -40,7 +42,9 @@ export const CREATE_SHIPPING = gql`
     $trackingCode: String!,
     $carrier: String!,
     $estimatedDate: String!,
-    $status: String!
+    $status: String!,
+    $address: String!,
+
   ) {
     createShipping(
       order_id: $orderId,
@@ -48,6 +52,8 @@ export const CREATE_SHIPPING = gql`
       carrier: $carrier,
       estimated_date: $estimatedDate,
       status: $status
+      address: $address
+
     ) {
       code
       message
@@ -61,14 +67,16 @@ export const UPDATE_SHIPPING = gql`
     $trackingCode: String,
     $carrier: String,
     $estimatedDate: String,
-    $status: String
+    $status: String,
+    $address?:String
   ) {
     updateShipping(
       order_id: $orderId,
       tracking_code: $trackingCode,
       carrier: $carrier,
       estimated_date: $estimatedDate,
-      status: $status
+      status: $status,
+      address:$string
     ) {
       code
       message
@@ -125,7 +133,8 @@ export const createShipping = async (
   trackingCode: string,
   carrier: string,
   estimatedDate: string,
-  status: string
+  status: string,
+  address:string,
 ) => {
   try {
     const response = await apolloClient.mutate({
@@ -135,7 +144,8 @@ export const createShipping = async (
         trackingCode,
         carrier,
         estimatedDate,
-        status
+        status,
+        address
       },
       context: {
         requiresAuth: true
@@ -153,7 +163,8 @@ export const updateShipping = async (
   trackingCode?: string,
   carrier?: string,
   estimatedDate?: string,
-  status?: string
+  status?: string,
+  address?:string
 ) => {
   try {
     const response = await apolloClient.mutate({
@@ -163,7 +174,8 @@ export const updateShipping = async (
         trackingCode,
         carrier,
         estimatedDate,
-        status
+        status,
+        address
       },
       context: {
         requiresAuth: true

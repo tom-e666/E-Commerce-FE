@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { getUserCredential, updateUserInfo } from '../services/credential/endpoints';
+import { getUserCredential, updateUserInfo,changePassword } from '../services/credential/endpoints';
 export interface UserCredential {
   id: string;
   email: string;
@@ -36,7 +36,7 @@ export const useCredential = () => {
   ): Promise<{ code: number; message: string }> => {
     setLoading(true);
     try {
-      const response = await updateUserInfo(fullName, email, phone);
+      const response = await updateUserInfo(fullName, phone);
       const { code, message } = response.data.updateUserInfo;
       
       if (code === 200) {
@@ -53,11 +53,24 @@ export const useCredential = () => {
       setLoading(false);
     }
   };
+  const changePasswordAPI = async (oldPassword: string, newPassword: string) => {
+    try {
+        setLoading(true);
+        await changePassword(oldPassword, newPassword);
+        return "Đổi mật khẩu thành công";
+    }catch(error)
+    {
+        throw error;
+    }finally{
+        setLoading(false);
+    }
+}
 
   return {
     loading,
     userCredential,
     fetchUserCredential,
     updateUserInformation,
+    changePasswordAPI
   };
 };

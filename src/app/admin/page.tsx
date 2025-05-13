@@ -65,7 +65,7 @@ export default function AdminPage() {
                                 />
                             </div>
                             <p className="text-center mb-4">Quản lý đơn hàng</p>
-                            <Link href="/admin/orders">
+                            <Link href="/admin/order">
                                 <AnimatedButton>Quản lý Đơn hàng</AnimatedButton>
                             </Link>
                         </div>

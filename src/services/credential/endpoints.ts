@@ -18,8 +18,17 @@ export const GET_USER_CREDENTIAL = gql`
 `;
 
 export const UPDATE_USER_INFO = gql`
-  mutation UpdateMyUserInfo($fullName: String, $email: String, $phone: String) {
-    updateUserInfo(full_name: $fullName, email: $email, phone: $phone) {
+  mutation UpdateMyUserInfo($fullName: String, $phone: String) {
+    updateUserInfo(full_name: $fullName, phone: $phone) {
+      code
+      message
+    }
+  }
+`;
+
+export const CHANGE_PASSWORD = gql`
+  mutation ChangePassword($oldPassword: String!, $newPassword: String!) {
+    changePassword(old_password: $oldPassword, new_password: $newPassword) {
       code
       message
     }
@@ -42,11 +51,26 @@ export const getUserCredential = async () => {
   }
 };
 
-export const updateUserInfo = async (fullName?: string, email?: string, phone?: string) => {
+export const updateUserInfo = async (fullName?: string, phone?: string) => {
   try {
     const response = await apolloClient.mutate({
       mutation: UPDATE_USER_INFO,
-      variables: { fullName, email, phone },
+      variables: { fullName, phone },
+      context: {
+        requiresAuth: true
+      }
+    });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const changePassword = async (oldPassword: string, newPassword: string) => {
+  try {
+    const response = await apolloClient.mutate({
+      mutation: CHANGE_PASSWORD,
+      variables: { oldPassword, newPassword },
       context: {
         requiresAuth: true
       }

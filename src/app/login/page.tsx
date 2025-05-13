@@ -34,7 +34,6 @@ const Page = () => {
       }, 1000);
     } catch (error) {
       toast.error(error.message);
-      console.error(error);
     }
   };
   return (

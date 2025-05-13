@@ -17,7 +17,6 @@ interface OrderProduct {
     name: string;
     price: number;
 }
-
 interface OrderItem {
     id: string;
     order_id: string;
@@ -113,7 +112,9 @@ export const useOrder = () => {
             } else {
                 throw new Error("Không thể tạo đơn hàng");
             }
-        } catch  {
+        } catch (error) {
+            console.log(error);
+
             throw new Error("Không thể tạo đơn hàng");
         } finally {
             setLoading(false);

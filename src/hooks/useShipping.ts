@@ -13,6 +13,7 @@ export interface ShippingData {
   carrier: string;
   estimated_date: string;
   status: string;
+  address:string;
 }
 
 export const useShipping = () => {
@@ -65,7 +66,8 @@ export const useShipping = () => {
     trackingCode: string,
     carrier: string,
     estimatedDate: string,
-    status: string
+    status: string,
+    address:string
   ): Promise<{ code: number; message: string }> => {
     setLoading(true);
     try {
@@ -74,7 +76,8 @@ export const useShipping = () => {
         trackingCode,
         carrier,
         estimatedDate,
-        status
+        status,
+        address
       );
       
       const { code, message } = response.data.createShipping;
@@ -99,7 +102,8 @@ export const useShipping = () => {
     trackingCode?: string,
     carrier?: string,
     estimatedDate?: string,
-    status?: string
+    status?: string,
+    address?:string
   ): Promise<{ code: number; message: string }> => {
     setLoading(true);
     try {
@@ -108,7 +112,8 @@ export const useShipping = () => {
         trackingCode,
         carrier,
         estimatedDate,
-        status
+        status,
+        address,
       );
       
       const { code, message } = response.data.updateShipping;
