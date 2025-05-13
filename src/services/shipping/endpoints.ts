@@ -43,17 +43,15 @@ export const CREATE_SHIPPING = gql`
     $carrier: String!,
     $estimatedDate: String!,
     $status: String!,
-    $address: String!,
-
+    $address: String!
   ) {
     createShipping(
       order_id: $orderId,
       tracking_code: $trackingCode,
       carrier: $carrier,
       estimated_date: $estimatedDate,
-      status: $status
+      status: $status,
       address: $address
-
     ) {
       code
       message
@@ -68,7 +66,7 @@ export const UPDATE_SHIPPING = gql`
     $carrier: String,
     $estimatedDate: String,
     $status: String,
-    $address?:String
+    $address: String
   ) {
     updateShipping(
       order_id: $orderId,
@@ -76,7 +74,7 @@ export const UPDATE_SHIPPING = gql`
       carrier: $carrier,
       estimated_date: $estimatedDate,
       status: $status,
-      address:$string
+      address: $address
     ) {
       code
       message
@@ -93,7 +91,7 @@ export const UPDATE_SHIPPING_STATUS = gql`
   }
 `;
 
-// API function implementations
+// API function implementations remain the same
 export const getShippingByOrder = async (orderId: string) => {
   try {
     const response = await apolloClient.query({
@@ -134,7 +132,7 @@ export const createShipping = async (
   carrier: string,
   estimatedDate: string,
   status: string,
-  address:string,
+  address: string,
 ) => {
   try {
     const response = await apolloClient.mutate({
@@ -164,7 +162,7 @@ export const updateShipping = async (
   carrier?: string,
   estimatedDate?: string,
   status?: string,
-  address?:string
+  address?: string
 ) => {
   try {
     const response = await apolloClient.mutate({

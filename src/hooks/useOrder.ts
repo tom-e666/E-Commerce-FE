@@ -24,6 +24,10 @@ interface OrderItem {
     quantity: number;
     price: number;
     product?: OrderProduct;
+    // id:string;
+    // product_id:string;
+    // quantity:number;
+    // price:number;
 }
 
 interface Order {
@@ -47,7 +51,6 @@ export const useOrder = () => {
         }
         prep();
     }, []);
-    // Fetch all orders for the current user
     const getUserOrders = async () => {
         setLoading(true);
         try {
@@ -64,8 +67,8 @@ export const useOrder = () => {
             } else {
                 throw new Error("Không thể lấy danh sách đơn hàng");
             }
-        } catch  {
-            throw new Error("Không thể lấy danh sách đơn hàng");
+        } catch(error)  {
+            throw error;
         } finally {
             setLoading(false);
         }
@@ -88,8 +91,8 @@ export const useOrder = () => {
             } else {
                 throw new Error("Không thể lấy thông tin đơn hàng");
             }
-        } catch  {
-            throw new Error("Không thể lấy thông tin đơn hàng");
+        } catch (error)  {
+            throw error;
         } finally {
             setLoading(false);
         }
@@ -108,14 +111,12 @@ export const useOrder = () => {
             
             if (code === 200) {
                 setCurrentOrder(order);
-                return "Đơn hàng đã được tạo thành công";
+                return order;
             } else {
                 throw new Error("Không thể tạo đơn hàng");
             }
         } catch (error) {
-            console.log(error);
-
-            throw new Error("Không thể tạo đơn hàng");
+            throw error;
         } finally {
             setLoading(false);
         }
@@ -148,8 +149,8 @@ export const useOrder = () => {
             } else {
                 throw new Error("Không thể cập nhật sản phẩm trong đơn hàng");
             }
-        } catch  {
-            throw new Error("Không thể cập nhật sản phẩm trong đơn hàng");
+        } catch (error) {
+            throw error;
         } finally {
             setLoading(false);
         }
@@ -178,8 +179,8 @@ export const useOrder = () => {
             } else {
                 throw new Error("Không thể xóa sản phẩm khỏi đơn hàng");
             }
-        } catch  {
-            throw new Error("Không thể xóa sản phẩm khỏi đơn hàng");
+        } catch (error) {
+            throw error;
         } finally {
             setLoading(false);
         }
@@ -217,8 +218,8 @@ export const useOrder = () => {
             } else {
                 throw new Error("Không thể hủy đơn hàng");
             }
-        } catch  {
-            throw new Error("Không thể hủy đơn hàng");
+        } catch (error) {
+            throw error;
         } finally {
             setLoading(false);
         }
@@ -256,8 +257,8 @@ export const useOrder = () => {
             } else {
                 throw new Error("Không thể xác nhận đơn hàng");
             }
-        } catch  {
-            throw new Error("Không thể xác nhận đơn hàng");
+        } catch (error) {
+            throw error;
         } finally {
             setLoading(false);
         }
@@ -295,8 +296,8 @@ export const useOrder = () => {
             } else {
                 throw new Error("Không thể cập nhật trạng thái giao hàng");
             }
-        } catch  {
-            throw new Error("Không thể cập nhật trạng thái giao hàng");
+        } catch (error) {
+            throw error;
         } finally {
             setLoading(false);
         }
@@ -334,8 +335,8 @@ export const useOrder = () => {
             } else {
                 throw new Error("Không thể cập nhật trạng thái giao hàng");
             }
-        } catch  {
-            throw new Error("Không thể cập nhật trạng thái giao hàng");
+        } catch (error) {
+            throw error;
         } finally {
             setLoading(false);
         }

@@ -84,19 +84,21 @@ export default function CheckoutPage() {
 
     useEffect(() => {
         const initializeOrder = async () => {
-            setLoading(true);
-            await createOrderFromCart();
-
-            if (currentOrder?.id) {
-                setOrderId(currentOrder.id);
+            try {
+                setLoading(true);
+                const tempOrder = await createOrderFromCart();
+                setOrderId(tempOrder.id);
                 toast.success("Đơn hàng đã được tạo từ giỏ hàng của bạn");
-            } else {
+            } catch (error) {
+                console.log(error);
                 toast.error("Không thể tạo giỏ hàng");
+            } finally {
+                setLoading(false);
             }
-            setLoading(false);
         };
         initializeOrder();
     }, []);
+    console.log(currentOrder);
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setShippingInfo(prev => ({
@@ -135,7 +137,6 @@ export default function CheckoutPage() {
             return;
         }
         setIsSubmitting(true);
-
         try {
             const shippingAddress = `${shippingInfo.address}, ${shippingInfo.ward}, ${shippingInfo.district}, ${shippingInfo.city}`;
             const trackingCode = `TRK-${Date.now().toString().slice(-8)}`;
@@ -244,7 +245,7 @@ export default function CheckoutPage() {
                                                     <div className="h-16 w-16 relative rounded overflow-hidden flex-shrink-0 mr-4">
                                                         <Image
                                                             src={"/gaming.png"}
-                                                            alt={item!.product!.name || "Sản phẩm"}
+                                                            alt={item.product?.name || "Sản phẩm"}
                                                             fill
                                                             className="object-cover"
                                                         />

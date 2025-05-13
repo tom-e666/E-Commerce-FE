@@ -9,21 +9,23 @@ export const CREATE_ORDER_FROM_CART = gql`
       message
       order {
         id
-        user_id
         status
-        total_price
         created_at
+        total_price
         items {
           id
-          product_id
           quantity
           price
+          product {
+            name
+            price
+            image
+          }
         }
       }
     }
   }
 `;
-
 export const UPDATE_ORDER_ITEM = gql`
   mutation UpdateOrderItem($orderItemId: ID!, $quantity: Int!) {
     updateOrderItem(order_item_id: $orderItemId, quantity: $quantity) {
@@ -89,6 +91,8 @@ export const GET_ORDER = gql`
         status
         created_at
         total_price
+        payment_status
+        shipping_address
         items {
           id
           order_id
@@ -96,9 +100,12 @@ export const GET_ORDER = gql`
           quantity
           price
           product {
-            id
+            product_id
             name
             price
+            image
+            stock
+            status
           }
         }
       }
@@ -114,19 +121,24 @@ export const GET_USER_ORDERS = gql`
       orders {
         id
         status
-        total_price
         created_at
+        total_price
+        payment_status
+        shipping_address
         items {
           id
-          product_id
           quantity
           price
+          product {
+            name
+            image
+          }
         }
       }
     }
   }
 `;
-// API function implementations
+
 export const createOrderFromCartAPI = async () => {
   try {
     const response = await apolloClient.mutate({
@@ -137,6 +149,7 @@ export const createOrderFromCartAPI = async () => {
     });
     return response;
   } catch (error) {
+    console.log(error);
     throw error;
   }
 };
