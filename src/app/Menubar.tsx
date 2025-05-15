@@ -69,17 +69,15 @@ const Menubar = () => {
                     <Button variant={"outline"}
                         className="bg-transparent border-0"
                         onClick={() => { router.push("/Order") }}
-                    >                        Order
+                    >                        Đơn hàng
                     </Button>
-
                 </div>
                 <div className="h-full w-20 flex justify-center items-center">
                     <Button variant={"outline"}
                         className="bg-transparent border-0"
                         onClick={() => { router.push("/cart") }}
-                    >                        Cart
+                    >                        Giỏ hàng
                     </Button>
-
                 </div>
                 <div className="h-full w-20 flex justify-center items-center" onClick={() => { router.push("/login") }}>
                     {!user && <Button variant={"outline"}
@@ -114,5 +112,4 @@ const Menubar = () => {
         </div>
     );
 };
-
 export default Menubar;

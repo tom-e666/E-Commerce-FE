@@ -82,7 +82,7 @@ export default function AdminPage() {
                                 />
                             </div>
                             <p className="text-center mb-4">Quản lý thông tin người dùng</p>
-                            <Link href="/admin/users">
+                            <Link href="/admin/user">
                                 <AnimatedButton>Quản lý Người dùng</AnimatedButton>
                             </Link>
                         </div>
