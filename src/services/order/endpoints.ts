@@ -13,8 +13,7 @@ export const CREATE_ORDER_FROM_CART = gql`
         status
         created_at
         total_price
-        payment_status
-        shipping_address
+        
         items {
           id
           quantity
@@ -95,8 +94,8 @@ export const GET_ORDER = gql`
         status
         created_at
         total_price
-        payment_status
-        shipping_address
+        
+        
         items {
           id
           order_id
@@ -128,8 +127,8 @@ export const GET_USER_ORDERS = gql`
         status
         created_at
         total_price
-        payment_status
-        shipping_address
+        
+        
         items {
           id
           quantity
@@ -161,8 +160,8 @@ export const GET_ORDERS = gql`
         status
         created_at
         total_price
-        payment_status
-        shipping_address
+        
+        
       }
     }
   }

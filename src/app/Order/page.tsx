@@ -45,14 +45,13 @@ import {
     TableRow,
 } from "@/components/ui/table";
 
-import { 
-    Check, 
-    Package, 
-    Truck, 
-    X, 
-    Clock, 
-    ArrowRight, 
-    AlarmClock, 
+import {
+    Check,
+    Package,
+    Truck,
+    X,
+    Clock,
+    AlarmClock,
     Search,
     ShoppingBag,
     Loader2
@@ -61,14 +60,14 @@ import {
 export default function UserOrders() {
     const router = useRouter();
     const { user, isAuthenticated, loading: authLoading } = useAuth();
-    const { 
-        loading, 
-        orders, 
-        getUserOrders, 
+    const {
+        loading,
+        orders,
+        getUserOrders,
         getOrder,
-        cancelOrder 
+        cancelOrder
     } = useOrder();
-    
+
     const [filter, setFilter] = useState("all");
     const [filteredOrders, setFilteredOrders] = useState([]);
     const [selectedOrder, setSelectedOrder] = useState(null);
@@ -99,7 +98,6 @@ export default function UserOrders() {
         cancelled: "Đã hủy"
     };
 
-    // Tải danh sách đơn hàng khi component được mount
     useEffect(() => {
         const loadOrders = async () => {
             try {
@@ -159,13 +157,13 @@ export default function UserOrders() {
                 success: "Đơn hàng đã được hủy thành công",
                 error: "Không thể hủy đơn hàng"
             });
-            
+
             // Cập nhật lại thông tin đơn hàng hiện tại
             if (selectedOrder && selectedOrder.id === orderId) {
                 const updatedOrder = await getOrder(orderId);
                 setSelectedOrder(updatedOrder);
             }
-            
+
         } catch (error) {
             console.error("Error cancelling order:", error);
         } finally {
@@ -214,7 +212,7 @@ export default function UserOrders() {
                     <CardHeader>
                         <CardTitle>Không tìm thấy đơn hàng nào</CardTitle>
                         <CardDescription>
-                            {filter === "all" 
+                            {filter === "all"
                                 ? "Bạn chưa có đơn hàng nào. Hãy mua sắm ngay!"
                                 : `Không tìm thấy đơn hàng nào có trạng thái "${statusLabels[filter] || filter}"`}
                         </CardDescription>
@@ -260,7 +258,7 @@ export default function UserOrders() {
                                             <span className="font-medium">{order.payment_method === "cod" ? "Thanh toán khi nhận hàng" : order.payment_method || "N/A"}</span>
                                         </div>
                                     </div>
-                                    
+
                                     <div className="space-y-1">
                                         {order.items && order.items.slice(0, 2).map((item) => (
                                             <div key={item.id} className="flex items-center gap-3">
@@ -283,7 +281,7 @@ export default function UserOrders() {
                                                 </div>
                                             </div>
                                         ))}
-                                        
+
                                         {order.items && order.items.length > 2 && (
                                             <p className="text-sm text-muted-foreground text-center mt-2">
                                                 +{order.items.length - 2} sản phẩm khác
@@ -293,18 +291,18 @@ export default function UserOrders() {
                                 </div>
                             </CardContent>
                             <CardFooter className="flex flex-wrap gap-2 border-t bg-muted/30 pt-4">
-                                <Button 
-                                    variant="secondary" 
+                                <Button
+                                    variant="secondary"
                                     className="flex-1"
                                     onClick={() => handleViewDetail(order.id)}
                                 >
                                     <Search className="h-4 w-4 mr-2" />
                                     Xem chi tiết
                                 </Button>
-                                
+
                                 {order.status === "pending" && (
-                                    <Button 
-                                        variant="destructive" 
+                                    <Button
+                                        variant="destructive"
                                         className="flex-1"
                                         onClick={() => handleCancelOrder(order.id)}
                                         disabled={processingOrder === order.id}
@@ -317,10 +315,10 @@ export default function UserOrders() {
                                         Hủy đơn hàng
                                     </Button>
                                 )}
-                                
+
                                 {order.status === "delivered" && (
-                                    <Button 
-                                        variant="outline" 
+                                    <Button
+                                        variant="outline"
                                         className="flex-1"
                                         onClick={() => router.push(`/review/${order.id}`)}
                                     >
@@ -328,10 +326,10 @@ export default function UserOrders() {
                                         Đánh giá
                                     </Button>
                                 )}
-                                
+
                                 {(order.status === "confirmed" || order.status === "shipped") && (
-                                    <Button 
-                                        variant="outline" 
+                                    <Button
+                                        variant="outline"
                                         className="flex-1"
                                         disabled
                                     >

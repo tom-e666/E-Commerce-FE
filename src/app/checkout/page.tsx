@@ -64,7 +64,7 @@ interface ShippingInfo {
 
 export default function CheckoutPage() {
     const [loading, setLoading] = useState(true);
-    const { createOrderFromCart, loading: orderLoading, currentOrder } = useOrder();
+    const { loading: orderLoading, currentOrder, setCurrentOrder } = useOrder();
     const { handleCreateShipping, loading: shippingLoading } = useShipping();
     const [orderId, setOrderId] = useState<string | null>(null);
     const [paymentMethod, setPaymentMethod] = useState("cod");
@@ -86,13 +86,21 @@ export default function CheckoutPage() {
         const initializeOrder = async () => {
             try {
                 setLoading(true);
-                const tempOrder = await createOrderFromCart();
-                setOrderId(tempOrder.id);
-                toast.success("Đơn hàng đã được tạo từ giỏ hàng của bạn");
+                if (typeof window !== 'undefined') {
+                    const storedOrder = sessionStorage.getItem("newOrder");
+                    console.log(storedOrder);
+                    if (storedOrder) {
+                        const tempOrder = JSON.parse(storedOrder).data.createOrderFromCart;
+                        setCurrentOrder(tempOrder);
+                        setOrderId(tempOrder.id);
+                        toast.success("Đơn hàng đã được tạo từ giỏ hàng của bạn");
+                    }
+                }
             } catch (error) {
                 console.log(error);
                 toast.error("Không thể tạo giỏ hàng");
             } finally {
+                console.log(currentOrder);
                 setLoading(false);
             }
         };

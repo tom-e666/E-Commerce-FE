@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { 
     createOrderFromCartAPI, 
     getOrderAPI, 
@@ -12,23 +12,49 @@ import {
     getOrdersAPI  
 } from '@/services/order/endpoints';
 
-interface OrderProduct {
-    product_id?: string;
-    id?: string;
+// First, define proper interfaces that match the GraphQL schema
+
+// This matches what comes back in items array from createOrderFromCart
+interface OrderItemResponse {
+    image: string;
     name: string;
     price: number;
-    image?: string;
-    stock?: number;
-    status?: string;
+    stock: number;
+    product_id: string;
 }
+
+// This is for the full response structure
+interface CreateOrderResponse {
+    code: number;
+    message: string;
+    order: {
+        id: string;
+        created_at: string;
+        status: string;
+        total_price: number;
+        items: OrderItemResponse[];
+    }
+}
+
+// This is for the processed order in our application
+interface OrderProduct {
+    id?: string;
+    product_id: string;
+    name: string;
+    price: number;
+    image: string;
+    stock?: number;
+}
+
 interface OrderItem {
     id: string;
     order_id?: string;
-    product_id?: string;
+    product_id: string;
     quantity: number;
     price: number;
     product?: OrderProduct;
 }
+
 interface Order {
     id: string;
     user_id?: string;
@@ -44,6 +70,7 @@ interface Order {
     items: OrderItem[];
 }
 
+// Added missing interfaces
 interface OrderInput {
     order_id: string;
     shipping_address?: string;
@@ -53,28 +80,18 @@ interface OrderInput {
     recipient_name?: string;
     recipient_phone?: string;
 }
+
 interface OrderFilter {
     status?: string;
     createdAfter?: string;
     createdBefore?: string;
 }
+
 export const useOrder = () => {
     const [loading, setLoading] = useState<boolean>(false);
     const [orders, setOrders] = useState<Order[]>([]);
-    const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
+    const [currentOrder, setCurrentOrder] = useState<Order | null>(null);    
     
-    useEffect(() => {
-        const fetchOrders = async () => {
-            try {
-                setLoading(true);
-                await getUserOrders();
-            } catch {
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchOrders();
-    }, [orders]);
     const getUserOrders = async () => {
         setLoading(true);
         try {
@@ -159,8 +176,29 @@ export const useOrder = () => {
             const { code, message, order } = response.data.createOrderFromCart;
             
             if (code === 200 && order) {
-                setCurrentOrder(order);
-                return order;
+                // Transform the API response to match our application structure
+                const transformedOrder: Order = {
+                    id: order.id,
+                    created_at: order.created_at,
+                    status: order.status,
+                    total_price: order.total_price,
+                    items: order.items.map(item => ({
+                        id: item.product_id, // Use product_id as the item ID initially
+                        product_id: item.product_id,
+                        quantity: 1, // Default quantity
+                        price: item.price,
+                        product: {
+                            product_id: item.product_id,
+                            name: item.name,
+                            image: item.image,
+                            price: item.price,
+                            stock: item.stock
+                        }
+                    }))
+                };
+                
+                setCurrentOrder(transformedOrder);
+                return transformedOrder;
             } else {
                 throw new Error(message || "Không thể tạo đơn hàng");
             }
@@ -456,8 +494,8 @@ export const useOrder = () => {
         cancelOrder,
         confirmOrder,
         shipOrder,
-        deliverOrder
+        deliverOrder,
+        setCurrentOrder
     };
 };
-
 export default useOrder;

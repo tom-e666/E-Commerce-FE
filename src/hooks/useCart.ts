@@ -88,8 +88,8 @@ export const useCart = () => {
             } else {
                 throw new Error("Không thể xóa sản phẩm khỏi giỏ hàng");
             }
-        } catch  {
-            throw new Error("Không thể xóa sản phẩm khỏi giỏ hàng");
+        } catch (error) {
+            throw error;
         } finally {
             setLoading(false);
         }

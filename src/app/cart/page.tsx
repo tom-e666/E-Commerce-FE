@@ -27,6 +27,7 @@ import {
 import { MinusIcon, PlusIcon, ShoppingCart, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "next/navigation";
+import { createOrderFromCartAPI } from "@/services/order/endpoints";
 
 export default function CartPage() {
     const router = useRouter();
@@ -67,6 +68,7 @@ export default function CartPage() {
             const response = await removeFromCart(productId);
             toast.success(response);
         } catch (error) {
+            console.log(error);
             // @ts-expect-error catch error
             toast.error(error.message);
         } finally {
@@ -83,8 +85,20 @@ export default function CartPage() {
             toast.error(error.message);
         }
     };
-    const handleCheckout = () => {
-        router.push('/checkout');
+    const handleCheckout = async () => {
+        try {
+            const toastId = toast.loading("Đang tạo đơn hàng");
+            const response = await createOrderFromCartAPI();
+            console.log(response);
+            if (!response?.data) {
+                throw new Error("Có lỗi! Đơn hàng không được tạo!");
+            }
+            sessionStorage.setItem("newOrder", JSON.stringify(response));
+            toast.dismiss(toastId);
+            router.push("/checkout");
+        } catch {
+            toast.error("Có lỗi! Đơn hàng không được tạo!");
+        }
     };
     if (loading) {
         return (
@@ -214,7 +228,7 @@ export default function CartPage() {
                                             variant="ghost"
                                             size="icon"
                                             className="h-8 w-8 text-destructive"
-                                            onClick={() => handleRemoveItem(item.id)}
+                                            onClick={() => handleRemoveItem(item.product.product_id)}
                                             disabled={!!isUpdating}
                                         >
                                             <Trash2 className="h-4 w-4" />
