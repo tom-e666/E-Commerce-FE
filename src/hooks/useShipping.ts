@@ -13,7 +13,13 @@ export interface ShippingData {
   carrier: string;
   estimated_date: string;
   status: string;
-  address:string;
+  address: string;
+  order_id?: string;
+  recipient_name?: string;
+  recipient_phone?: string;
+  note?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export const useShipping = () => {
@@ -67,7 +73,10 @@ export const useShipping = () => {
     carrier: string,
     estimatedDate: string,
     status: string,
-    address:string
+    address: string,
+    recipientName?: string,
+    recipientPhone?: string,
+    note?: string
   ): Promise<{ code: number; message: string }> => {
     setLoading(true);
     try {
@@ -77,7 +86,10 @@ export const useShipping = () => {
         carrier,
         estimatedDate,
         status,
-        address
+        address,
+        recipientName,
+        recipientPhone,
+        note
       );
       
       const { code, message } = response.data.createShipping;
@@ -99,21 +111,21 @@ export const useShipping = () => {
 
   const handleUpdateShipping = async (
     orderId: string,
-    trackingCode?: string,
     carrier?: string,
-    estimatedDate?: string,
-    status?: string,
-    address?:string
+    address?: string,
+    recipientName?: string,
+    recipientPhone?: string,
+    note?: string
   ): Promise<{ code: number; message: string }> => {
     setLoading(true);
     try {
       const response = await updateShipping(
         orderId,
-        trackingCode,
         carrier,
-        estimatedDate,
-        status,
         address,
+        recipientName,
+        recipientPhone,
+        note
       );
       
       const { code, message } = response.data.updateShipping;

@@ -93,7 +93,7 @@ export default function CartPage() {
             if (!response?.data) {
                 throw new Error("Có lỗi! Đơn hàng không được tạo!");
             }
-            sessionStorage.setItem("newOrder", JSON.stringify(response));
+            sessionStorage.setItem("newOrder", JSON.stringify(response.data.createOrderFromCart.order));
             toast.dismiss(toastId);
             router.push("/checkout");
         } catch {
@@ -191,7 +191,7 @@ export default function CartPage() {
                                                 />
                                             </div>
                                             <div>
-                                                <div className="font-medium">{item && `Sản phẩm #${item.product.product_id}`}</div>
+                                                <div className="font-medium">{item && `Sản phẩm #${item.product.name}`}</div>
                                                 <div className="text-sm text-muted-foreground">Mã: {item.product.product_id}</div>
                                             </div>
                                         </div>

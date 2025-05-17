@@ -12,66 +12,24 @@ import {
     getOrdersAPI  
 } from '@/services/order/endpoints';
 
-// First, define proper interfaces that match the GraphQL schema
-
-// This matches what comes back in items array from createOrderFromCart
-interface OrderItemResponse {
-    image: string;
-    name: string;
-    price: number;
-    stock: number;
-    product_id: string;
-}
-
-// This is for the full response structure
-interface CreateOrderResponse {
-    code: number;
-    message: string;
-    order: {
-        id: string;
-        created_at: string;
-        status: string;
-        total_price: number;
-        items: OrderItemResponse[];
-    }
-}
-
-// This is for the processed order in our application
-interface OrderProduct {
-    id?: string;
-    product_id: string;
-    name: string;
-    price: number;
-    image: string;
-    stock?: number;
-}
-
-interface OrderItem {
+export interface OrderItem {
     id: string;
-    order_id?: string;
     product_id: string;
+    name: string;
     quantity: number;
     price: number;
-    product?: OrderProduct;
+    image: string
 }
-
-interface Order {
+export interface Order {
     id: string;
     user_id?: string;
     status: string;
     total_price: number;
     created_at: string;
-    payment_status?: string;
-    payment_method?: string;
-    shipping_address?: string;
-    recipient_name?: string;
-    recipient_phone?: string;
-    notes?: string;
     items: OrderItem[];
 }
 
-// Added missing interfaces
-interface OrderInput {
+export interface OrderInput {
     order_id: string;
     shipping_address?: string;
     payment_method?: string;
@@ -80,17 +38,16 @@ interface OrderInput {
     recipient_name?: string;
     recipient_phone?: string;
 }
-
-interface OrderFilter {
+export interface OrderFilter {
     status?: string;
     createdAfter?: string;
     createdBefore?: string;
 }
-
 export const useOrder = () => {
     const [loading, setLoading] = useState<boolean>(false);
     const [orders, setOrders] = useState<Order[]>([]);
-    const [currentOrder, setCurrentOrder] = useState<Order | null>(null);    
+    const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
+    
     
     const getUserOrders = async () => {
         setLoading(true);
@@ -164,7 +121,6 @@ export const useOrder = () => {
             setLoading(false);
         }
     };
-
     const createOrderFromCart = async () => {
         setLoading(true);
         try {
@@ -176,29 +132,8 @@ export const useOrder = () => {
             const { code, message, order } = response.data.createOrderFromCart;
             
             if (code === 200 && order) {
-                // Transform the API response to match our application structure
-                const transformedOrder: Order = {
-                    id: order.id,
-                    created_at: order.created_at,
-                    status: order.status,
-                    total_price: order.total_price,
-                    items: order.items.map(item => ({
-                        id: item.product_id, // Use product_id as the item ID initially
-                        product_id: item.product_id,
-                        quantity: 1, // Default quantity
-                        price: item.price,
-                        product: {
-                            product_id: item.product_id,
-                            name: item.name,
-                            image: item.image,
-                            price: item.price,
-                            stock: item.stock
-                        }
-                    }))
-                };
-                
-                setCurrentOrder(transformedOrder);
-                return transformedOrder;
+                setCurrentOrder(order);
+                return order;
             } else {
                 throw new Error(message || "Không thể tạo đơn hàng");
             }
@@ -211,20 +146,11 @@ export const useOrder = () => {
     };
     const createOrder = async (orderData: OrderInput) => {
         setLoading(true);
-        try {
- 
-            
+        try {  
             if (currentOrder && currentOrder.id === orderData.order_id) {
                 const updatedOrder = {
                     ...currentOrder,
-                    shipping_address: orderData.shipping_address || currentOrder.shipping_address,
-                    payment_method: orderData.payment_method || currentOrder.payment_method,
-                    payment_status: orderData.payment_status || currentOrder.payment_status || 'pending',
-                    notes: orderData.notes || currentOrder.notes,
-                    recipient_name: orderData.recipient_name || currentOrder.recipient_name,
-                    recipient_phone: orderData.recipient_phone || currentOrder.recipient_phone
                 };
-                
                 setCurrentOrder(updatedOrder);
                 
                 setOrders(prevOrders => 
@@ -403,7 +329,6 @@ export const useOrder = () => {
             setLoading(false);
         }
     };
-
     const shipOrder = async (orderId: string) => {
         setLoading(true);
         try {
@@ -495,7 +420,8 @@ export const useOrder = () => {
         confirmOrder,
         shipOrder,
         deliverOrder,
-        setCurrentOrder
+        setCurrentOrder,
     };
 };
+
 export default useOrder;

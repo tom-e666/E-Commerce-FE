@@ -2,7 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { ArrowLeft, ClipboardCheck, Loader2 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
-import OrderItem from "@/components/checkout/OrderItem";
+import OrderItem from "./OrderItem";
 import {
     Card,
     CardContent,

@@ -13,16 +13,12 @@ export const CREATE_ORDER_FROM_CART = gql`
         status
         created_at
         total_price
-        
         items {
           id
+          product_id
+          name
           quantity
           price
-          product {
-            name
-            price
-            image
-          }
         }
       }
     }
@@ -94,22 +90,12 @@ export const GET_ORDER = gql`
         status
         created_at
         total_price
-        
-        
         items {
           id
-          order_id
           product_id
+          name
           quantity
           price
-          product {
-            product_id
-            name
-            price
-            image
-            stock
-            status
-          }
         }
       }
     }
@@ -127,24 +113,18 @@ export const GET_USER_ORDERS = gql`
         status
         created_at
         total_price
-        
-        
         items {
           id
+          product_id
+          name
           quantity
           price
-          product {
-            name
-            price
-            image
-          }
         }
       }
     }
   }
 `;
 
-//get_orders have additional field
 export const GET_ORDERS = gql`
   query GetOrders($status: String, $createdAfter: String, $createdBefore: String) {
     getOrders(
@@ -160,8 +140,13 @@ export const GET_ORDERS = gql`
         status
         created_at
         total_price
-        
-        
+        items {
+          id
+          product_id
+          name
+          quantity
+          price
+        }
       }
     }
   }

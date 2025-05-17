@@ -14,6 +14,12 @@ export const GET_SHIPPING_BY_ORDER = gql`
         estimated_date
         status
         address
+        order_id
+        recipient_name
+        recipient_phone
+        note
+        created_at
+        updated_at
       }
     }
   }
@@ -31,6 +37,12 @@ export const GET_SHIPPINGS_LIST = gql`
         estimated_date
         status
         address
+        order_id
+        recipient_name
+        recipient_phone
+        note
+        created_at
+        updated_at
       }
     }
   }
@@ -43,7 +55,10 @@ export const CREATE_SHIPPING = gql`
     $carrier: String!,
     $estimatedDate: String!,
     $status: String!,
-    $address: String!
+    $address: String!,
+    $recipientName: String,
+    $recipientPhone: String,
+    $note: String
   ) {
     createShipping(
       order_id: $orderId,
@@ -52,6 +67,9 @@ export const CREATE_SHIPPING = gql`
       estimated_date: $estimatedDate,
       status: $status,
       address: $address
+      recipient_name: $recipientName,
+      recipient_phone: $recipientPhone,
+      note: $note
     ) {
       code
       message
@@ -62,11 +80,11 @@ export const CREATE_SHIPPING = gql`
 export const UPDATE_SHIPPING = gql`
   mutation UpdateShippingDetails(
     $orderId: ID!,
-    $trackingCode: String,
     $carrier: String,
-    $estimatedDate: String,
-    $status: String,
-    $address: String
+    $address: String,
+    $recipientName: String,
+    $recipientPhone: String,
+    $note: String
   ) {
     updateShipping(
       order_id: $orderId,
@@ -74,7 +92,8 @@ export const UPDATE_SHIPPING = gql`
       carrier: $carrier,
       estimated_date: $estimatedDate,
       status: $status,
-      address: $address
+      address: $address,
+      note: $note
     ) {
       code
       message
@@ -133,6 +152,9 @@ export const createShipping = async (
   estimatedDate: string,
   status: string,
   address: string,
+  recipientName?: string,
+  recipientPhone?: string,
+  note?: string
 ) => {
   try {
     const response = await apolloClient.mutate({
@@ -143,7 +165,10 @@ export const createShipping = async (
         carrier,
         estimatedDate,
         status,
-        address
+        address,
+        recipientName,
+        recipientPhone,
+        note
       },
       context: {
         requiresAuth: true
@@ -158,22 +183,23 @@ export const createShipping = async (
 
 export const updateShipping = async (
   orderId: string,
-  trackingCode?: string,
   carrier?: string,
-  estimatedDate?: string,
-  status?: string,
-  address?: string
+  address?: string,
+  recipient_name?:string,
+  recipient_phone?:string,
+  note?:string
+
 ) => {
   try {
     const response = await apolloClient.mutate({
       mutation: UPDATE_SHIPPING,
       variables: {
         orderId,
-        trackingCode,
         carrier,
-        estimatedDate,
-        status,
-        address
+        address,
+        recipient_name,
+        recipient_phone,
+        note
       },
       context: {
         requiresAuth: true

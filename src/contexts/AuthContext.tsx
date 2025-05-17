@@ -58,7 +58,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         refreshPromiseRef.current = new Promise<string>(async (resolve, reject) => {
             try {
                 const res = await refreshTokenAPI(storedRefreshToken);
-                const { code, user, access_token, refresh_token, expires_at } = res.data;
+                const { code, user, access_token, refresh_token, expires_at } = res.data.refreshToken;
 
                 if (code === 200) {
                     await onSuccessLogIn(JSON.parse(user), access_token, refresh_token, expires_at);
