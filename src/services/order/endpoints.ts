@@ -19,6 +19,7 @@ export const CREATE_ORDER_FROM_CART = gql`
           name
           quantity
           price
+          image
         }
       }
     }
@@ -96,6 +97,7 @@ export const GET_ORDER = gql`
           name
           quantity
           price
+          image
         }
       }
     }
@@ -119,6 +121,7 @@ export const GET_USER_ORDERS = gql`
           name
           quantity
           price
+          image
         }
       }
     }
@@ -146,6 +149,7 @@ export const GET_ORDERS = gql`
           name
           quantity
           price
+          image
         }
       }
     }

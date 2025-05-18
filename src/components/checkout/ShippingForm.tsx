@@ -1,5 +1,5 @@
 import React from "react";
-import { ArrowLeft, Loader2, MapPin } from "lucide-react";
+import { ArrowLeft, Loader2, MapPin, Truck } from "lucide-react";
 import {
     Card,
     CardContent,
@@ -18,6 +18,27 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import {
+    RadioGroup,
+    RadioGroupItem
+} from "@/components/ui/radio-group";
+import { Badge } from "@/components/ui/badge";
+import { formatCurrency } from "@/lib/utils";
+
+interface Province {
+    province_id: number;
+    province_name: string;
+}
+
+interface District {
+    district_id: number;
+    district_name: string;
+}
+
+interface Ward {
+    ward_id: number;
+    ward_name: string;
+}
 
 interface ShippingFormProps {
     shippingInfo: {
@@ -34,9 +55,9 @@ interface ShippingFormProps {
         districts: boolean;
         wards: boolean;
     };
-    provinces: any[];
-    districts: any[];
-    wards: any[];
+    provinces: Province[];
+    districts: District[];
+    wards: Ward[];
     isSubmitting: boolean;
     onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
     onSelectChange: (name: string, value: string) => void;
@@ -204,6 +225,42 @@ const ShippingForm = React.memo(({
                     </div>
                 </div>
 
+                {/* Shipping Method Selection */}
+                <div className="space-y-2 border p-4 rounded-lg">
+                    <div className="flex items-center space-x-2">
+                        <Truck className="h-5 w-5 text-primary" />
+                        <Label className="font-medium">Phương thức vận chuyển</Label>
+                    </div>
+
+                    <RadioGroup defaultValue="SHOP" className="mt-2">
+                        <div className="flex items-center space-x-2 border p-3 rounded-md mb-2">
+                            <RadioGroupItem value="SHOP" id="shop" />
+                            <Label htmlFor="shop" className="flex-1 cursor-pointer">
+                                <div className="font-medium">Giao hàng tiêu chuẩn</div>
+                                <div className="text-xs text-muted-foreground">
+                                    Nhận hàng từ 3-5 ngày làm việc
+                                </div>
+                            </Label>
+                            <Badge variant="outline" className="ml-auto">
+                                {formatCurrency(0)}
+                            </Badge>
+                        </div>
+
+                        <div className="flex items-center space-x-2 border p-3 rounded-md bg-gray-50/50">
+                            <RadioGroupItem value="GHN" id="ghn" disabled />
+                            <Label htmlFor="ghn" className="flex-1 cursor-not-allowed opacity-70">
+                                <div className="font-medium">Giao Hàng Nhanh (GHN)</div>
+                                <div className="text-xs text-muted-foreground">
+                                    Nhận hàng từ 1-2 ngày làm việc (Tạm thời không khả dụng)
+                                </div>
+                            </Label>
+                            <Badge variant="outline" className="ml-auto">
+                                {formatCurrency(25000)}
+                            </Badge>
+                        </div>
+                    </RadioGroup>
+                </div>
+
                 <div className="space-y-2">
                     <Label htmlFor="notes">Ghi chú (tùy chọn)</Label>
                     <Textarea
@@ -211,6 +268,7 @@ const ShippingForm = React.memo(({
                         name="notes"
                         defaultValue={shippingInfo.notes}
                         onChange={(e) => {
+                            // Use the raw DOM value instead of state for rendering
                             e.currentTarget.value = e.currentTarget.value;
                             debouncedSetNotes(e.currentTarget.value);
                         }}
@@ -218,7 +276,6 @@ const ShippingForm = React.memo(({
                         className="h-24"
                     />
                 </div>
-
             </CardContent>
             <CardFooter className="flex justify-between">
                 <Button variant="outline" onClick={onBack}>

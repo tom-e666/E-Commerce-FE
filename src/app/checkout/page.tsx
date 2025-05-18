@@ -19,6 +19,7 @@ import OrderSummary from "@/components/checkout/OrderSummary";
 import OrderStatusIndicator from "@/components/checkout/OrderStatusIndicator";
 import OrderCompletedView from "@/components/checkout/OrderCompleteView";
 import PaymentForm from "@/components/checkout/PaymentForm";
+
 // Main component
 export default function CheckoutPage() {
     const [loading, setLoading] = useState(true);
@@ -38,6 +39,7 @@ export default function CheckoutPage() {
         ward: "",
         notes: "",
     });
+
     interface Province {
         province_id: number;
         province_name: string;
@@ -214,40 +216,61 @@ export default function CheckoutPage() {
         setStep(0);
     }, []);
 
-    const handleShippingSubmit = useCallback(async () => {
+    const handleProceedToPayment = useCallback(async () => {
         if (!validateShippingInfo() || !orderId) {
             return;
         }
 
         setIsSubmitting(true);
         try {
-            const shippingAddress = `${shippingInfo.address}, ${shippingInfo.ward}, ${shippingInfo.district}, ${shippingInfo.city}`;
-            const trackingCode = `TRK-${Date.now().toString().slice(-8)}`;
-            const carrier = "Viettel Post";
-            const estimatedDate = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-            const status = "received";
+            const selectedProvince = provinces.find(p => p.province_name === shippingInfo.city);
+            const selectedDistrict = districts.find(d => d.district_name === shippingInfo.district);
+            const selectedWard = wards.find(w => w.ward_name === shippingInfo.ward);
 
-            await handleCreateShipping(
+            if (!selectedProvince || !selectedDistrict || !selectedWard) {
+                toast.error("Thông tin địa chỉ không hợp lệ. Vui lòng kiểm tra lại.");
+                setIsSubmitting(false); // Make sure to reset loading state
+                return;
+            }
+
+            const response = await handleCreateShipping(
                 orderId,
-                trackingCode,
-                carrier,
-                estimatedDate,
-                status,
-                shippingAddress,
+                shippingInfo.address,
                 shippingInfo.fullName,
                 shippingInfo.phone,
+                shippingInfo.city,
+                shippingInfo.district,
+                shippingInfo.ward,
+                selectedDistrict.district_id.toString(),
+                selectedWard.ward_id.toString(),
+                'SHOP',
+                0,
                 shippingInfo.notes
             );
 
-            setOrderCompleted(true);
-            toast.success("Đặt hàng thành công");
+            // Check if the shipping creation was successful
+            if (response && response.code === 200) {
+                // Move to payment step after successful shipping creation
+                setStep(2);
+                toast.success("Thông tin giao hàng đã được lưu");
+            } else {
+                toast.error(response?.message || "Không thể lưu thông tin giao hàng");
+            }
         } catch (error) {
-            console.error("Order submission error:", error);
-            toast.error("Có lỗi xảy ra khi xử lý đơn hàng. Vui lòng thử lại sau.");
+            console.error("Shipping submission error:", error);
+            toast.error("Có lỗi xảy ra khi lưu thông tin giao hàng. Vui lòng thử lại sau.");
         } finally {
-            setIsSubmitting(false);
+            setIsSubmitting(false); // Reset loading state regardless of outcome
         }
-    }, [orderId, shippingInfo, validateShippingInfo, handleCreateShipping]);
+    }, [
+        orderId,
+        shippingInfo,
+        validateShippingInfo,
+        provinces,
+        districts,
+        wards,
+        handleCreateShipping
+    ]);
 
     const totalPrice = useMemo(() => {
         return currentOrder ? currentOrder.total_price + shippingCost : 0;
@@ -294,10 +317,27 @@ export default function CheckoutPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 space-y-6">
                     <Tabs value={`step-${step}`} className="w-full">
-                        <TabsList className="grid w-full grid-cols-2">
-                            <TabsTrigger value="step-0">Xem đơn hàng</TabsTrigger>
-                            <TabsTrigger value="step-1">Thông tin giao hàng</TabsTrigger>
-                            <TabsTrigger value="step-2">Thanh toán</TabsTrigger>
+                        <TabsList className="grid w-full grid-cols-3">
+                            <TabsTrigger
+                                value="step-0"
+                                onClick={() => setStep(0)}
+                                disabled={isSubmitting}
+                            >
+                                Đơn hàng
+                            </TabsTrigger>
+                            <TabsTrigger
+                                value="step-1"
+                                onClick={() => orderId ? setStep(1) : null}
+                                disabled={isSubmitting || !orderId}
+                            >
+                                Thông tin giao hàng
+                            </TabsTrigger>
+                            <TabsTrigger
+                                value="step-2"
+                                disabled={step < 2 || isSubmitting}
+                            >
+                                Thanh toán
+                            </TabsTrigger>
                         </TabsList>
 
                         <TabsContent value="step-0" className="space-y-6">
@@ -309,6 +349,7 @@ export default function CheckoutPage() {
                                 onProceed={handleProceedToShipping}
                             />
                         </TabsContent>
+
                         <TabsContent value="step-1" className="space-y-6">
                             <ShippingForm
                                 shippingInfo={shippingInfo}
@@ -320,12 +361,22 @@ export default function CheckoutPage() {
                                 onInputChange={handleInputChange}
                                 onSelectChange={handleSelectChange}
                                 onBack={handleBackToOrderView}
-                                onSubmit={handleShippingSubmit}
+                                onSubmit={handleProceedToPayment}
                                 debouncedSetNotes={debouncedSetNotes}
                             />
                         </TabsContent>
+
                         <TabsContent value="step-2" className="space-y-6">
-                            <PaymentForm />
+                            <PaymentForm
+                                orderId={orderId}
+                                totalAmount={totalPrice}
+                                onBack={() => setStep(1)}
+                                onComplete={(method) => {
+                                    setPaymentMethod(method);
+                                    setOrderCompleted(true);
+                                    sessionStorage.setItem("paymentMethod", method);
+                                }}
+                            />
                         </TabsContent>
                     </Tabs>
                 </div>

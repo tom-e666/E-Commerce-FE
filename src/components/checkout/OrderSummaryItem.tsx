@@ -10,7 +10,7 @@ const OrderSummaryItem = React.memo(({ item }: OrderSummaryItemProps) => (
     <div className="flex items-center space-x-3">
         <div className="h-12 w-12 relative rounded overflow-hidden flex-shrink-0">
             <Image
-                src={"/gaming.png"}
+                src={item.image}
                 alt={item.name || "Sản phẩm"}
                 width={48}
                 height={48}

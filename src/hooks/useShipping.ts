@@ -1,67 +1,53 @@
 import { useState } from "react";
 import {
-  getShippingByOrder,
-  getShippingsList,
-  createShipping,
-  updateShipping,
-  updateShippingStatus
+  getShippingByOrderId,
+  createShipping as apiCreateShipping,
+  updateShipping as apiUpdateShipping,
+  updateShippingStatus as apiUpdateShippingStatus
 } from "../services/shipping/endpoints";
 
 export interface ShippingData {
   id: string;
-  tracking_code: string;
-  carrier: string;
+  order_id: string;
   estimated_date: string;
   status: string;
   address: string;
-  order_id?: string;
-  recipient_name?: string;
-  recipient_phone?: string;
+  recipient_name: string;
+  recipient_phone: string;
   note?: string;
-  created_at?: string;
-  updated_at?: string;
+  ghn_order_code?: string;
+  province_name: string;
+  district_name: string;
+  ward_name: string;
+  shipping_fee: number;
+  expected_delivery_time?: string;
+  created_at: string;
+  updated_at: string;
+  shipping_method: string;
+  code?: number;
+  message?: string;
 }
 
 export const useShipping = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [shippingData, setShippingData] = useState<ShippingData | null>(null);
-  const [shippingsList, setShippingsList] = useState<ShippingData[]>([]);
 
-  const handleFetchShippingByOrder = async (orderId: string): Promise<ShippingData> => {
+  const handleFetchShippingByOrderId = async (orderId: string): Promise<ShippingData | null> => {
     setLoading(true);
     try {
-      const response = await getShippingByOrder(orderId);
-      const { code, message, shipping } = response.data.getShippingByOrder;
+      const response = await getShippingByOrderId(orderId);
       
-      if (code === 200 && shipping) {
-        setShippingData(shipping);
-        return shipping;
+      if (response.code === 200 && response.shipping) {
+        setShippingData(response.shipping);
+        return response.shipping;
       } else {
-        throw new Error(message || "Không thể lấy thông tin vận chuyển");
+        // No shipping found is not necessarily an error in this case
+        setShippingData(null);
+        return null;
       }
     } catch (err) {
-      if (err instanceof Error) throw err;
-      throw new Error("Lỗi khi lấy thông tin vận chuyển");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleFetchShippingsList = async (status?: string): Promise<ShippingData[]> => {
-    setLoading(true);
-    try {
-      const response = await getShippingsList(status);
-      const { code, message, shippings } = response.data.getShippings;
-      
-      if (code === 200) {
-        setShippingsList(shippings || []);
-        return shippings || [];
-      } else {
-        throw new Error(message || "Không thể lấy danh sách vận chuyển");
-      }
-    } catch (err) {
-      if (err instanceof Error) throw err;
-      throw new Error("Lỗi khi lấy danh sách vận chuyển");
+      console.error("Error fetching shipping:", err);
+      throw new Error(err instanceof Error ? err.message : "Lỗi khi lấy thông tin vận chuyển");
     } finally {
       setLoading(false);
     }
@@ -69,49 +55,58 @@ export const useShipping = () => {
 
   const handleCreateShipping = async (
     orderId: string,
-    trackingCode: string,
-    carrier: string,
-    estimatedDate: string,
-    status: string,
     address: string,
-    recipientName?: string,
-    recipientPhone?: string,
-    note?: string
-  ): Promise<{ code: number; message: string }> => {
+    recipientName: string,
+    recipientPhone: string,
+    provinceName: string,
+    districtName: string,
+    wardName: string,
+    toDistrictId: string,
+    toWardCode: string,
+    shippingMethod: string = 'SHOP',
+    shippingFee: number = 0,
+    note?: string,
+    estimatedDate?: string
+  ): Promise<ShippingData> => {
     setLoading(true);
     try {
-      const response = await createShipping(
+      const response = await apiCreateShipping(
         orderId,
-        trackingCode,
-        carrier,
-        estimatedDate,
-        status,
         address,
         recipientName,
         recipientPhone,
-        note
+        provinceName,
+        districtName,
+        wardName,
+        toDistrictId,
+        toWardCode,
+        shippingMethod,
+        shippingFee,
+        note,
+        estimatedDate
       );
       
-      const { code, message } = response.data.createShipping;
-      
-      if (code === 200) {
-        // Assuming handleFetchShippingByOrder will throw on its own error
-        await handleFetchShippingByOrder(orderId); 
-        return { code, message };
+      if (response.code === 200 && response.shipping) {
+        // Fetch the created shipping to get complete data
+        await handleFetchShippingByOrderId(orderId);
+        return {
+          ...response.shipping,
+          code: response.code,
+          message: response.message
+        };
       } else {
-        throw new Error(message || "Không thể tạo đơn vận chuyển");
+        throw new Error(response.message || "Không thể tạo đơn vận chuyển");
       }
     } catch (err) {
-      if (err instanceof Error) throw err;
-      throw new Error("Lỗi khi tạo đơn vận chuyển");
+      console.error("Error creating shipping:", err);
+      throw new Error(err instanceof Error ? err.message : "Lỗi khi tạo đơn vận chuyển");
     } finally {
       setLoading(false);
     }
   };
 
   const handleUpdateShipping = async (
-    orderId: string,
-    carrier?: string,
+    shippingId: string,
     address?: string,
     recipientName?: string,
     recipientPhone?: string,
@@ -119,50 +114,63 @@ export const useShipping = () => {
   ): Promise<{ code: number; message: string }> => {
     setLoading(true);
     try {
-      const response = await updateShipping(
-        orderId,
-        carrier,
+      const response = await apiUpdateShipping(
+        shippingId,
         address,
         recipientName,
         recipientPhone,
         note
       );
       
-      const { code, message } = response.data.updateShipping;
-      
-      if (code === 200) {
-        await handleFetchShippingByOrder(orderId); 
-        return { code, message };
+      if (response.code === 200) {
+        // If we have current shipping data and it matches the ID, update it
+        if (shippingData && shippingData.id === shippingId) {
+          setShippingData(prev => {
+            if (!prev) return null;
+            
+            return {
+              ...prev,
+              address: address || prev.address,
+              recipient_name: recipientName || prev.recipient_name,
+              recipient_phone: recipientPhone || prev.recipient_phone,
+              note: note !== undefined ? note : prev.note
+            };
+          });
+        }
+        
+        return { code: response.code, message: response.message };
       } else {
-        throw new Error(message || "Không thể cập nhật đơn vận chuyển");
+        throw new Error(response.message || "Không thể cập nhật đơn vận chuyển");
       }
     } catch (err) {
-      if (err instanceof Error) throw err;
-      throw new Error("Lỗi khi cập nhật đơn vận chuyển");
+      console.error("Error updating shipping:", err);
+      throw new Error(err instanceof Error ? err.message : "Lỗi khi cập nhật đơn vận chuyển");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleUpdateShippingStatus = async (shippingId: string, newStatus: string): Promise<{ code: number; message: string }> => {
+  const handleUpdateShippingStatus = async (
+    shippingId: string, 
+    newStatus: string
+  ): Promise<{ code: number; message: string }> => {
     setLoading(true);
     try {
-      const response = await updateShippingStatus(shippingId, newStatus);
-      const { code, message } = response.data.updateShippingStatus;
+      const response = await apiUpdateShippingStatus(shippingId, newStatus);
       
-      if (code === 200) {
-        // Assuming handleFetchShippingsList will throw on its own error
-        await handleFetchShippingsList(); 
+      if (response.code === 200) {
+        // If we have current shipping data and it matches the ID, update its status
         if (shippingData && shippingData.id === shippingId) {
-            setShippingData(prev => prev ? { ...prev, status: newStatus } : null);
+          setShippingData(prev => prev ? { ...prev, status: newStatus } : null);
         }
-        return { code, message };
+        
+        return { code: response.code, message: response.message };
       } else {
-        throw new Error(message || "Không thể cập nhật trạng thái vận chuyển");
+        throw new Error(response.message || "Không thể cập nhật trạng thái vận chuyển");
       }
     } catch (err) {
-      if (err instanceof Error) throw err;
-      throw new Error("Lỗi khi cập nhật trạng thái vận chuyển");
+      console.error("Error updating shipping status:", err);
+      throw new Error(err instanceof Error ? err.message : "Lỗi khi cập nhật trạng thái vận chuyển");
     } finally {
       setLoading(false);
     }
@@ -171,9 +179,7 @@ export const useShipping = () => {
   return {
     loading,
     shippingData,
-    shippingsList,
-    handleFetchShippingByOrder,
-    handleFetchShippingsList,
+    handleFetchShippingByOrderId,
     handleCreateShipping,
     handleUpdateShipping,
     handleUpdateShippingStatus

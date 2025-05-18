@@ -1,22 +1,25 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, CreditCard, WalletCards, Smartphone, Loader2 } from 'lucide-react';
+import { ArrowLeft, CreditCard, WalletCards, Smartphone, Loader2, BanknoteIcon } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
+import { usePayment } from '@/hooks/usePayment';
 
 interface PaymentFormProps {
     orderId: string | null;
     totalAmount: number;
     onBack: () => void;
+    onComplete: (method: string) => void;
 }
 
-const PaymentForm = React.memo(({ orderId, totalAmount, onBack }: PaymentFormProps) => {
+const PaymentForm = React.memo(({ orderId, totalAmount, onBack, onComplete }: PaymentFormProps) => {
     const router = useRouter();
-    const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
+    const [selectedMethod, setSelectedMethod] = useState<string | null>('cod');
     const [isLoading, setIsLoading] = useState(false);
+    const { createCODPayment } = usePayment();
 
     const handlePayment = async () => {
         if (!selectedMethod) {
@@ -32,15 +35,57 @@ const PaymentForm = React.memo(({ orderId, totalAmount, onBack }: PaymentFormPro
         setIsLoading(true);
 
         try {
+            switch (selectedMethod) {
+                case 'cod':
+                    const response = await createCODPayment(orderId);
+                    if (response.code === 200) {
+                        toast.success("Đặt hàng thành công!");
+                        onComplete('cod');
 
-            await new Promise(resolve => setTimeout(resolve, 1500));
+                        setTimeout(() => {
+                            router.push(`/checkout/success?orderId=${orderId}&method=cod`);
+                        }, 1000);
+                    } else {
+                        toast.error(response.message || "Có lỗi xảy ra khi xử lý thanh toán COD");
+                    }
+                    break;
 
+                case 'cc':
+                    toast.info("Chức năng thanh toán qua thẻ quốc tế đang được phát triển");
+                    toast.success("Đang xử lý thanh toán demo...");
 
-            toast.success("Đang chuyển đến cổng thanh toán ZaloPay...");
-            setTimeout(() => {
+                    onComplete('cc');
 
-                router.push('/checkout/success');
-            }, 1000);
+                    setTimeout(() => {
+                        router.push(`/checkout/success?orderId=${orderId}&demo=true&method=cc`);
+                    }, 1500);
+                    break;
+
+                case 'atm':
+                    toast.info("Chức năng thanh toán qua thẻ ATM đang được phát triển");
+                    toast.success("Đang xử lý thanh toán demo...");
+
+                    onComplete('atm');
+
+                    setTimeout(() => {
+                        router.push(`/checkout/success?orderId=${orderId}&demo=true&method=atm`);
+                    }, 1500);
+                    break;
+
+                case 'mbanking':
+                    toast.info("Chức năng thanh toán qua Mobile Banking đang được phát triển");
+                    toast.success("Đang xử lý thanh toán demo...");
+
+                    onComplete('mbanking');
+
+                    setTimeout(() => {
+                        router.push(`/checkout/success?orderId=${orderId}&demo=true&method=mbanking`);
+                    }, 1500);
+                    break;
+
+                default:
+                    toast.error("Phương thức thanh toán không được hỗ trợ");
+            }
         } catch (error) {
             console.error("Payment error:", error);
             toast.error("Có lỗi xảy ra khi xử lý thanh toán");
@@ -61,12 +106,30 @@ const PaymentForm = React.memo(({ orderId, totalAmount, onBack }: PaymentFormPro
                 <div>
                     <h3 className="text-lg font-medium mb-3">Chọn phương thức thanh toán</h3>
 
-                    {/* ZaloPay App */}
+                    {/* COD Payment Option */}
                     <div
-                        className={`flex items-center p-4 border rounded-md mb-3 cursor-pointer ${selectedMethod === 'zalopay_app' ? 'border-primary bg-primary/5' : ''}`}
-                        onClick={() => setSelectedMethod('zalopay_app')}
+                        className={`flex items-center p-4 border rounded-md mb-3 cursor-pointer ${selectedMethod === 'cod' ? 'border-primary bg-primary/5' : ''}`}
+                        onClick={() => setSelectedMethod('cod')}
                     >
-                        <div className="w-12 h-12 flex-shrink-0 mr-4">
+                        <div className="w-12 h-12 flex-shrink-0 mr-4 flex justify-center items-center">
+                            <BanknoteIcon className="h-8 w-8 text-primary" />
+                        </div>
+                        <div className="flex-1">
+                            <h4 className="font-medium">Thanh toán khi nhận hàng (COD)</h4>
+                            <p className="text-sm text-muted-foreground">Thanh toán bằng tiền mặt khi nhận được hàng</p>
+                        </div>
+                        <div className="w-5 h-5 rounded-full border-2 border-muted flex-shrink-0">
+                            {selectedMethod === 'cod' && (
+                                <div className="w-full h-full bg-primary rounded-full"></div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* ZaloPay App - Disabled */}
+                    <div
+                        className="flex items-center p-4 border rounded-md mb-3 cursor-not-allowed bg-gray-50"
+                    >
+                        <div className="w-12 h-12 flex-shrink-0 mr-4 opacity-50">
                             <Image
                                 src="https://stc-zalopay.zdn.vn/zf/p/zalopay-identity/images/logo_zalopay.svg"
                                 alt="ZaloPay"
@@ -75,18 +138,14 @@ const PaymentForm = React.memo(({ orderId, totalAmount, onBack }: PaymentFormPro
                                 className="rounded"
                             />
                         </div>
-                        <div className="flex-1">
+                        <div className="flex-1 opacity-50">
                             <h4 className="font-medium">Ứng dụng ZaloPay</h4>
-                            <p className="text-sm text-muted-foreground">Quét mã QR để thanh toán</p>
+                            <p className="text-sm text-muted-foreground">Quét mã QR để thanh toán (Tạm thời không khả dụng)</p>
                         </div>
-                        <div className="w-5 h-5 rounded-full border-2 border-muted flex-shrink-0">
-                            {selectedMethod === 'zalopay_app' && (
-                                <div className="w-full h-full bg-primary rounded-full"></div>
-                            )}
-                        </div>
+                        <div className="w-5 h-5 rounded-full border-2 border-muted flex-shrink-0 opacity-50"></div>
                     </div>
 
-                    {/* Visa/Mastercard */}
+                    {/* Credit Cards */}
                     <div
                         className={`flex items-center p-4 border rounded-md mb-3 cursor-pointer ${selectedMethod === 'cc' ? 'border-primary bg-primary/5' : ''}`}
                         onClick={() => setSelectedMethod('cc')}
@@ -172,7 +231,7 @@ const PaymentForm = React.memo(({ orderId, totalAmount, onBack }: PaymentFormPro
                     </div>
                     <Separator className="my-2" />
                     <div className="text-xs text-muted-foreground">
-                        Bằng việc nhấn "Thanh toán", bạn đồng ý với Điều khoản dịch vụ của ZaloPay
+                        Bằng việc nhấn &quot;Thanh toán&quot;, bạn đồng ý với Điều khoản dịch vụ của chúng tôi
                     </div>
                 </div>
             </CardContent>

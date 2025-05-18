@@ -4,14 +4,19 @@ import { refreshTokenAPI } from "@/services/auth/endpoints";
 
 interface User {
     id: string,
-    full_name: string
+    full_name: string,
+    role?: string,
 }
 
 interface AuthContextType {
+
     user: User | null;
     access_token: string | null;
     refresh_token: string | null;
     loading: boolean;
+    role: string | null;
+    isAuthenticated: boolean;
+    hasRole: (roles: string | string[]) => boolean;
     onSuccessLogIn: (user: User, token: string, refresh_token: string, expires_at: number) => Promise<void>;
     onSuccessLogout: () => Promise<void>;
 }
@@ -23,6 +28,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [access_token, setAccessToken] = useState<string | null>(null);
     const [refresh_token, setRefreshToken] = useState<string | null>(null);
     const [loading, setLoading] = useState<boolean>(true); // Thêm trạng thái loading
+    const [role, setRole] = useState<string | null>(null);
 
     const refreshPromiseRef = useRef<Promise<string> | null>(null);
 
@@ -31,6 +37,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(user);
         setAccessToken(access_token);
         setRefreshToken(refresh_token);
+        setRole(user.role || null);
 
         localStorage.setItem("user", JSON.stringify(user));
         localStorage.setItem("access_token", access_token);
@@ -42,6 +49,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(null);
         setAccessToken(null);
         setRefreshToken(null);
+        setRole(null);
 
         localStorage.removeItem("user");
         localStorage.removeItem("access_token");
@@ -81,6 +89,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         return refreshPromiseRef.current;
     };
+    const hasRole = (roles: string | string[]): boolean => {
+        if (!role) return false;
+
+        if (Array.isArray(roles)) {
+            return roles.includes(role);
+        }
+
+        return role === roles;
+    };
 
     // Đồng bộ giữa các tab
     useEffect(() => {
@@ -93,9 +110,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 const storedUser = localStorage.getItem("user");
                 const storedRefreshToken = localStorage.getItem("refresh_token");
                 if (storedUser && e.newValue && storedRefreshToken) {
-                    setUser(JSON.parse(storedUser));
+                    const parsedUser = JSON.parse(storedUser);
+
+                    setUser(parsedUser);
                     setAccessToken(e.newValue);
                     setRefreshToken(storedRefreshToken);
+                    setRole(parsedUser.role || null);
+
                 }
             }
         };
@@ -127,9 +148,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         }
                     } else {
                         // Token còn hiệu lực - set state
+                        const parsedUser = JSON.parse(storedUser);
                         setAccessToken(storedAccessToken);
-                        setUser(JSON.parse(storedUser));
+                        setUser(parsedUser);
                         setRefreshToken(storedRefreshToken);
+                        // Also set role
+                        setRole(parsedUser.role || null);
+
                     }
                 }
             } finally {
@@ -147,6 +172,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 access_token,
                 refresh_token,
                 loading,
+                role,
+                hasRole,
+                isAuthenticated: !!user,
                 onSuccessLogIn,
                 onSuccessLogout
             }}
