@@ -18,7 +18,7 @@ import ShippingForm from "@/components/checkout/ShippingForm";
 import OrderSummary from "@/components/checkout/OrderSummary";
 import OrderStatusIndicator from "@/components/checkout/OrderStatusIndicator";
 import OrderCompletedView from "@/components/checkout/OrderCompleteView";
-
+import PaymentForm from "@/components/checkout/PaymentForm";
 // Main component
 export default function CheckoutPage() {
     const [loading, setLoading] = useState(true);
@@ -186,10 +186,6 @@ export default function CheckoutPage() {
         }));
     }, []);
 
-    const handlePaymentMethodChange = useCallback((method: string) => {
-        setPaymentMethod(method);
-    }, []);
-
     const validateShippingInfo = useCallback(() => {
         const { fullName, phone, address, city, district, ward } = shippingInfo;
         if (!fullName || !phone || !address || !city || !district || !ward) {
@@ -301,6 +297,7 @@ export default function CheckoutPage() {
                         <TabsList className="grid w-full grid-cols-2">
                             <TabsTrigger value="step-0">Xem đơn hàng</TabsTrigger>
                             <TabsTrigger value="step-1">Thông tin giao hàng</TabsTrigger>
+                            <TabsTrigger value="step-2">Thanh toán</TabsTrigger>
                         </TabsList>
 
                         <TabsContent value="step-0" className="space-y-6">
@@ -312,7 +309,6 @@ export default function CheckoutPage() {
                                 onProceed={handleProceedToShipping}
                             />
                         </TabsContent>
-
                         <TabsContent value="step-1" className="space-y-6">
                             <ShippingForm
                                 shippingInfo={shippingInfo}
@@ -321,14 +317,15 @@ export default function CheckoutPage() {
                                 districts={districts}
                                 wards={wards}
                                 isSubmitting={isSubmitting}
-                                paymentMethod={paymentMethod}
                                 onInputChange={handleInputChange}
                                 onSelectChange={handleSelectChange}
-                                onPaymentMethodChange={handlePaymentMethodChange}
                                 onBack={handleBackToOrderView}
                                 onSubmit={handleShippingSubmit}
                                 debouncedSetNotes={debouncedSetNotes}
                             />
+                        </TabsContent>
+                        <TabsContent value="step-2" className="space-y-6">
+                            <PaymentForm />
                         </TabsContent>
                     </Tabs>
                 </div>

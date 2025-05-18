@@ -38,10 +38,8 @@ interface ShippingFormProps {
     districts: any[];
     wards: any[];
     isSubmitting: boolean;
-    paymentMethod: string;
     onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
     onSelectChange: (name: string, value: string) => void;
-    onPaymentMethodChange: (method: string) => void;
     onBack: () => void;
     onSubmit: () => void;
     debouncedSetNotes: (value: string) => void;
@@ -54,10 +52,8 @@ const ShippingForm = React.memo(({
     districts,
     wards,
     isSubmitting,
-    paymentMethod,
     onInputChange,
     onSelectChange,
-    onPaymentMethodChange,
     onBack,
     onSubmit,
     debouncedSetNotes
@@ -223,35 +219,6 @@ const ShippingForm = React.memo(({
                     />
                 </div>
 
-                <div className="space-y-2 pt-4">
-                    <Label>Phương thức thanh toán</Label>
-                    <div className="space-y-2">
-                        <div className="flex items-center space-x-2 border p-3 rounded-md">
-                            <input
-                                type="radio"
-                                id="cod"
-                                name="paymentMethod"
-                                value="cod"
-                                checked={paymentMethod === 'cod'}
-                                onChange={() => onPaymentMethodChange('cod')}
-                                className="h-4 w-4"
-                            />
-                            <Label htmlFor="cod" className="cursor-pointer">Thanh toán khi nhận hàng (COD)</Label>
-                        </div>
-                        <div className="flex items-center space-x-2 border p-3 rounded-md">
-                            <input
-                                type="radio"
-                                id="bank-transfer"
-                                name="paymentMethod"
-                                value="bank-transfer"
-                                checked={paymentMethod === 'bank-transfer'}
-                                onChange={() => onPaymentMethodChange('bank-transfer')}
-                                className="h-4 w-4"
-                            />
-                            <Label htmlFor="bank-transfer" className="cursor-pointer">Chuyển khoản ngân hàng</Label>
-                        </div>
-                    </div>
-                </div>
             </CardContent>
             <CardFooter className="flex justify-between">
                 <Button variant="outline" onClick={onBack}>
