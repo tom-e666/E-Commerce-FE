@@ -59,7 +59,6 @@ export const auditRoleAPI = async (userId: string, role: string) => {
     });
     return response;
   } catch (error) {
-    console.error("Error updating user role:", error);
     throw error;
   }
 };

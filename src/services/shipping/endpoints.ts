@@ -1,5 +1,5 @@
 import { gql } from '@apollo/client';
-import { apolloClient } from '../apollo/client';
+import { apolloClient } from '@/services/apollo/client';
 
 // Define GraphQL Queries and Mutations
 export const GET_SHIPPING_BY_ORDER_ID = gql`
@@ -70,7 +70,7 @@ export const GET_WARDS = gql`
 `;
 
 export const CALCULATE_SHIPPING_FEE = gql`
-  query CalculateShippingFee($toDistrictId: ID!, $toWardCode: String!, $weight: Int!, $value: Int) {
+  mutation CalculateShippingFee($toDistrictId: ID!, $toWardCode: String!, $weight: Int!, $value: Int) {
     calculateShippingFee(
       to_district_id: $toDistrictId,
       to_ward_code: $toWardCode,
@@ -196,7 +196,7 @@ export const getDistricts = async (provinceId: string) => {
     const response = await apolloClient.query({
       query: GET_DISTRICTS,
       variables: { provinceId },
-      fetchPolicy: 'cache-first'
+      fetchPolicy: 'network-only'
     });
     return response.data.getDistricts.districts;
   } catch (error) {
@@ -210,7 +210,7 @@ export const getWards = async (districtId: string) => {
     const response = await apolloClient.query({
       query: GET_WARDS,
       variables: { districtId },
-      fetchPolicy: 'cache-first'
+      fetchPolicy: 'network-only'
     });
     return response.data.getWards.wards;
   } catch (error) {
@@ -226,15 +226,14 @@ export const calculateShippingFee = async (
   value?: number
 ) => {
   try {
-    const response = await apolloClient.query({
-      query: CALCULATE_SHIPPING_FEE,
+    const response = await apolloClient.mutate({
+      mutation: CALCULATE_SHIPPING_FEE,
       variables: {
         toDistrictId,
         toWardCode,
         weight,
         value
-      },
-      fetchPolicy: 'network-only' // Always get fresh fee calculation
+      }
     });
     return response.data.calculateShippingFee;
   } catch (error) {
@@ -253,8 +252,8 @@ export const createShipping = async (
   wardName: string,
   toDistrictId: string,
   toWardCode: string,
-  shippingMethod: string = 'standard',
-  shippingFee?: number,
+  shippingMethod: string = 'SHOP',
+  shippingFee: number = 0,
   note?: string,
   estimatedDate?: string
 ) => {
@@ -263,7 +262,6 @@ export const createShipping = async (
       mutation: CREATE_SHIPPING,
       variables: {
         orderId,
-        status: 'pending',
         address,
         recipientName,
         recipientPhone,
@@ -275,7 +273,8 @@ export const createShipping = async (
         shippingMethod,
         shippingFee,
         note,
-        estimatedDate
+        estimatedDate,
+        status: 'pending'
       },
       context: {
         requiresAuth: true

@@ -1,8 +1,9 @@
 'use client'
-import React from "react";
+import React, { useEffect } from "react";
 import Image from "next/image";
 import { useAuth } from "@/hooks/useAuth";
-import { useRouter } from "next/navigation";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -17,11 +18,27 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+
 const Page = () => {
   const [username, setUsername] = React.useState<string>('');
   const [password, setPassword] = React.useState<string>('');
   const { login, loading } = useAuth();
+  const { isAuthenticated, hasRole } = useAuthContext();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectParam = searchParams?.get('redirect') || '/';
+  const redirectUrl = redirectParam.startsWith('/')
+    ? redirectParam : '/';
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      if (hasRole(['admin', 'staff'])) {
+        router.push('/admin');
+      } else {
+        router.push(redirectUrl !== '/login' ? redirectUrl : '/');
+      }
+    }
+  }, [isAuthenticated, hasRole, router, redirectUrl]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,13 +46,21 @@ const Page = () => {
     try {
       const success = await login(username, password);
       toast.success(success);
+
       setTimeout(() => {
-        router.push('/');
-      }, 1000);
+        // Check if the user has admin or staff role
+        if (hasRole(['admin', 'staff'])) {
+          router.push('/admin');
+        } else {
+          router.push(redirectUrl !== '/login' ? redirectUrl : '/');
+        }
+      }, 500);
     } catch (error) {
+      console.error(error);
       toast.error(error.message);
     }
   };
+
   return (
     <div className="w-full min-h-screen flex flex-col items-center justify-center p-4">
       <Image src="shapelined.jpg"
@@ -77,12 +102,7 @@ const Page = () => {
               </div>
 
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Mật khẩu</Label>
-                  <Link href="#" className="text-sm font-medium text-blue-600 hover:text-blue-500">
-                    Quên mật khẩu?
-                  </Link>
-                </div>
+                <Label htmlFor="password">Mật khẩu</Label>
                 <Input
                   id="password"
                   name="password"
@@ -93,6 +113,12 @@ const Page = () => {
                   placeholder="Nhập mật khẩu"
                   className="w-full"
                 />
+                <div className="flex items-center justify-between">
+
+                  <Link href="#" className="text-sm font-medium text-blue-600 hover:text-blue-500">
+                    Quên mật khẩu?
+                  </Link>
+                </div>
               </div>
 
               <Button
