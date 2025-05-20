@@ -56,6 +56,7 @@ const Page = () => {
         }
       }, 500);
     } catch (error) {
+      //@ts-expect-error any
       toast.error(error.message);
     }
   };

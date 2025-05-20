@@ -3,30 +3,17 @@ import {
   getShippingByOrderId,
   createShipping as apiCreateShipping,
   updateShipping as apiUpdateShipping,
-  updateShippingStatus as apiUpdateShippingStatus
+  updateShippingStatus as apiUpdateShippingStatus,
+  Shipping,
+  BaseResponse,
+  cancelShipping as apiCancelShipping,
 } from "../services/shipping/endpoints";
 
-export interface ShippingData {
-  id: string;
-  order_id: string;
-  estimated_date: string;
-  status: string;
-  address: string;
-  recipient_name: string;
-  recipient_phone: string;
-  note?: string;
-  ghn_order_code?: string;
-  province_name: string;
-  district_name: string;
-  ward_name: string;
-  shipping_fee: number;
-  expected_delivery_time?: string;
-  created_at: string;
-  updated_at: string;
-  shipping_method: string;
+// Use the interface from endpoints.ts instead of redefining
+export type ShippingData = Shipping & {
   code?: number;
   message?: string;
-}
+};
 
 export const useShipping = () => {
   const [loading, setLoading] = useState<boolean>(false);
@@ -61,12 +48,8 @@ export const useShipping = () => {
     provinceName: string,
     districtName: string,
     wardName: string,
-    toDistrictId: string,
-    toWardCode: string,
     shippingMethod: string = 'SHOP',
-    shippingFee: number = 0,
-    note?: string,
-    estimatedDate?: string
+    note?: string
   ): Promise<ShippingData> => {
     setLoading(true);
     try {
@@ -78,12 +61,8 @@ export const useShipping = () => {
         provinceName,
         districtName,
         wardName,
-        toDistrictId,
-        toWardCode,
         shippingMethod,
-        shippingFee,
-        note,
-        estimatedDate
+        note
       );
       
       if (response.code === 200 && response.shipping) {
@@ -107,20 +86,19 @@ export const useShipping = () => {
 
   const handleUpdateShipping = async (
     shippingId: string,
-    address?: string,
-    recipientName?: string,
-    recipientPhone?: string,
-    note?: string
-  ): Promise<{ code: number; message: string }> => {
+    data: {
+      address?: string;
+      recipientName?: string;
+      recipientPhone?: string;
+      note?: string;
+      provinceName?: string;
+      districtName?: string;
+      wardName?: string;
+    }
+  ): Promise<BaseResponse> => {
     setLoading(true);
     try {
-      const response = await apiUpdateShipping(
-        shippingId,
-        address,
-        recipientName,
-        recipientPhone,
-        note
-      );
+      const response = await apiUpdateShipping(shippingId, data);
       
       if (response.code === 200) {
         // If we have current shipping data and it matches the ID, update it
@@ -130,10 +108,7 @@ export const useShipping = () => {
             
             return {
               ...prev,
-              address: address || prev.address,
-              recipient_name: recipientName || prev.recipient_name,
-              recipient_phone: recipientPhone || prev.recipient_phone,
-              note: note !== undefined ? note : prev.note
+              ...response.shipping // Use the returned shipping data
             };
           });
         }
@@ -153,7 +128,7 @@ export const useShipping = () => {
   const handleUpdateShippingStatus = async (
     shippingId: string, 
     newStatus: string
-  ): Promise<{ code: number; message: string }> => {
+  ): Promise<BaseResponse> => {
     setLoading(true);
     try {
       const response = await apiUpdateShippingStatus(shippingId, newStatus);
@@ -161,7 +136,11 @@ export const useShipping = () => {
       if (response.code === 200) {
         // If we have current shipping data and it matches the ID, update its status
         if (shippingData && shippingData.id === shippingId) {
-          setShippingData(prev => prev ? { ...prev, status: newStatus } : null);
+          setShippingData(prev => prev ? { 
+            ...prev, 
+            status: newStatus,
+            updated_at: response.shipping.updated_at
+          } : null);
         }
         
         return { code: response.code, message: response.message };
@@ -176,12 +155,36 @@ export const useShipping = () => {
     }
   };
 
+  const handleCancelShipping = async (shippingId: string): Promise<BaseResponse> => {
+    setLoading(true);
+    try {
+      const response = await apiCancelShipping(shippingId);
+      
+      if (response.code === 200) {
+        // If we have current shipping data and it matches the ID, update its status to canceled
+        if (shippingData && shippingData.id === shippingId) {
+          setShippingData(prev => prev ? { ...prev, status: 'CANCELED' } : null);
+        }
+        
+        return { code: response.code, message: response.message };
+      } else {
+        throw new Error(response.message || "Không thể hủy đơn vận chuyển");
+      }
+    } catch (err) {
+      console.error("Error canceling shipping:", err);
+      throw new Error(err instanceof Error ? err.message : "Lỗi khi hủy đơn vận chuyển");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     loading,
     shippingData,
     handleFetchShippingByOrderId,
     handleCreateShipping,
     handleUpdateShipping,
-    handleUpdateShippingStatus
+    handleUpdateShippingStatus,
+    handleCancelShipping
   };
 };

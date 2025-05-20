@@ -30,6 +30,34 @@ export const GET_SHIPPING_BY_ORDER_ID = gql`
   }
 `;
 
+export const GET_ALL_SHIPPINGS = gql`
+  query GetAllShippings($status: String) {
+    getAllShippings(status: $status) {
+      code
+      message
+      shippings {
+        id
+        order_id
+        estimated_date
+        status
+        address
+        recipient_name
+        recipient_phone
+        note
+        ghn_order_code
+        province_name
+        district_name
+        ward_name
+        shipping_fee
+        expected_delivery_time
+        created_at
+        updated_at
+        shipping_method
+      }
+    }
+  }
+`;
+
 export const GET_PROVINCES = gql`
   query GetProvinces {
     getProvinces {
@@ -70,7 +98,7 @@ export const GET_WARDS = gql`
 `;
 
 export const CALCULATE_SHIPPING_FEE = gql`
-  mutation CalculateShippingFee($toDistrictId: ID!, $toWardCode: String!, $weight: Int!, $value: Int) {
+  query CalculateShippingFee($toDistrictId: ID!, $toWardCode: String!, $weight: Int!, $value: Int) {
     calculateShippingFee(
       to_district_id: $toDistrictId,
       to_ward_code: $toWardCode,
@@ -88,8 +116,6 @@ export const CALCULATE_SHIPPING_FEE = gql`
 export const CREATE_SHIPPING = gql`
   mutation CreateShipping(
     $orderId: ID!,
-    $estimatedDate: String,
-    $status: String!,
     $address: String!,
     $recipientName: String!,
     $recipientPhone: String!,
@@ -97,15 +123,10 @@ export const CREATE_SHIPPING = gql`
     $provinceName: String!,
     $districtName: String!,
     $wardName: String!,
-    $shippingMethod: String!,
-    $shippingFee: Float,
-    $toDistrictId: ID!,
-    $toWardCode: String!
+    $shippingMethod: String!
   ) {
     createShipping(
       order_id: $orderId,
-      estimated_date: $estimatedDate,
-      status: $status,
       address: $address,
       recipient_name: $recipientName,
       recipient_phone: $recipientPhone,
@@ -113,10 +134,7 @@ export const CREATE_SHIPPING = gql`
       province_name: $provinceName,
       district_name: $districtName,
       ward_name: $wardName,
-      shipping_method: $shippingMethod,
-      shipping_fee: $shippingFee,
-      to_district_id: $toDistrictId,
-      to_ward_code: $toWardCode
+      shipping_method: $shippingMethod
     ) {
       code
       message
@@ -125,6 +143,7 @@ export const CREATE_SHIPPING = gql`
         ghn_order_code
         shipping_fee
         expected_delivery_time
+        status
       }
     }
   }
@@ -136,24 +155,58 @@ export const UPDATE_SHIPPING = gql`
     $address: String,
     $recipientName: String,
     $recipientPhone: String,
-    $note: String
+    $note: String,
+    $provinceName: String,
+    $districtName: String,
+    $wardName: String
   ) {
     updateShipping(
-      id: $shippingId,
+      shipping_id: $shippingId,
       address: $address,
       recipient_name: $recipientName,
       recipient_phone: $recipientPhone,
-      note: $note
+      note: $note,
+      province_name: $provinceName,
+      district_name: $districtName,
+      ward_name: $wardName
     ) {
       code
       message
+      shipping {
+        id
+        address
+        recipient_name
+        recipient_phone
+        note
+        province_name
+        district_name
+        ward_name
+        updated_at
+      }
     }
   }
 `;
 
 export const UPDATE_SHIPPING_STATUS = gql`
-  mutation UpdateShippingStatus($shippingId: ID!, $newStatus: String!) {
-    updateShippingStatus(id: $shippingId, status: $newStatus) {
+  mutation UpdateShippingStatus($shippingId: ID!, $status: String!) {
+    updateShippingStatus(
+      shipping_id: $shippingId, 
+      status: $status
+    ) {
+      code
+      message
+      shipping {
+        id
+        status
+        updated_at
+      }
+    }
+  }
+`;
+
+export const CANCEL_SHIPPING = gql`
+  mutation CancelShipping($shippingId: ID!) {
+    cancelShipping(shipping_id: $shippingId) {
       code
       message
     }
@@ -178,13 +231,30 @@ export const getShippingByOrderId = async (orderId: string) => {
   }
 };
 
+export const getAllShippings = async (status?: string) => {
+  try {
+    const response = await apolloClient.query({
+      query: GET_ALL_SHIPPINGS,
+      variables: status ? { status } : {},
+      fetchPolicy: 'network-only',
+      context: {
+        requiresAuth: true
+      }
+    });
+    return response.data.getAllShippings;
+  } catch (error) {
+    console.error('Error fetching all shippings:', error);
+    throw error;
+  }
+};
+
 export const getProvinces = async () => {
   try {
     const response = await apolloClient.query({
       query: GET_PROVINCES,
       fetchPolicy: 'cache-first' // Provinces don't change often, so caching is fine
     });
-    return response.data.getProvinces.provinces;
+    return response.data.getProvinces;
   } catch (error) {
     console.error('Error fetching provinces:', error);
     throw error;
@@ -198,7 +268,7 @@ export const getDistricts = async (provinceId: string) => {
       variables: { provinceId },
       fetchPolicy: 'network-only'
     });
-    return response.data.getDistricts.districts;
+    return response.data.getDistricts;
   } catch (error) {
     console.error('Error fetching districts:', error);
     throw error;
@@ -212,7 +282,7 @@ export const getWards = async (districtId: string) => {
       variables: { districtId },
       fetchPolicy: 'network-only'
     });
-    return response.data.getWards.wards;
+    return response.data.getWards;
   } catch (error) {
     console.error('Error fetching wards:', error);
     throw error;
@@ -226,8 +296,8 @@ export const calculateShippingFee = async (
   value?: number
 ) => {
   try {
-    const response = await apolloClient.mutate({
-      mutation: CALCULATE_SHIPPING_FEE,
+    const response = await apolloClient.query({
+      query: CALCULATE_SHIPPING_FEE,
       variables: {
         toDistrictId,
         toWardCode,
@@ -250,12 +320,8 @@ export const createShipping = async (
   provinceName: string,
   districtName: string,
   wardName: string,
-  toDistrictId: string,
-  toWardCode: string,
   shippingMethod: string = 'SHOP',
-  shippingFee: number = 0,
-  note?: string,
-  estimatedDate?: string
+  note?: string
 ) => {
   try {
     const response = await apolloClient.mutate({
@@ -268,13 +334,8 @@ export const createShipping = async (
         provinceName,
         districtName,
         wardName,
-        toDistrictId,
-        toWardCode,
         shippingMethod,
-        shippingFee,
-        note,
-        estimatedDate,
-        status: 'pending'
+        note
       },
       context: {
         requiresAuth: true
@@ -289,21 +350,25 @@ export const createShipping = async (
 
 export const updateShipping = async (
   shippingId: string,
-  address?: string,
-  recipientName?: string,
-  recipientPhone?: string,
-  note?: string
+  data: {
+    address?: string;
+    recipientName?: string;
+    recipientPhone?: string;
+    note?: string;
+    provinceName?: string;
+    districtName?: string;
+    wardName?: string;
+  }
 ) => {
   try {
+    const variables = {
+      shippingId,
+      ...data
+    };
+    
     const response = await apolloClient.mutate({
       mutation: UPDATE_SHIPPING,
-      variables: {
-        shippingId,
-        address,
-        recipientName,
-        recipientPhone,
-        note
-      },
+      variables: variables,
       context: {
         requiresAuth: true
       }
@@ -315,13 +380,13 @@ export const updateShipping = async (
   }
 };
 
-export const updateShippingStatus = async (shippingId: string, newStatus: string) => {
+export const updateShippingStatus = async (shippingId: string, status: string) => {
   try {
     const response = await apolloClient.mutate({
       mutation: UPDATE_SHIPPING_STATUS,
       variables: {
         shippingId,
-        newStatus
+        status
       },
       context: {
         requiresAuth: true
@@ -333,3 +398,86 @@ export const updateShippingStatus = async (shippingId: string, newStatus: string
     throw error;
   }
 };
+
+export const cancelShipping = async (shippingId: string) => {
+  try {
+    const response = await apolloClient.mutate({
+      mutation: CANCEL_SHIPPING,
+      variables: {
+        shippingId
+      },
+      context: {
+        requiresAuth: true
+      }
+    });
+    return response.data.cancelShipping;
+  } catch (error) {
+    console.error('Error canceling shipping:', error);
+    throw error;
+  }
+};
+
+export interface Shipping {
+  id: string;
+  order_id: string;
+  estimated_date?: string;
+  status: string;
+  address: string;
+  recipient_name: string;
+  recipient_phone: string;
+  note?: string;
+  ghn_order_code?: string;
+  province_name?: string;
+  district_name?: string;
+  ward_name?: string;
+  shipping_fee?: number;
+  expected_delivery_time?: string;
+  created_at: string;
+  updated_at: string;
+  shipping_method: string;
+}
+
+export interface Province {
+  ProvinceID: string;
+  ProvinceName: string;
+}
+
+export interface District {
+  DistrictID: string;
+  DistrictName: string;
+}
+
+export interface Ward {
+  WardCode: string;
+  WardName: string;
+}
+
+export interface BaseResponse {
+  code: number;
+  message: string;
+}
+
+export interface ShippingResponse extends BaseResponse {
+  shipping: Shipping;
+}
+
+export interface ShippingsResponse extends BaseResponse {
+  shippings: Shipping[];
+}
+
+export interface ProvinceResponse extends BaseResponse {
+  provinces: Province[];
+}
+
+export interface DistrictResponse extends BaseResponse {
+  districts: District[];
+}
+
+export interface WardResponse extends BaseResponse {
+  wards: Ward[];
+}
+
+export interface ShippingFeeResponse extends BaseResponse {
+  fee?: number;
+  expected_delivery_time?: string;
+}
