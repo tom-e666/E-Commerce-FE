@@ -76,7 +76,7 @@ const authLink = new ApolloLink((operation, forward) => {
 // HTTP link
 const httpLink = new HttpLink({
   uri: 'http://127.0.0.1:8000/graphql',
-  // Thêm credentials nếu cần để xử lý cookies
+
 });
 
 // Create and export the client instance
