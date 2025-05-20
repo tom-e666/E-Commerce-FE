@@ -11,6 +11,7 @@ export const GET_PRODUCTS_QUERY = gql`
         stock
         status
         brand_id
+        weight
         details {
           description
           images
@@ -248,7 +249,7 @@ export const deleteProduct = async (id: string) => {
     throw error;
   }
 };
-//@ts-expect-error dynamic type
+// @ts-expect-error nothing
 function cleanInputObject(obj:any){
   if (!obj) return obj;
 

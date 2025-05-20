@@ -1,11 +1,14 @@
 "use client";
-
 import { useState } from "react";
-import LocalPhoneIcon from "@mui/icons-material/LocalPhone";
-import EmailIcon from "@mui/icons-material/Email";
-import LocationOnIcon from "@mui/icons-material/LocationOn";
+import { Phone, Mail, MapPin, Send } from "lucide-react";
 import Image from "next/image";
 import { toast } from "sonner";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 export default function Hotline() {
     const [formData, setFormData] = useState({
@@ -20,103 +23,229 @@ export default function Hotline() {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        
-        toast.success("Gửi biểu mẫu thành công! \n Cảm ơn sự đóng góp của bạn");
+        toast.success("Gửi biểu mẫu thành công!", {
+            description: "Cảm ơn sự đóng góp của bạn. Chúng tôi sẽ liên hệ lại trong thời gian sớm nhất."
+        });
+        // Reset form
+        setFormData({ name: "", email: "", message: "" });
     };
 
     return (
-        <div className="relative w-full min-h-screen">
-            
-            <div className="absolute inset-0 -z-10">
-                <Image 
-                    src="/background.jpg" 
-                    alt="Background" 
-                    fill 
-                    className="object-cover"
-                    priority
-                />
+        <div className="container mx-auto px-4 py-10">
+            {/* Hero Section */}
+            <div className="flex flex-col lg:flex-row items-center justify-between gap-8 mb-16">
+                <motion.div
+                    className="max-w-xl"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.5 }}
+                >
+                    <h1 className="text-4xl font-bold mb-4">Liên Hệ Với Chúng Tôi</h1>
+                    <p className="text-lg text-muted-foreground mb-6">
+                        Đội ngũ hỗ trợ của EcommerceLaptop luôn sẵn sàng hỗ trợ bạn 24/7, giải đáp mọi thắc mắc và cung cấp tư vấn chuyên sâu về sản phẩm.
+                    </p>
+                </motion.div>
+                
+                <motion.div
+                    className="w-full max-w-md lg:max-w-lg"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.5, delay: 0.2 }}
+                >
+                    <Image
+                        src="/Contact-Us-Vector-Illustration.jpg"
+                        width={500}
+                        height={400}
+                        alt="Contact Illustration"
+                        priority
+                        className="w-full h-auto rounded-lg"
+                    />
+                </motion.div>
             </div>
             
-            <div className="relative z-10 w-full flex flex-col lg:flex-row gap-6 p-6">
+            <div className="flex flex-col lg:flex-row gap-6">
                 {/* Thông tin liên hệ */}
-                <div className="w-full lg:w-1/3 p-6 bg-white shadow-lg rounded-lg">
-                    <h2 className="text-2xl font-medium mb-3">Liên Hệ Với Chúng Tôi</h2>
-                    <p className="text-gray-600 mb-4">Luôn có mặt vì bạn!</p>
-                    <div className="space-y-3 text-gray-700">
-                        <p className="flex items-center">
-                            <LocalPhoneIcon className="mr-2 text-blue-500" />
-                            <a href="tel:0899888999" className="hover:underline">0899888999</a>
-                        </p>
-                        <p className="flex items-center">
-                            <EmailIcon className="mr-2 text-red-500" />
-                            <a href="mailto:Thinh@gmail.com" className="hover:underline">Thinh@gmail.com</a>
-                        </p>
-                        <p className="flex items-center">
-                            <LocationOnIcon className="mr-2 text-green-500" />
-                            <a className="hover:underline" href="https://www.google.com/maps/place/G%C3%A0+R%C3%A1n+Otok%C3%A9/@10.765666,106.6325774,2583m/data=!3m1!1e3!4m10!1m2!2m1!1zMTI5LzFUIEzhuqFjIExvbmcgUXXDom4sIFAuMSwgUS4xMSwgVFAuSENN!3m6!1s0x31752f82f0dc9097:0x252de226269e0ded!8m2!3d10.7663306!4d106.6425822!15sCioxMjkvMVQgTOG6oWMgTG9uZyBRdcOibiwgUC4xLCBRLjExLCBUUC5IQ01aKSInMTI5IDF0IGzhuqFjIGxvbmcgcXXDom4gcCAxIHEgMTEgdHAgaGNtkgEKcmVzdGF1cmFudKoBWhABKgciA3AgMShCMiAQASIcVUD4PgHo3sgfA5O9nkWYzWVmwaEozy2mIdrFQjIrEAIiJzEyOSAxdCBs4bqhYyBsb25nIHF1w6JuIHAgMSBxIDExIHRwIGhjbeABAA!16s%2Fg%2F11kd5xt2zh?entry=ttu&g_ep=EgoyMDI1MDQzMC4xIKXMDSoASAFQAw%3D%3D">129/1T Lạc Long Quân, P.1, Q.11, TP.HCM</a>                            
-                        </p>
-                    </div>
+                <motion.div 
+                    className="w-full lg:w-1/3"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                >
+                    <Card>
+                        <CardContent className="p-6">
+                            <h2 className="text-2xl font-bold mb-4">Thông Tin Liên Hệ</h2>
+                            <div className="space-y-4">
+                                <div className="flex items-center">
+                                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mr-3">
+                                        <Phone className="h-5 w-5 text-primary" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">Hotline</p>
+                                        <a href="tel:0899888999" className="font-medium hover:text-primary">0899 888 999</a>
+                                    </div>
+                                </div>
+                                
+                                <div className="flex items-center">
+                                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mr-3">
+                                        <Mail className="h-5 w-5 text-primary" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">Email</p>
+                                        <a href="mailto:support@ecommercelaptop.com" className="font-medium hover:text-primary">support@ecommercelaptop.com</a>
+                                    </div>
+                                </div>
+                                
+                                <div className="flex items-center">
+                                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mr-3">
+                                        <MapPin className="h-5 w-5 text-primary" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">Địa chỉ</p>
+                                        <a 
+                                            href="https://www.google.com/maps?q=10.758142236592212,106.63786218934307&z=16" 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="font-medium hover:text-primary"
+                                        >
+                                            129/1T Lạc Long Quân, P.1, Q.11, TP.HCM
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
 
-                    {/* Google Maps */}
-                    <div className="mt-4">
-                        <iframe
-                            className="w-full h-64 rounded-lg shadow-md"
-                            src="https://www.google.com/maps?q=10.758142236592212,106.63786218934307&z=16&output=embed"
-                            allowFullScreen
-                            loading="lazy"
-                            referrerPolicy="no-referrer-when-downgrade"
-                        ></iframe>
-                    </div>
-                </div>
+                            <div className="mt-6">
+                                <h3 className="text-lg font-semibold mb-2">Giờ làm việc</h3>
+                                <p className="text-muted-foreground">Thứ 2 - Chủ Nhật: 8:00 - 21:00</p>
+                                <p className="text-muted-foreground">Hỗ trợ kỹ thuật: 24/7</p>
+                            </div>
+
+                            {/* Google Maps */}
+                            <div className="mt-6 rounded-lg overflow-hidden border">
+                                <iframe
+                                    className="w-full h-64"
+                                    src="https://www.google.com/maps?q=10.758142236592212,106.63786218934307&z=16&output=embed"
+                                    allowFullScreen
+                                    loading="lazy"
+                                    referrerPolicy="no-referrer-when-downgrade"
+                                    title="EcommerceLaptop Location"
+                                ></iframe>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </motion.div>
                 
                 {/* Form liên hệ */}
-                <div className="w-full lg:w-2/3 p-6 bg-white shadow-lg rounded-lg">
-                    <h2 className="text-2xl font-medium mb-3">Gửi Tin Nhắn</h2>
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <div>
-                            <label className="block text-gray-700">Họ và tên</label>
-                            <input
-                                type="text"
-                                name="name"
-                                className="w-full p-2 border rounded"
-                                placeholder="Nhập họ tên của bạn"
-                                value={formData.name}
-                                onChange={handleChange}
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-gray-700">Email</label>
-                            <input
-                                type="email"
-                                name="email"
-                                className="w-full p-2 border rounded"
-                                placeholder="Nhập email của bạn"
-                                value={formData.email}
-                                onChange={handleChange}
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-gray-700">Nội dung</label>
-                            <textarea
-                                name="message"
-                                className="w-full p-2 border rounded h-20 max-h-[160px]"
-                                placeholder="Nhập nội dung tin nhắn"
-                                value={formData.message}
-                                onChange={handleChange}
-                                required
-                            ></textarea>
-                        </div>
-                        <button
-                            type="submit"
-                            className="w-full p-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                        >
-                            Gửi Tin Nhắn
-                        </button>
-                    </form>
-                </div>
+                <motion.div 
+                    className="w-full lg:w-2/3"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.3 }}
+                >
+                    <Card>
+                        <CardContent className="p-6">
+                            <h2 className="text-2xl font-bold mb-4">Gửi Tin Nhắn</h2>
+                            <p className="text-muted-foreground mb-6">
+                                Hãy để lại thông tin của bạn, chúng tôi sẽ liên hệ trong thời gian sớm nhất
+                            </p>
+                            
+                            <form onSubmit={handleSubmit} className="space-y-4">
+                                <div className="grid gap-4 sm:grid-cols-2">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="name">Họ và tên</Label>
+                                        <Input
+                                            id="name"
+                                            name="name"
+                                            placeholder="Nhập họ tên của bạn"
+                                            value={formData.name}
+                                            onChange={handleChange}
+                                            required
+                                        />
+                                    </div>
+                                    
+                                    <div className="space-y-2">
+                                        <Label htmlFor="email">Email</Label>
+                                        <Input
+                                            id="email"
+                                            name="email"
+                                            type="email"
+                                            placeholder="Nhập email của bạn"
+                                            value={formData.email}
+                                            onChange={handleChange}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                                
+                                <div className="space-y-2">
+                                    <Label htmlFor="message">Nội dung tin nhắn</Label>
+                                    <Textarea
+                                        id="message"
+                                        name="message"
+                                        placeholder="Nhập nội dung tin nhắn"
+                                        className="min-h-[120px]"
+                                        value={formData.message}
+                                        onChange={handleChange}
+                                        required
+                                    />
+                                </div>
+                                
+                                <Button type="submit" className="w-full">
+                                    <Send className="w-4 h-4 mr-2" />
+                                    Gửi Tin Nhắn
+                                </Button>
+                            </form>
+                        </CardContent>
+                    </Card>
+                    
+                    {/* FAQ Section */}
+                    <div className="mt-6">
+                        <h3 className="text-xl font-bold mb-4">Câu hỏi thường gặp</h3>
+                        <Card>
+                            <CardContent className="p-4 space-y-4">
+                                <div className="border-b pb-3">
+                                    <h4 className="font-medium mb-1">Thời gian phản hồi các yêu cầu hỗ trợ?</h4>
+                                    <p className="text-muted-foreground text-sm">
+                                        Chúng tôi sẽ phản hồi trong vòng 24 giờ đối với tin nhắn, và ngay lập tức đối với các cuộc gọi trong giờ làm việc.
+                                    </p>
+                                </div>
+                                <div className="border-b pb-3">
+                                    <h4 className="font-medium mb-1">Tôi cần hỗ trợ kỹ thuật khẩn cấp?</h4>
+                                    <p className="text-muted-foreground text-sm">
+                                        Vui lòng gọi trực tiếp qua hotline 0899 888 999 để được hỗ trợ ngay lập tức bởi đội ngũ kỹ thuật viên.
+                                    </p>
+                                </div>
+                                <div>
+                                    <h4 className="font-medium mb-1">Chính sách đổi trả và bảo hành?</h4>
+                                    <p className="text-muted-foreground text-sm">
+                                        Quý khách có thể liên hệ tổng đài để được hướng dẫn quy trình đổi trả và bảo hành sản phẩm chi tiết.
+                                    </p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </motion.div>
             </div>
+            
+            {/* CTA Section */}
+            <motion.section 
+                className="bg-primary/5 rounded-2xl p-8 text-center mt-16"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.5 }}
+            >
+                <h2 className="text-2xl font-bold mb-4">Tư Vấn Trực Tiếp Tại Showroom</h2>
+                <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
+                    Ghé thăm showroom của chúng tôi để được trải nghiệm sản phẩm và nhận tư vấn chuyên sâu từ đội ngũ nhân viên chuyên nghiệp.
+                </p>
+                <Button 
+                    variant="default" 
+                    size="lg" 
+                    onClick={() => window.location.href="/showroom"}
+                >
+                    <MapPin className="mr-2 h-4 w-4" />
+                    Tìm Showroom Gần Nhất
+                </Button>
+            </motion.section>
         </div>
     );
 }

@@ -18,10 +18,12 @@ export const useProduct = () => {
     setLoading(true);
     try {
       const response = await getProducts(status);
-      const { code, products } = response.data.getProducts;
+      const { code,message, products } = response.data.getProducts;
       
       if (code === 200) {
         setProducts(products);
+        console.log("Products:", products);
+        console.log("Message:", message);
         return products;
       } else {
         throw new Error("Không thể lấy danh sách sản phẩm");
