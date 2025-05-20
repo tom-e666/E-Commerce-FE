@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import {
-  getProducts,
-  getProduct,
-  createProduct,
-  updateProduct,
-  deleteProduct,
+  getProducts as apiGetProducts,
+  getProduct as apiGetProduct,
+  createProduct as apiCreateProduct,
+  updateProduct as apiUpdateProduct,
+  deleteProduct as apiDeleteProduct,
   Product,
   ProductDetails
 } from '@/services/product/endpoint';
@@ -17,8 +17,8 @@ export const useProduct = () => {
   const handleGetProducts = async (status = "1") => {
     setLoading(true);
     try {
-      const response = await getProducts(status);
-      const { code,message, products } = response.data.getProducts;
+      const response = await apiGetProducts(status);
+      const { code, message, products } = response;
       
       if (code === 200) {
         setProducts(products);
@@ -36,8 +36,8 @@ export const useProduct = () => {
   const handleGetProduct = async (id: string) => {
     setLoading(true);
     try {
-      const response = await getProduct(id);
-      const { code, product } = response.data.getProduct;
+      const response = await apiGetProduct(id);
+      const { code, product } = response;
       
       if (code === 200) {
         setCurrentProduct(product);
@@ -60,8 +60,19 @@ export const useProduct = () => {
   ) => {
     setLoading(true);
     try {
-      const response = await createProduct(name, price, stock, status, brand_id, details);
-      const { code, product } = response.data.createProduct;
+      // Create a single object parameter matching the endpoint function signature
+      const productData = {
+        name,
+        price,
+        stock,
+        status,
+        brand_id,
+        details,
+        weight: 0 // Default weight since it's required but not in the original function signature
+      };
+      
+      const response = await apiCreateProduct(productData);
+      const { code, product } = response;
       
       if (code === 200) {
         setProducts(prev => [...prev, product]);
@@ -76,19 +87,12 @@ export const useProduct = () => {
 
   const handleUpdateProduct = async (
     id: string,
-    data: {
-      name?: string;
-      price?: number;
-      stock?: number;
-      status?: boolean;
-      brand_id?: string;
-      details?: Partial<ProductDetails>;
-    }
+    data: Partial<Omit<Product, "id">>  
   ) => {
     setLoading(true);
     try {
-      const response = await updateProduct(id, data);
-      const { code, product } = response.data.updateProduct;
+      const response = await apiUpdateProduct(id, data);
+      const { code, product } = response;
       
       if (code === 200) {
         setProducts(prev => prev.map(item => item.id === id ? product : item));
@@ -108,8 +112,8 @@ export const useProduct = () => {
   const handleDeleteProduct = async (id: string) => {
     setLoading(true);
     try {
-      const response = await deleteProduct(id);
-      const { code } = response.data.deleteProduct;
+      const response = await apiDeleteProduct(id);
+      const { code } = response;
       
       if (code === 200) {
         setProducts(prev => prev.filter(item => item.id !== id));

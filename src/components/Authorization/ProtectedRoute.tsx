@@ -1,43 +1,63 @@
 'use client'
 
-import { useEffect } from 'react';
+import { useEffect, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 
 interface ProtectedRouteProps {
-    children: React.ReactNode;
-    allowedRoles?: string[];
+  children: ReactNode;
+  allowedRoles?: string[];
+  redirectTo?: string;
 }
 
-export default function ProtectedRoute({
-    children,
-    allowedRoles
-}: ProtectedRouteProps) {
-    const { isAuthenticated, hasRole, loading } = useAuthContext();
-    const router = useRouter();
+const ProtectedRoute = ({ 
+  children, 
+  allowedRoles = [], 
+  redirectTo = '/unauthorized' 
+}: ProtectedRouteProps) => {
+  const { isAuthenticated, hasRole, isLoading } = useAuthContext();
+  const router = useRouter();
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
 
-    useEffect(() => {
-        if (!loading) {
-            if (!isAuthenticated) {
-                router.push('/login?redirect=' + encodeURIComponent(window.location.pathname));
-            } else if (allowedRoles && !hasRole(allowedRoles)) {
-                router.push('/unauthorized');
-            }
+  useEffect(() => {
+    // Chỉ thực hiện kiểm tra khi đã tải xong thông tin xác thực
+    if (!isLoading) {
+      if (!isAuthenticated) {
+        // Chưa đăng nhập, chuyển hướng đến trang login và lưu URL hiện tại để quay lại sau
+        console.log("User not authenticated, redirecting to login");
+        router.push(`/login?redirect=${window.location.pathname}`);
+        setIsAuthorized(false);
+        return;
+      }
+
+      // Đã đăng nhập, kiểm tra quyền nếu có
+      if (allowedRoles.length > 0) {
+        const authorized = hasRole(allowedRoles);
+        setIsAuthorized(authorized);
+        
+        if (!authorized) {
+          console.log("User doesn't have required roles, redirecting");
+          router.push(redirectTo);
+          return;
         }
-    }, [isAuthenticated, loading, router, hasRole, allowedRoles]);
-
-    if (loading) {
-        return (
-            <div className="flex h-screen w-full items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-        );
+      } else {
+        // Không cần quyền cụ thể, chỉ cần đăng nhập
+        setIsAuthorized(true);
+      }
     }
+  }, [isAuthenticated, isLoading, hasRole, allowedRoles, router, redirectTo]);
 
-    if (!isAuthenticated || (allowedRoles && !hasRole(allowedRoles))) {
-        return null;
-    }
+  if (isLoading || isAuthorized === null) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2">Đang xác thực...</span>
+      </div>
+    );
+  }
 
-    return <>{children}</>;
-}
+  return isAuthorized ? <>{children}</> : null;
+};
+
+export default ProtectedRoute;

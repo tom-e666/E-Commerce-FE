@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+
 const Page = () => {
     const [password, setPassword] = React.useState<string>('');
     const [phone, setPhone] = React.useState<string>('');
@@ -31,25 +32,19 @@ const Page = () => {
         try {
             const success = await signup(email, phone, password, full_name);
             toast.success(success);
-
-            setTimeout(async () => {
-                try {
-                    await login(email, password);
-                    router.push('/');
-                } catch (error) {
-                    toast.error("Lỗi logic không xác định");
-                    console.log(error);
-                }
-            }, 1000);
+            
+            // After successful signup, try to log in automatically
+            await login(email, password);
+            router.push('/');
         } catch (error) {
-            //@ts-expect-error dynamic type
+            // @ts-expect-error any
             toast.error(error.message);
-            console.error(error);
         }
     };
+
     return (
         <div className="w-full min-h-screen flex flex-col items-center justify-center p-4">
-            <Image src="shapelined.jpg"
+            <Image src="/shapelined.jpg"
                 fill={true}
                 className="object-cover w-full h-full -z-10"
                 alt="background"
@@ -65,14 +60,28 @@ const Page = () => {
                             className="mx-auto object-contain mb-4"
                             priority
                         />
-                        <CardTitle className="text-2xl font-bold text-center">Đăng kí</CardTitle>
+                        <CardTitle className="text-2xl font-bold text-center">Đăng ký</CardTitle>
                         <CardDescription className="text-center">
-                            Nhập thông tin đăng kí để tiếp tục
+                            Tạo tài khoản để mua sắm và theo dõi đơn hàng
                         </CardDescription>
                     </CardHeader>
 
                     <CardContent>
                         <form onSubmit={handleSubmit} className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="fullname">Họ và tên</Label>
+                                <Input
+                                    id="fullname"
+                                    name="full_name"
+                                    type="text"
+                                    required
+                                    value={full_name}
+                                    onChange={(e) => setFull_name(e.target.value)}
+                                    placeholder="Nhập họ và tên"
+                                    className="w-full"
+                                />
+                            </div>
+
                             <div className="space-y-2">
                                 <Label htmlFor="email">Email</Label>
                                 <Input
@@ -86,22 +95,7 @@ const Page = () => {
                                     className="w-full"
                                 />
                             </div>
-                            <div className="space-y-2">
-                                <div className="flex items-center justify-between">
-                                    <Label htmlFor="password">Mật khẩu</Label>
 
-                                </div>
-                                <Input
-                                    id="password"
-                                    name="password"
-                                    type="password"
-                                    required
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    placeholder="Nhập mật khẩu"
-                                    className="w-full"
-                                />
-                            </div>
                             <div className="space-y-2">
                                 <Label htmlFor="phone">Số điện thoại</Label>
                                 <Input
@@ -115,16 +109,17 @@ const Page = () => {
                                     className="w-full"
                                 />
                             </div>
+
                             <div className="space-y-2">
-                                <Label htmlFor="phone">Họ và Tên</Label>
+                                <Label htmlFor="password">Mật khẩu</Label>
                                 <Input
-                                    id="full_name"
-                                    name="full_name"
-                                    type="text"
+                                    id="password"
+                                    name="password"
+                                    type="password"
                                     required
-                                    value={full_name}
-                                    onChange={(e) => setFull_name(e.target.value)}
-                                    placeholder="Nhập họ và tên"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    placeholder="Nhập mật khẩu"
                                     className="w-full"
                                 />
                             </div>
@@ -137,10 +132,10 @@ const Page = () => {
                                 {loading ? (
                                     <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Đang đăng kí
+                                        Đang xử lý
                                     </>
                                 ) : (
-                                    "Đăng kí"
+                                    "Đăng ký"
                                 )}
                             </Button>
                         </form>
@@ -150,7 +145,7 @@ const Page = () => {
                         <div className="text-center text-sm text-muted-foreground">
                             Đã có tài khoản?{' '}
                             <Link href="/login" className="font-medium text-blue-600 hover:text-blue-500">
-                                Đăng nhập ngay
+                                Đăng nhập
                             </Link>
                         </div>
                     </CardFooter>

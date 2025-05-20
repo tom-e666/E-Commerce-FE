@@ -49,6 +49,7 @@ interface ShippingFormProps {
         district: string;
         ward: string;
         notes: string;
+        shippingMethod: string;
     };
     loadingStates: {
         provinces: boolean;
@@ -232,7 +233,13 @@ const ShippingForm = React.memo(({
                         <Label className="font-medium">Phương thức vận chuyển</Label>
                     </div>
 
-                    <RadioGroup defaultValue="SHOP" className="mt-2">
+                    <RadioGroup
+                        defaultValue="SHOP"
+                        className="mt-2"
+                        name="shippingMethod"
+                        value={shippingInfo.shippingMethod}
+                        onValueChange={(value) => onSelectChange("shippingMethod", value)}
+                    >
                         <div className="flex items-center space-x-2 border p-3 rounded-md mb-2">
                             <RadioGroupItem value="SHOP" id="shop" />
                             <Label htmlFor="shop" className="flex-1 cursor-pointer">
@@ -268,7 +275,6 @@ const ShippingForm = React.memo(({
                         name="notes"
                         defaultValue={shippingInfo.notes}
                         onChange={(e) => {
-                            // Use the raw DOM value instead of state for rendering
                             e.currentTarget.value = e.currentTarget.value;
                             debouncedSetNotes(e.currentTarget.value);
                         }}

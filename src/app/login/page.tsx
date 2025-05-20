@@ -23,47 +23,58 @@ const Page = () => {
   const [username, setUsername] = React.useState<string>('');
   const [password, setPassword] = React.useState<string>('');
   const { login, loading } = useAuth();
-  const { isAuthenticated, hasRole } = useAuthContext();
+  const { isAuthenticated, hasRole, user } = useAuthContext();
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectParam = searchParams?.get('redirect') || '/';
-  const redirectUrl = redirectParam.startsWith('/')
-    ? redirectParam : '/';
+  const redirectUrl = redirectParam.startsWith('/') ? redirectParam : '/';
 
+  // Kiểm tra nếu người dùng đã đăng nhập và chuyển hướng phù hợp
   useEffect(() => {
     if (isAuthenticated) {
-      if (hasRole(['admin', 'staff'])) {
+      // Kiểm tra role của người dùng
+      if (user && (user.role === 'admin' || user.role === 'staff')) {
+        console.log("Đã phát hiện admin/staff, chuyển hướng đến trang admin");
         router.push('/admin');
       } else {
+        console.log("Chuyển hướng người dùng thông thường đến:", redirectUrl);
         router.push(redirectUrl !== '/login' ? redirectUrl : '/');
       }
     }
-  }, [isAuthenticated, hasRole, router, redirectUrl]);
+  }, [isAuthenticated, user, router, redirectUrl]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
-      const success = await login(username, password);
-      toast.success(success);
-
-      setTimeout(() => {
-        // Check if the user has admin or staff role
-        if (hasRole(['admin', 'staff'])) {
-          router.push('/admin');
-        } else {
-          router.push(redirectUrl !== '/login' ? redirectUrl : '/');
+      await toast.promise(
+        login(username, password), 
+        {
+          loading: 'Đang đăng nhập...',
+          success: (data) => {
+            // Kiểm tra role ngay sau đăng nhập thành công
+            setTimeout(() => {
+              // Thêm setTimeout để đảm bảo context auth đã được cập nhật
+              if (hasRole(['admin', 'staff'])) {
+                router.push('/admin');
+              } else {
+                router.push(redirectUrl !== '/login' ? redirectUrl : '/');
+              }
+            }, 300);
+            return 'Đăng nhập thành công';
+          },
+          error: (err) => `${err.message || 'Đăng nhập thất bại'}`
         }
-      }, 500);
+      );
     } catch (error) {
-      //@ts-expect-error any
-      toast.error(error.message);
+      // Toast error đã được xử lý ở trên
+      console.error("Login error:", error);
     }
   };
 
   return (
     <div className="w-full min-h-screen flex flex-col items-center justify-center p-4">
-      <Image src="shapelined.jpg"
+      <Image src="/shapelined.jpg"
         fill={true}
         className="object-cover w-full h-full -z-10"
         alt="background"
@@ -114,7 +125,6 @@ const Page = () => {
                   className="w-full"
                 />
                 <div className="flex items-center justify-between">
-
                   <Link href="#" className="text-sm font-medium text-blue-600 hover:text-blue-500">
                     Quên mật khẩu?
                   </Link>
