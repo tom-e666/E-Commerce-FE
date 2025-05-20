@@ -23,47 +23,106 @@ const Page = () => {
   const [username, setUsername] = React.useState<string>('');
   const [password, setPassword] = React.useState<string>('');
   const { login, loading } = useAuth();
-  const { isAuthenticated, hasRole } = useAuthContext();
+  const { isAuthenticated, hasRole, user } = useAuthContext();
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectParam = searchParams?.get('redirect') || '/';
-  const redirectUrl = redirectParam.startsWith('/')
-    ? redirectParam : '/';
+  const redirectUrl = redirectParam.startsWith('/') ? redirectParam : '/';
 
+  // Kiểm tra nếu người dùng đã đăng nhập và chuyển hướng phù hợp
   useEffect(() => {
     if (isAuthenticated) {
-      if (hasRole(['admin', 'staff'])) {
-        router.push('/admin');
+      console.log("User is already authenticated, checking role for redirection");
+
+      // Kiểm tra role từ user object trong context
+      if (user && (user.role === 'admin' || user.role === 'staff')) {
+        console.log("Admin/staff user detected from context, redirecting to admin dashboard");
+        // Sử dụng window.location.href thay vì router.push để đảm bảo trang được tải lại hoàn toàn
+        window.location.href = '/admin';
+        return;
+      }
+
+      // Kiểm tra role từ localStorage như một phương án dự phòng
+      const userRole = localStorage.getItem('userRole');
+      if (userRole === 'admin' || userRole === 'staff') {
+        console.log("Admin/staff user detected from localStorage, redirecting to admin dashboard");
+        window.location.href = '/admin';
+        return;
+      }
+
+      // Nếu không phải admin/staff, chuyển hướng đến trang thông thường
+      console.log("Regular user detected, redirecting to:", redirectUrl);
+
+      // Kiểm tra nếu redirectUrl là /admin nhưng user không phải admin
+      if (redirectUrl === '/admin' || redirectUrl.startsWith('/admin/')) {
+        console.log("Non-admin user trying to access admin area, redirecting to home");
+        router.push('/');
       } else {
         router.push(redirectUrl !== '/login' ? redirectUrl : '/');
       }
     }
-  }, [isAuthenticated, hasRole, router, redirectUrl]);
+  }, [isAuthenticated, user, router, redirectUrl]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
-      const success = await login(username, password);
-      toast.success(success);
+      await toast.promise(
+        login(username, password),
+        {
+          loading: 'Đang đăng nhập...',
+          success: (result) => {
+            console.log("Login successful, checking user role...");
 
-      setTimeout(() => {
-        // Check if the user has admin or staff role
-        if (hasRole(['admin', 'staff'])) {
-          router.push('/admin');
-        } else {
-          router.push(redirectUrl !== '/login' ? redirectUrl : '/');
+            // Lấy thông tin user trực tiếp từ kết quả đăng nhập
+            const user = result.user;
+            console.log("User info from login result:", user);
+
+            // Kiểm tra nếu là admin/staff
+            if (user && (user.role === 'admin' || user.role === 'staff')) {
+              console.log("Admin/staff user detected directly from login response");
+
+              // Chuyển hướng ngay lập tức đến trang admin
+              // Sử dụng window.location.href thay vì router.push để đảm bảo trang được tải lại hoàn toàn
+              window.location.href = '/admin';
+              return 'Đăng nhập thành công, đang chuyển hướng đến trang quản trị';
+            }
+
+            // Kiểm tra role từ localStorage như một phương án dự phòng
+            const userRole = localStorage.getItem('userRole');
+            console.log("User role from localStorage:", userRole);
+
+            if (userRole === 'admin' || userRole === 'staff') {
+              console.log("Admin/staff user detected from localStorage");
+              window.location.href = '/admin';
+              return 'Đăng nhập thành công, đang chuyển hướng đến trang quản trị';
+            }
+
+            // Nếu không phải admin/staff, chuyển hướng đến trang thông thường
+            console.log("Regular user detected, redirecting to:", redirectUrl !== '/login' ? redirectUrl : '/');
+
+            // Kiểm tra nếu redirectUrl là /admin nhưng user không phải admin
+            if (redirectUrl === '/admin' || redirectUrl.startsWith('/admin/')) {
+              console.log("Non-admin user trying to access admin area, redirecting to home");
+              router.push('/');
+            } else {
+              router.push(redirectUrl !== '/login' ? redirectUrl : '/');
+            }
+
+            return 'Đăng nhập thành công';
+          },
+          error: (err) => `${err.message || 'Đăng nhập thất bại'}`
         }
-      }, 500);
+      );
     } catch (error) {
-      //@ts-expect-error any
-      toast.error(error.message);
+      // Toast error đã được xử lý ở trên
+      console.error("Login error:", error);
     }
   };
 
   return (
     <div className="w-full min-h-screen flex flex-col items-center justify-center p-4">
-      <Image src="shapelined.jpg"
+      <Image src="/shapelined.jpg"
         fill={true}
         className="object-cover w-full h-full -z-10"
         alt="background"
@@ -114,7 +173,6 @@ const Page = () => {
                   className="w-full"
                 />
                 <div className="flex items-center justify-between">
-
                   <Link href="#" className="text-sm font-medium text-blue-600 hover:text-blue-500">
                     Quên mật khẩu?
                   </Link>

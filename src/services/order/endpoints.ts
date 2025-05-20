@@ -306,21 +306,45 @@ export const getOrdersAPI = async (
   createdBefore?: string
 ) => {
   try {
+    // Kiểm tra token trước khi gọi API
+    const token = localStorage.getItem('token') || localStorage.getItem('access_token');
+    if (!token) {
+      console.error('No token available for getOrdersAPI');
+      throw new Error('Vui lòng đăng nhập lại để xem danh sách đơn hàng');
+    }
+
+    console.log('Calling getOrders API with token:', token.substring(0, 15) + '...');
+    console.log('Query variables:', { status, createdAfter, createdBefore });
+
     const response = await apolloClient.query({
       query: GET_ORDERS,
-      variables: { 
-        status, 
-        createdAfter, 
-        createdBefore 
+      variables: {
+        status,
+        createdAfter,
+        createdBefore
       },
       fetchPolicy: 'network-only',
       context: {
         requiresAuth: true,
+        headers: {
+          authorization: `Bearer ${token}` // Thêm token vào header
+        }
       }
     });
+
+    console.log('getOrders API response:', response);
     return response;
   } catch (error) {
     console.error('Error fetching orders:', error);
-    throw error;
+    // Trả về một đối tượng giả để tránh lỗi "Cannot read properties of undefined"
+    return {
+      data: {
+        getOrders: {
+          code: 500,
+          message: 'Lỗi khi lấy danh sách đơn hàng',
+          orders: []
+        }
+      }
+    };
   }
 };

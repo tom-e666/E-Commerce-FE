@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { 
-    createOrderFromCartAPI, 
-    getOrderAPI, 
+import {
+    createOrderFromCartAPI,
+    getOrderAPI,
     getUserOrdersAPI,
     updateOrderItemAPI,
     deleteOrderItemAPI,
@@ -9,7 +9,7 @@ import {
     confirmOrderAPI,
     shipOrderAPI,
     deliverOrderAPI,
-    getOrdersAPI  
+    getOrdersAPI
 } from '@/services/order/endpoints';
 
 export interface OrderItem {
@@ -47,8 +47,8 @@ export const useOrder = () => {
     const [loading, setLoading] = useState<boolean>(false);
     const [orders, setOrders] = useState<Order[]>([]);
     const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
-    
-    
+
+
     const getUserOrders = async () => {
         setLoading(true);
         try {
@@ -56,9 +56,9 @@ export const useOrder = () => {
             if (!response?.data) {
                 throw new Error("Không thể lấy danh sách đơn hàng");
             }
-            
+
             const { code, message, orders } = response.data.getUserOrders;
-            
+
             if (code === 200) {
                 setOrders(orders || []);
                 return orders;
@@ -76,22 +76,48 @@ export const useOrder = () => {
         setLoading(true);
         try {
             const { status, createdAfter, createdBefore } = filters || {};
-            
-            const response = await getOrdersAPI(status, createdAfter, createdBefore);
-            if (!response?.data) {
-                throw new Error("Không thể lấy danh sách đơn hàng");
+
+            console.log("Fetching orders with filters:", { status, createdAfter, createdBefore });
+
+            // Kiểm tra token trước khi gọi API
+            const token = localStorage.getItem('token') || localStorage.getItem('access_token');
+            if (!token) {
+                console.error("No authentication token found for getOrders");
+                throw new Error("Vui lòng đăng nhập lại để xem danh sách đơn hàng");
             }
-            
+
+            const response = await getOrdersAPI(status, createdAfter, createdBefore);
+            console.log("Orders API response:", response);
+
+            if (!response) {
+                console.error("Empty response from getOrders API");
+                throw new Error("Không thể lấy danh sách đơn hàng - Phản hồi trống");
+            }
+
+            if (!response.data) {
+                console.error("Response missing data property:", response);
+                throw new Error("Không thể lấy danh sách đơn hàng - Thiếu dữ liệu");
+            }
+
+            if (!response.data.getOrders) {
+                console.error("Response missing getOrders property:", response.data);
+                throw new Error("Không thể lấy danh sách đơn hàng - Cấu trúc không hợp lệ");
+            }
+
             const { code, message, orders } = response.data.getOrders;
-            
+
             if (code === 200) {
+                console.log("Successfully fetched orders:", orders?.length || 0);
                 setOrders(orders || []);
                 return orders;
             } else {
+                console.error("API returned error:", { code, message });
                 throw new Error(message || "Không thể lấy danh sách đơn hàng");
             }
         } catch(error) {
             console.error("Error fetching admin orders:", error);
+            // Trả về mảng rỗng thay vì ném lỗi để tránh crash UI
+            setOrders([]);
             throw error;
         } finally {
             setLoading(false);
@@ -105,9 +131,9 @@ export const useOrder = () => {
             if (!response?.data) {
                 throw new Error("Không thể lấy thông tin đơn hàng");
             }
-            
+
             const { code, message, order } = response.data.getOrder;
-            
+
             if (code === 200 && order) {
                 setCurrentOrder(order);
                 return order;
@@ -128,9 +154,9 @@ export const useOrder = () => {
             if (!response?.data) {
                 throw new Error("Không thể tạo đơn hàng");
             }
-            
+
             const { code, message, order } = response.data.createOrderFromCart;
-            
+
             if (code === 200 && order) {
                 setCurrentOrder(order);
                 return order;
@@ -146,28 +172,28 @@ export const useOrder = () => {
     };
     const createOrder = async (orderData: OrderInput) => {
         setLoading(true);
-        try {  
+        try {
             if (currentOrder && currentOrder.id === orderData.order_id) {
                 const updatedOrder = {
                     ...currentOrder,
                 };
                 setCurrentOrder(updatedOrder);
-                
-                setOrders(prevOrders => 
-                    prevOrders.map(order => 
-                        order.id === orderData.order_id 
-                            ? updatedOrder 
+
+                setOrders(prevOrders =>
+                    prevOrders.map(order =>
+                        order.id === orderData.order_id
+                            ? updatedOrder
                             : order
                     )
                 );
-                
+
                 return {
                     code: 200,
                     message: "Đơn hàng đã được cập nhật",
                     order_id: orderData.order_id
                 };
             }
-            
+
             throw new Error("Không tìm thấy đơn hàng để cập nhật");
         } catch (error) {
             console.error("Error updating order:", error);
@@ -184,22 +210,22 @@ export const useOrder = () => {
             if (!response?.data) {
                 throw new Error("Không thể cập nhật sản phẩm trong đơn hàng");
             }
-            
+
             const { code, message } = response.data.updateOrderItem;
-            
+
             if (code === 200) {
                 if (currentOrder) {
-                    const updatedItems = currentOrder.items.map(item => 
-                        item.id === orderItemId 
-                            ? { ...item, quantity } 
+                    const updatedItems = currentOrder.items.map(item =>
+                        item.id === orderItemId
+                            ? { ...item, quantity }
                             : item
                     );
-                    
+
                     const newTotalPrice = updatedItems.reduce(
-                        (sum, item) => sum + (item.price * item.quantity), 
+                        (sum, item) => sum + (item.price * item.quantity),
                         0
                     );
-                    
+
                     setCurrentOrder({
                         ...currentOrder,
                         items: updatedItems,
@@ -224,18 +250,18 @@ export const useOrder = () => {
             if (!response?.data) {
                 throw new Error("Không thể xóa sản phẩm khỏi đơn hàng");
             }
-            
+
             const { code, message } = response.data.deleteOrderItem;
-            
+
             if (code === 200) {
                 if (currentOrder) {
                     const updatedItems = currentOrder.items.filter(item => item.id !== orderItemId);
-                    
+
                     const newTotalPrice = updatedItems.reduce(
-                        (sum, item) => sum + (item.price * item.quantity), 
+                        (sum, item) => sum + (item.price * item.quantity),
                         0
                     );
-                    
+
                     setCurrentOrder({
                         ...currentOrder,
                         items: updatedItems,
@@ -261,9 +287,9 @@ export const useOrder = () => {
             if (!response?.data) {
                 throw new Error("Không thể hủy đơn hàng");
             }
-            
+
             const { code, message } = response.data.cancelOrder;
-            
+
             if (code === 200) {
                 if (currentOrder && currentOrder.id === orderId) {
                     setCurrentOrder({
@@ -271,15 +297,15 @@ export const useOrder = () => {
                         status: 'cancelled'
                     });
                 }
-                
-                setOrders(prevOrders => 
-                    prevOrders.map(order => 
-                        order.id === orderId 
-                            ? { ...order, status: 'cancelled' } 
+
+                setOrders(prevOrders =>
+                    prevOrders.map(order =>
+                        order.id === orderId
+                            ? { ...order, status: 'cancelled' }
                             : order
                     )
                 );
-                
+
                 return "Đơn hàng đã được hủy";
             } else {
                 throw new Error(message || "Không thể hủy đơn hàng");
@@ -299,9 +325,9 @@ export const useOrder = () => {
             if (!response?.data) {
                 throw new Error("Không thể xác nhận đơn hàng");
             }
-            
+
             const { code, message } = response.data.confirmOrder;
-            
+
             if (code === 200) {
                 if (currentOrder && currentOrder.id === orderId) {
                     setCurrentOrder({
@@ -309,15 +335,15 @@ export const useOrder = () => {
                         status: 'confirmed'
                     });
                 }
-                
-                setOrders(prevOrders => 
-                    prevOrders.map(order => 
-                        order.id === orderId 
-                            ? { ...order, status: 'confirmed' } 
+
+                setOrders(prevOrders =>
+                    prevOrders.map(order =>
+                        order.id === orderId
+                            ? { ...order, status: 'confirmed' }
                             : order
                     )
                 );
-                
+
                 return "Đơn hàng đã được xác nhận";
             } else {
                 throw new Error(message || "Không thể xác nhận đơn hàng");
@@ -336,9 +362,9 @@ export const useOrder = () => {
             if (!response?.data) {
                 throw new Error("Không thể cập nhật trạng thái giao hàng");
             }
-            
+
             const { code, message } = response.data.shipOrder;
-            
+
             if (code === 200) {
                 if (currentOrder && currentOrder.id === orderId) {
                     setCurrentOrder({
@@ -346,15 +372,15 @@ export const useOrder = () => {
                         status: 'shipped'
                     });
                 }
-                
-                setOrders(prevOrders => 
-                    prevOrders.map(order => 
-                        order.id === orderId 
-                            ? { ...order, status: 'shipped' } 
+
+                setOrders(prevOrders =>
+                    prevOrders.map(order =>
+                        order.id === orderId
+                            ? { ...order, status: 'shipped' }
                             : order
                     )
                 );
-                
+
                 return "Đơn hàng đã được giao cho đơn vị vận chuyển";
             } else {
                 throw new Error(message || "Không thể cập nhật trạng thái giao hàng");
@@ -374,9 +400,9 @@ export const useOrder = () => {
             if (!response?.data) {
                 throw new Error("Không thể cập nhật trạng thái giao hàng");
             }
-            
+
             const { code, message } = response.data.deliverOrder;
-            
+
             if (code === 200) {
                 if (currentOrder && currentOrder.id === orderId) {
                     setCurrentOrder({
@@ -384,15 +410,15 @@ export const useOrder = () => {
                         status: 'delivered'
                     });
                 }
-                
-                setOrders(prevOrders => 
-                    prevOrders.map(order => 
-                        order.id === orderId 
-                            ? { ...order, status: 'delivered' } 
+
+                setOrders(prevOrders =>
+                    prevOrders.map(order =>
+                        order.id === orderId
+                            ? { ...order, status: 'delivered' }
                             : order
                     )
                 );
-                
+
                 return "Đơn hàng đã được giao thành công";
             } else {
                 throw new Error(message || "Không thể cập nhật trạng thái giao hàng");
@@ -410,7 +436,7 @@ export const useOrder = () => {
         orders,
         currentOrder,
         getUserOrders,
-        getOrders,      
+        getOrders,
         getOrder,
         createOrderFromCart,
         createOrder,

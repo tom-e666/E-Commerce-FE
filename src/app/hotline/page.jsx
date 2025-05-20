@@ -143,7 +143,7 @@ export default function Hotline() {
                                 </Slider>
                             </div>
                             <div className='mt-3 w-full'>
-                                <p className='flex items-center font-semibold text-white'>
+                                <div className='flex items-center font-semibold text-white'>
                                     <MapPin className='mr-2 size-15 text-white' />
                                     <div className='mt-5 flex flex-col'>
                                         <span className='text-2xl'>129/1T Lạc Long Quân</span>
@@ -151,7 +151,7 @@ export default function Hotline() {
                                             Phường 1, Quận 11, Thành phố Hồ Chí Minh
                                         </span>
                                     </div>
-                                </p>
+                                </div>
                             </div>
                         </div>
                     </div>

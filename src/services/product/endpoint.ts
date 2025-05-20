@@ -1,6 +1,88 @@
 import { gql } from '@apollo/client';
-export const GET_PRODUCTS_QUERY = gql`
-  query GetProducts($status: String!) {
+import { apolloClient } from '@/services/apollo/client';
+
+// Types matching the GraphQL schema
+export interface Specification {
+  name: string;
+  value: string;
+}
+
+export interface ProductDetails {
+  description: string;
+  specifications: Specification[];
+  images: string[];
+  keywords: string[];
+}
+
+export interface Product {
+  id: string;
+  name: string;
+  price: number;
+  stock: number;
+  status: boolean;
+  brand_id: string;
+  details: ProductDetails;
+  weight: number;
+}
+
+export interface BaseResponse {
+  code: number;
+  message: string;
+}
+
+export interface ProductResponse extends BaseResponse {
+  product: Product;
+}
+
+export interface ProductsResponse extends BaseResponse {
+  products: Product[];
+}
+
+export interface PaginationInfo {
+  total: number;
+  current_page: number;
+  per_page: number;
+  last_page: number;
+  from: number | null;
+  to: number | null;
+  has_more_pages: boolean;
+}
+
+export interface PaginatedProductsResponse extends BaseResponse {
+  products: Product[];
+  pagination: PaginationInfo;
+}
+
+// GraphQL queries and mutations
+const GET_PRODUCT = gql`
+  query GetProduct($getProductId: ID!) {
+    getProduct(id: $getProductId) {
+      code
+      message
+      product {
+        id
+        name
+        price
+        stock
+        status
+        brand_id
+        weight
+        details {
+          description
+          specifications {
+            name
+            value
+          }
+          images
+          keywords
+        }
+      }
+    }
+  }
+`;
+
+const GET_PRODUCTS = gql`
+  query GetProducts($status: String) {
     getProducts(status: $status) {
       code
       message
@@ -14,49 +96,84 @@ export const GET_PRODUCTS_QUERY = gql`
         weight
         details {
           description
-          images
-          keywords
           specifications {
             name
             value
           }
+          images
+          keywords
         }
       }
     }
   }
 `;
-export const GET_PRODUCT_QUERY = gql`
-  query GetProduct($id: ID!) {
-    getProduct(id: $id) {
+
+const GET_PAGINATED_PRODUCTS = gql`
+  query GetPaginatedProducts(
+    $search: String
+    $status: String
+    $category_id: ID
+    $brand_id: ID
+    $price_min: Float
+    $price_max: Float
+    $sort_field: String
+    $sort_direction: String
+    $page: Int
+    $per_page: Int
+  ) {
+    getPaginatedProducts(
+      search: $search
+      status: $status
+      category_id: $category_id
+      brand_id: $brand_id
+      price_min: $price_min
+      price_max: $price_max
+      sort_field: $sort_field
+      sort_direction: $sort_direction
+      page: $page
+      per_page: $per_page
+    ) {
       code
       message
-      product {
+      products {
         id
         name
         price
         stock
         status
         brand_id
+        weight
         details {
           description
-          images
-          keywords
           specifications {
             name
             value
           }
+          images
+          keywords
         }
+      }
+      pagination {
+        total
+        current_page
+        per_page
+        last_page
+        from
+        to
+        has_more_pages
       }
     }
   }
 `;
-export const CREATE_PRODUCT_MUTATION = gql`
+
+const CREATE_PRODUCT = gql`
   mutation CreateProduct(
     $name: String!
     $price: Float!
     $stock: Int!
     $status: Boolean!
     $brand_id: ID!
+    $weight: Float!
     $details: ProductDetailsInput!
   ) {
     createProduct(
@@ -65,6 +182,7 @@ export const CREATE_PRODUCT_MUTATION = gql`
       stock: $stock
       status: $status
       brand_id: $brand_id
+      weight: $weight
       details: $details
     ) {
       code
@@ -76,20 +194,22 @@ export const CREATE_PRODUCT_MUTATION = gql`
         stock
         status
         brand_id
+        weight
         details {
           description
-          images
-          keywords
           specifications {
             name
             value
           }
+          images
+          keywords
         }
       }
     }
   }
 `;
-export const UPDATE_PRODUCT_MUTATION = gql`
+
+const UPDATE_PRODUCT = gql`
   mutation UpdateProduct(
     $id: ID!
     $name: String
@@ -97,6 +217,7 @@ export const UPDATE_PRODUCT_MUTATION = gql`
     $stock: Int
     $status: Boolean
     $brand_id: ID
+    $weight: Float
     $details: ProductDetailsInput
   ) {
     updateProduct(
@@ -106,6 +227,7 @@ export const UPDATE_PRODUCT_MUTATION = gql`
       stock: $stock
       status: $status
       brand_id: $brand_id
+      weight: $weight
       details: $details
     ) {
       code
@@ -117,20 +239,22 @@ export const UPDATE_PRODUCT_MUTATION = gql`
         stock
         status
         brand_id
+        weight
         details {
           description
-          images
-          keywords
           specifications {
             name
             value
           }
+          images
+          keywords
         }
       }
     }
   }
 `;
-export const DELETE_PRODUCT_MUTATION = gql`
+
+const DELETE_PRODUCT = gql`
   mutation DeleteProduct($id: ID!) {
     deleteProduct(id: $id) {
       code
@@ -138,140 +262,113 @@ export const DELETE_PRODUCT_MUTATION = gql`
     }
   }
 `;
-export interface ProductSpecification {
-  name: string;
-  value: string;
-}
-export interface ProductDetails {
-  description: string;
-  images: string[];
-  keywords: string[];
-  specifications: ProductSpecification[];
-}
-export interface Product {
-  id: string;
-  name: string;
-  price: number;
-  stock: number;
-  status: boolean;
-  brand_id: string;
-  details: ProductDetails;
-}
-import { apolloClient } from "../apollo/client";
 
-export const getProducts = async (status = "1") => {
+// API methods
+export const getProduct = async (id: string): Promise<ProductResponse> => {
   try {
-    return await apolloClient.query({
-      query: GET_PRODUCTS_QUERY,
-      variables: { status },
-      fetchPolicy: 'network-only'
+    const response = await apolloClient.query({
+      query: GET_PRODUCT,
+      variables: { getProductId: id },
+      fetchPolicy: 'network-only',
     });
+    return response.data.getProduct;
+  } catch (error) {
+    console.error('Error fetching product:', error);
+    throw error;
+  }
+};
+
+export const getProducts = async (status?: string): Promise<ProductsResponse> => {
+  try {
+    const response = await apolloClient.query({
+      query: GET_PRODUCTS,
+      variables: status ? { status } : {},
+      fetchPolicy: 'network-only',
+    });
+    return response.data.getProducts;
   } catch (error) {
     console.error('Error fetching products:', error);
     throw error;
   }
 };
-export const getProduct = async (id: string) => {
+
+export const getPaginatedProducts = async (filters?: {
+  search?: string;
+  status?: string;
+  category_id?: string;
+  brand_id?: string;
+  price_min?: number;
+  price_max?: number;
+  sort_field?: string;
+  sort_direction?: string;
+  page?: number;
+  per_page?: number;
+}): Promise<PaginatedProductsResponse> => {
   try {
-    return await apolloClient.query({
-      query: GET_PRODUCT_QUERY,
-      variables: { id },
-      fetchPolicy: 'network-only'
+    const response = await apolloClient.query({
+      query: GET_PAGINATED_PRODUCTS,
+      variables: filters || {},
+      fetchPolicy: 'network-only',
     });
+    return response.data.getPaginatedProducts;
   } catch (error) {
-    console.error(`Error fetching product with id ${id}:`, error);
+    console.error('Error fetching paginated products:', error);
     throw error;
   }
 };
-export const createProduct = async (
-  name: string,
-  price: number,
-  stock: number,
-  status: boolean,
-  brand_id: string,
-  details: ProductDetails
-) => {
-  try {
-    return await apolloClient.mutate({
-      mutation: CREATE_PRODUCT_MUTATION,
-      variables: {
-        name,
-        price,
-        stock,
-        status,
-        brand_id,
-        details: cleanInputObject(details)
 
+export const createProduct = async (
+  productData: Omit<Product, "id">
+): Promise<ProductResponse> => {
+  try {
+    const response = await apolloClient.mutate({
+      mutation: CREATE_PRODUCT,
+      variables: productData,
+      context: {
+        requiresAuth: true
       }
     });
+    return response.data.createProduct;
   } catch (error) {
     console.error('Error creating product:', error);
     throw error;
   }
 };
+
 export const updateProduct = async (
   id: string,
-  data: {
-    name?: string;
-    price?: number;
-    stock?: number;
-    status?: boolean;
-    brand_id?: string;
-    details?: Partial<ProductDetails>;
-  }
-) => {
+  productData: Partial<Product>
+): Promise<ProductResponse> => {
   try {
-    const cleanedData = { ...data };
-    
-    if (cleanedData.details) {
-      cleanedData.details = cleanInputObject(cleanedData.details);
-    }
-    return await apolloClient.mutate({
-      mutation: UPDATE_PRODUCT_MUTATION,
+    const response = await apolloClient.mutate({
+      mutation: UPDATE_PRODUCT,
       variables: {
         id,
-        ...cleanedData
+        ...productData
+      },
+      context: {
+        requiresAuth: true
       }
     });
+    return response.data.updateProduct;
   } catch (error) {
-    console.error(`Error updating product with id ${id}:`, error);
+    console.error('Error updating product:', error);
     throw error;
   }
 };
-export const deleteProduct = async (id: string) => {
-  try {
-    return await apolloClient.mutate({
-      mutation: DELETE_PRODUCT_MUTATION,
-      variables: { id }
-    });
-  } catch (error) {
-    console.error(`Error deleting product with id ${id}:`, error);
-    throw error;
-  }
-};
-// @ts-expect-error nothing
-function cleanInputObject(obj:any){
-  if (!obj) return obj;
 
-  if (Array.isArray(obj)) {
-    return obj.map(cleanInputObject);
-  }
-  
-  if (typeof obj === 'object') {
-    const cleaned = { ...obj };
-    
-    if ('__typename' in cleaned) {
-      delete cleaned.__typename;
-    }
-    
-    Object.keys(cleaned).forEach(key => {
-      if (typeof cleaned[key] === 'object' && cleaned[key] !== null) {
-        cleaned[key] = cleanInputObject(cleaned[key]);
+export const deleteProduct = async (id: string): Promise<BaseResponse> => {
+  try {
+    const response = await apolloClient.mutate({
+      mutation: DELETE_PRODUCT,
+      variables: { id },
+      context: {
+        requiresAuth: true
       }
     });
-    
-    return cleaned;
+    return response.data.deleteProduct;
+  } catch (error) {
+    console.error('Error deleting product:', error);
+    throw error;
   }
-  
-  return obj;
-}
+};

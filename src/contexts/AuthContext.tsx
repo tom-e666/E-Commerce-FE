@@ -1,192 +1,185 @@
 'use client'
-import { useContext, createContext, useState, useEffect, useRef } from "react"
-import { refreshTokenAPI } from "@/services/auth/endpoints";
+
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { getCurrentUser } from '@/services/auth/endpoints';
 
 interface User {
-    id: string,
-    full_name: string,
-    role?: string,
+  id: string;
+  full_name: string;
+  role: string;
 }
 
 interface AuthContextType {
-
-    user: User | null;
-    access_token: string | null;
-    refresh_token: string | null;
-    loading: boolean;
-    role: string | null;
-    isAuthenticated: boolean;
-    hasRole: (roles: string | string[]) => boolean;
-    onSuccessLogIn: (user: User, token: string, refresh_token: string, expires_at: number) => Promise<void>;
-    onSuccessLogout: () => Promise<void>;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  user: User | null;
+  hasRole: (roles: string[]) => boolean;
+  updateUserData: (userData: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-    const [user, setUser] = useState<User | null>(null);
-    const [access_token, setAccessToken] = useState<string | null>(null);
-    const [refresh_token, setRefreshToken] = useState<string | null>(null);
-    const [loading, setLoading] = useState<boolean>(true); // Thêm trạng thái loading
-    const [role, setRole] = useState<string | null>(null);
+export const useAuthContext = (): AuthContextType => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuthContext must be used within an AuthProvider');
+  }
+  return context;
+};
 
-    const refreshPromiseRef = useRef<Promise<string> | null>(null);
+interface AuthProviderProps {
+  children: ReactNode;
+}
 
-    const onSuccessLogIn = async (user: User, access_token: string, refresh_token: string, expires_at: number) => {
-        const next_expire = new Date().getTime() + expires_at;
-        setUser(user);
-        setAccessToken(access_token);
-        setRefreshToken(refresh_token);
-        setRole(user.role || null);
+export const AuthProvider = ({ children }: AuthProviderProps) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-        localStorage.setItem("user", JSON.stringify(user));
-        localStorage.setItem("access_token", access_token);
-        localStorage.setItem("refresh_token", refresh_token);
-        localStorage.setItem("expires_at", JSON.stringify(next_expire));
-    }
+  // Kiểm tra người dùng hiện tại khi load trang
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        setIsLoading(true);
 
-    const onSuccessLogout = async () => {
-        setUser(null);
-        setAccessToken(null);
-        setRefreshToken(null);
-        setRole(null);
+        // Kiểm tra localStorage có token hay không (kiểm tra cả hai cách lưu)
+        const token = localStorage.getItem('token') || localStorage.getItem('access_token');
 
-        localStorage.removeItem("user");
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
-        localStorage.removeItem("expires_at");
-    }
-
-    const refreshToken = async (): Promise<string> => {
-        if (refreshPromiseRef.current) return refreshPromiseRef.current;
-
-        const storedRefreshToken = localStorage.getItem("refresh_token");
-        if (!storedRefreshToken) return Promise.reject("No refresh token");
-
-        refreshPromiseRef.current = new Promise<string>(async (resolve, reject) => {
-            try {
-                const res = await refreshTokenAPI(storedRefreshToken);
-                const { code, user, access_token, refresh_token, expires_at } = res.data.refreshToken;
-
-                if (code === 200) {
-                    await onSuccessLogIn(JSON.parse(user), access_token, refresh_token, expires_at);
-                    console.log("Token refresh success");
-                    resolve(access_token);
-                } else {
-                    await onSuccessLogout();
-                    console.log("Token refresh failed");
-                    reject("Failed to refresh token");
-                }
-            } catch (error) {
-                await onSuccessLogout();
-                console.log("Token refresh error");
-                reject(error);
-            } finally {
-                // Reset promise cache khi hoàn thành
-                refreshPromiseRef.current = null;
-            }
-        });
-
-        return refreshPromiseRef.current;
-    };
-    const hasRole = (roles: string | string[]): boolean => {
-        if (!role) return false;
-
-        if (Array.isArray(roles)) {
-            return roles.includes(role);
+        if (!token) {
+          console.log("No token found in localStorage");
+          setIsAuthenticated(false);
+          setUser(null);
+          return;
         }
 
-        return role === roles;
+        console.log("Token found, attempting to get user data");
+
+        // Kiểm tra xem có thông tin user đã lưu trong localStorage không
+        const storedUserData = localStorage.getItem('userData');
+        if (storedUserData) {
+          try {
+            // Nếu có, sử dụng thông tin đó trước
+            const parsedUser = JSON.parse(storedUserData);
+            console.log("Using stored user data:", parsedUser);
+            setUser(parsedUser);
+            setIsAuthenticated(true);
+
+            // Vẫn gọi API để cập nhật thông tin mới nhất
+            getCurrentUser().then(freshUserData => {
+              if (freshUserData.code === 200 && freshUserData.user) {
+                console.log("Updated user data from API:", freshUserData.user);
+                setUser(freshUserData.user);
+
+                // Cập nhật lại localStorage
+                localStorage.setItem('userData', JSON.stringify(freshUserData.user));
+                localStorage.setItem('userRole', freshUserData.user.role);
+              }
+            }).catch(err => {
+              console.warn("Could not refresh user data, using stored data instead:", err);
+            });
+
+            return;
+          } catch (parseError) {
+            console.error("Error parsing stored user data:", parseError);
+            // Tiếp tục với API call nếu parse thất bại
+          }
+        }
+
+        // Nếu không có thông tin user trong localStorage hoặc parse thất bại, gọi API
+        console.log("Calling getCurrentUser API...");
+        const userData = await getCurrentUser();
+        console.log("getCurrentUser API response:", userData);
+
+        if (userData.code === 200 && userData.user) {
+          console.log("User authenticated via API:", userData.user);
+
+          // Lưu thông tin user vào localStorage
+          localStorage.setItem('userData', JSON.stringify(userData.user));
+          localStorage.setItem('userRole', userData.user.role);
+          localStorage.setItem('userId', userData.user.id);
+          localStorage.setItem('userName', userData.user.full_name);
+
+          setUser(userData.user);
+          setIsAuthenticated(true);
+
+          // Log thêm thông tin để debug
+          if (userData.user.role === 'admin' || userData.user.role === 'staff') {
+            console.log("Admin/staff user detected in AuthContext");
+          }
+        } else {
+          console.log("Invalid user data or authentication failed:", userData);
+          // Xóa tất cả thông tin xác thực
+          localStorage.removeItem('token');
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refreshToken');
+          localStorage.removeItem('refresh_token');
+          localStorage.removeItem('expiresAt');
+          localStorage.removeItem('userRole');
+          localStorage.removeItem('userId');
+          localStorage.removeItem('userName');
+          localStorage.removeItem('userData');
+
+          setIsAuthenticated(false);
+          setUser(null);
+        }
+      } catch (error) {
+        console.error("Authentication error:", error);
+        // Xóa tất cả thông tin xác thực
+        localStorage.removeItem('token');
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('expiresAt');
+        localStorage.removeItem('userRole');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('userName');
+        localStorage.removeItem('userData');
+
+        setIsAuthenticated(false);
+        setUser(null);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
-    // Đồng bộ giữa các tab
-    useEffect(() => {
-        const handleStorageChange = (e: StorageEvent) => {
-            if (e.key === 'access_token' && e.newValue === null) {
-                // Một tab khác đã đăng xuất
-                onSuccessLogout();
-            } else if (e.key === 'access_token' && e.newValue) {
-                // Một tab khác đã refresh token
-                const storedUser = localStorage.getItem("user");
-                const storedRefreshToken = localStorage.getItem("refresh_token");
-                if (storedUser && e.newValue && storedRefreshToken) {
-                    const parsedUser = JSON.parse(storedUser);
+    checkAuth();
+  }, []);
 
-                    setUser(parsedUser);
-                    setAccessToken(e.newValue);
-                    setRefreshToken(storedRefreshToken);
-                    setRole(parsedUser.role || null);
+  // Kiểm tra nếu người dùng có một trong các role được chỉ định
+  const hasRole = (roles: string[]): boolean => {
+    // Kiểm tra từ user object trước
+    if (user && roles.includes(user.role)) {
+      console.log("Role check from user object:", user.role);
+      return true;
+    }
 
-                }
-            }
-        };
+    // Kiểm tra từ localStorage nếu không có user object
+    const storedRole = localStorage.getItem('userRole');
+    if (storedRole && roles.includes(storedRole)) {
+      console.log("Role check from localStorage:", storedRole);
+      return true;
+    }
 
-        window.addEventListener('storage', handleStorageChange);
-        return () => window.removeEventListener('storage', handleStorageChange);
-    }, []);
+    console.log("Role check failed. User role:", user?.role, "Stored role:", storedRole);
+    return false;
+  };
 
-    useEffect(() => {
-        const initAuth = async () => {
-            setLoading(true);
-            try {
-                const storedAccessToken = localStorage.getItem("access_token");
-                const storedUser = localStorage.getItem("user");
-                const storedRefreshToken = localStorage.getItem("refresh_token");
-                const storedExpires_at = localStorage.getItem("expires_at");
+  // Cập nhật thông tin người dùng
+  const updateUserData = (userData: Partial<User>) => {
+    if (user) {
+      setUser({ ...user, ...userData });
+    }
+  };
 
-                if (storedAccessToken && storedUser && storedRefreshToken && storedExpires_at) {
-                    const now = new Date();
-                    const temp = JSON.parse(storedExpires_at);
-                    const next_expire = new Date(temp);
-
-                    if (now > next_expire) {
-                        // Token đã hết hạn - cần refresh
-                        try {
-                            await refreshToken();
-                        } catch (error) {
-                            console.error("Failed to refresh token during init:", error);
-                        }
-                    } else {
-                        // Token còn hiệu lực - set state
-                        const parsedUser = JSON.parse(storedUser);
-                        setAccessToken(storedAccessToken);
-                        setUser(parsedUser);
-                        setRefreshToken(storedRefreshToken);
-                        // Also set role
-                        setRole(parsedUser.role || null);
-
-                    }
-                }
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        initAuth();
-    }, []);
-
-    return (
-        <AuthContext.Provider
-            value={{
-                user,
-                access_token,
-                refresh_token,
-                loading,
-                role,
-                hasRole,
-                isAuthenticated: !!user,
-                onSuccessLogIn,
-                onSuccessLogout
-            }}
-        >
-            {children}
-        </AuthContext.Provider>
-    );
-}
-
-export const useAuthContext = () => {
-    const context = useContext(AuthContext);
-    if (context === undefined)
-        throw new Error('AuthContext must be used within an AuthProvider');
-    return context;
-}
+  return (
+    <AuthContext.Provider value={{
+      isAuthenticated,
+      isLoading,
+      user,
+      hasRole,
+      updateUserData
+    }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};

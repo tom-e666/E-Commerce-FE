@@ -33,7 +33,7 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts"
-  ],
+, "src/app/checkout/success"  ],
   "exclude": [
     "node_modules"
   ]

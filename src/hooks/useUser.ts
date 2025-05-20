@@ -18,21 +18,47 @@ export const useUser = () => {
   const getUsers = async () => {
     setLoading(true);
     try {
-      const response = await getUsersAPI();
-      if (!response?.data) {
-        throw new Error("Không thể lấy danh sách người dùng");
+      // Kiểm tra token trước khi gọi API
+      const token = localStorage.getItem('token') || localStorage.getItem('access_token');
+      if (!token) {
+        console.error("No authentication token found for getUsers");
+        throw new Error("Vui lòng đăng nhập lại để xem danh sách người dùng");
       }
-      
+
+      console.log("Fetching users with token:", token.substring(0, 15) + "...");
+
+      const response = await getUsersAPI();
+      console.log("Users API response:", response);
+
+      if (!response) {
+        console.error("Empty response from getUsers API");
+        throw new Error("Không thể lấy danh sách người dùng - Phản hồi trống");
+      }
+
+      if (!response.data) {
+        console.error("Response missing data property:", response);
+        throw new Error("Không thể lấy danh sách người dùng - Thiếu dữ liệu");
+      }
+
+      if (!response.data.getUsers) {
+        console.error("Response missing getUsers property:", response.data);
+        throw new Error("Không thể lấy danh sách người dùng - Cấu trúc không hợp lệ");
+      }
+
       const { code, message, users } = response.data.getUsers;
-      
+
       if (code === 200) {
+        console.log("Successfully fetched users:", users?.length || 0);
         setUsers(users || []);
         return users;
       } else {
+        console.error("API returned error:", { code, message });
         throw new Error(message || "Không thể lấy danh sách người dùng");
       }
     } catch (error) {
       console.error("Error fetching users:", error);
+      // Trả về mảng rỗng thay vì ném lỗi để tránh crash UI
+      setUsers([]);
       throw error;
     } finally {
       setLoading(false);
@@ -48,14 +74,14 @@ export const useUser = () => {
       if (!response?.data) {
         throw new Error("Không thể cập nhật vai trò người dùng");
       }
-      
+
       const { code, message } = response.data.auditRole;
-      
+
       if (code === 200) {
-        setUsers(prevUsers => 
-          prevUsers.map(user => 
-            user.id === userId 
-              ? { ...user, role } 
+        setUsers(prevUsers =>
+          prevUsers.map(user =>
+            user.id === userId
+              ? { ...user, role }
               : user
           )
         );
@@ -78,10 +104,10 @@ export const useUser = () => {
     if (!query.trim()) {
       return users;
     }
-    
+
     const lowerQuery = query.toLowerCase();
-    return users.filter(user => 
-      user.email.toLowerCase().includes(lowerQuery) || 
+    return users.filter(user =>
+      user.email.toLowerCase().includes(lowerQuery) ||
       user.full_name.toLowerCase().includes(lowerQuery) ||
       user.phone.toLowerCase().includes(lowerQuery)
     );

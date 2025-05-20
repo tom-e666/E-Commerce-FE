@@ -14,7 +14,6 @@ export type ShippingData = Shipping & {
   code?: number;
   message?: string;
 };
-
 export const useShipping = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [shippingData, setShippingData] = useState<ShippingData | null>(null);

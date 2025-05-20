@@ -58,7 +58,7 @@ const PaymentForm = React.memo(({ orderId, totalAmount, onBack, onComplete }: Pa
 
                     setTimeout(() => {
                         router.push(`/checkout/success?orderId=${orderId}&demo=true&method=cc`);
-                    }, 1500);
+                    }, 5000);
                     break;
 
                 case 'atm':
@@ -69,7 +69,7 @@ const PaymentForm = React.memo(({ orderId, totalAmount, onBack, onComplete }: Pa
 
                     setTimeout(() => {
                         router.push(`/checkout/success?orderId=${orderId}&demo=true&method=atm`);
-                    }, 1500);
+                    }, 5000);
                     break;
 
                 case 'mbanking':
@@ -80,7 +80,7 @@ const PaymentForm = React.memo(({ orderId, totalAmount, onBack, onComplete }: Pa
 
                     setTimeout(() => {
                         router.push(`/checkout/success?orderId=${orderId}&demo=true&method=mbanking`);
-                    }, 1500);
+                    }, 5000);
                     break;
 
                 default:

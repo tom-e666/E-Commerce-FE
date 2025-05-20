@@ -38,6 +38,7 @@ export default function CheckoutPage() {
         district: "",
         ward: "",
         notes: "",
+        shippingMethod: "SHOP"
     });
 
     interface Province {
@@ -223,29 +224,24 @@ export default function CheckoutPage() {
 
         setIsSubmitting(true);
         try {
-            const selectedProvince = provinces.find(p => p.province_name === shippingInfo.city);
-            const selectedDistrict = districts.find(d => d.district_name === shippingInfo.district);
-            const selectedWard = wards.find(w => w.ward_name === shippingInfo.ward);
-
-            if (!selectedProvince || !selectedDistrict || !selectedWard) {
+            // Validate address information
+            if (!shippingInfo.city || !shippingInfo.district || !shippingInfo.ward) {
                 toast.error("Thông tin địa chỉ không hợp lệ. Vui lòng kiểm tra lại.");
-                setIsSubmitting(false); // Make sure to reset loading state
+                setIsSubmitting(false);
                 return;
             }
 
+            // Call the createShipping function with the correct parameters
             const response = await handleCreateShipping(
                 orderId,
                 shippingInfo.address,
                 shippingInfo.fullName,
                 shippingInfo.phone,
-                shippingInfo.city,
-                shippingInfo.district,
-                shippingInfo.ward,
-                selectedDistrict.district_id.toString(),
-                selectedWard.ward_id.toString(),
-                'SHOP',
-                0,
-                shippingInfo.notes
+                shippingInfo.city,       // provinceName
+                shippingInfo.district,   // districtName
+                shippingInfo.ward,       // wardName
+                'SHOP',                  // shippingMethod
+                shippingInfo.notes || undefined // note (optional)
             );
 
             // Check if the shipping creation was successful
@@ -266,9 +262,6 @@ export default function CheckoutPage() {
         orderId,
         shippingInfo,
         validateShippingInfo,
-        provinces,
-        districts,
-        wards,
         handleCreateShipping
     ]);
 

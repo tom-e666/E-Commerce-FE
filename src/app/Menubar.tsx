@@ -70,6 +70,14 @@ const Menubar = () => {
                 </div>
 
                 <div className="h-full w-20 flex justify-center items-center">
+                    <Link href="/news" passHref>
+                        <Button variant={"outline"} className="bg-transparent border-0">
+                            Bản tin
+                        </Button>
+                    </Link>
+                </div>
+
+                <div className="h-full w-20 flex justify-center items-center">
                     <Link href="/showroom" passHref>
                         <Button variant={"outline"} className="bg-transparent border-0">
                             Showroom
