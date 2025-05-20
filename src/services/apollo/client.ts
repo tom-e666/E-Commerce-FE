@@ -135,7 +135,7 @@ const authLink = new ApolloLink((operation, forward) => {
 
 // HTTP link
 const httpLink = new HttpLink({
-  uri: 'https://0862-116-110-41-30.ngrok-free.app/graphql', // URL API
+  uri: process.env.NEXT_PUBLIC_GRAPHQL_API_URL || 'https://0862-116-110-41-30.ngrok-free.app/graphql', // URL API
   // Không sử dụng credentials: 'include' để tránh lỗi CORS
 });
 

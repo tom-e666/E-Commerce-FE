@@ -80,7 +80,47 @@ const GET_PRODUCT = gql`
     }
   }
 `;
-
+export const SMART_SEARCH = gql`query SmartSearch($query: String!) {
+  smartSearch(query: $query) {
+    code
+    filters {
+      brands {
+        count
+        id
+        name
+      }
+      categories {
+        count
+        id
+        name
+      }
+      price_range {
+        max
+        min
+      }
+    }
+    message
+    products {
+      brand_id
+      details {
+        description
+        images
+        keywords
+        specifications {
+          name
+          value
+        }
+      }
+      id
+      name
+      price
+      status
+      stock
+      weight
+    }
+    total
+  }
+}`
 const GET_PRODUCTS = gql`
   query GetProducts($status: String) {
     getProducts(status: $status) {

@@ -157,7 +157,7 @@ export default function NewsPage() {
       {/* Tiêu đề trang */}
       <div className="text-center mb-10">
         <h1 className="text-3xl font-bold mb-2">Bản Tin Công Nghệ</h1>
-        <p className="text-gray-600">Cập nhật những tin tức mới nhất về công nghệ, sản phẩm và khuyến mãi</p>
+        <p className="text-gray-800">Cập nhật những tin tức mới nhất về công nghệ, sản phẩm và khuyến mãi</p>
       </div>
 
       {/* Thông báo lỗi nếu có */}
@@ -194,7 +194,7 @@ export default function NewsPage() {
         ) : (
           // Hiển thị số lượng bản tin giới hạn theo visibleNews
           news.slice(0, visibleNews).map((item) => (
-            <Card key={item.id} className="overflow-hidden hover:shadow-lg transition-shadow group">
+            <Card key={item.id} className="overflow-hidden hover:shadow-lg transition-shadow group flex flex-col h-full">
               <div className="relative h-48 w-full overflow-hidden">
                 <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
                   <Image
@@ -229,10 +229,10 @@ export default function NewsPage() {
                   {item.views}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="py-2">
+              <CardContent className="py-2 flex-grow">
                 <p className="text-gray-600 text-sm line-clamp-3">{item.summary}</p>
               </CardContent>
-              <CardFooter className="pt-2">
+              <CardFooter className="pt-2 mt-auto">
                 <Button asChild variant="outline" size="sm" className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition-colors w-full">
                   {item.url ? (
                     <a href={item.url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center">
@@ -277,9 +277,9 @@ export default function NewsPage() {
       )}
 
       {/* Nguồn dữ liệu */}
-      <div className="mt-10 text-center text-sm text-gray-500">
+      {/* <div className="mt-10 text-center text-sm text-gray-500">
         <p>Dữ liệu bản tin được lấy từ <a href="https://github.com/SauravKanchan/NewsAPI" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">NewsAPI</a></p>
-      </div>
+      </div> */}
     </div>
   );
 }
