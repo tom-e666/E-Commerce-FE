@@ -11,6 +11,7 @@ export const LOGIN_MUTATION = gql`
       user{
         id
         full_name
+        role
       } 
     }
   }
@@ -78,6 +79,8 @@ mutation refresh_token( $refresh_token:String!){
     user
     {
       full_name
+      id
+      role
     }
     expires_at
   }

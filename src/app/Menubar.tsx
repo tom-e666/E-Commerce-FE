@@ -83,7 +83,7 @@ const Menubar = () => {
                     {!user && <Button variant={"outline"}
                         className="bg-transparent border-0"
                         onClick={() => { router.push("/login") }}
-                    >                        Login
+                    >                        Đăng nhập
                     </Button>}
                     {user && (
                         <DropdownMenu>

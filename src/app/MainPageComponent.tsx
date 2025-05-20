@@ -4,10 +4,12 @@ import { useProduct } from "@/hooks/useProduct"
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { addToCart as addToCartAPI } from "@/services/cart/endpoint";
+
+import { useAuthContext } from "@/contexts/AuthContext";
 export default function MainPageComponent() {
     const { products, getProducts } = useProduct();
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-
+    const { isAuthenticated } = useAuthContext();
     useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
             const x = (e.clientX / window.innerWidth) * 100;
@@ -31,6 +33,10 @@ export default function MainPageComponent() {
     }, []);
 
     const addToCart = async (id: string) => {
+        if (!isAuthenticated) {
+            toast.error("Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng");
+            return;
+        }
         toast.promise(addToCartAPI(id), {
             loading: "Đang thêm sản phẩm vào giỏ hàng...",
             success: "Thêm sản phẩm vào giỏ hàng thành công",
