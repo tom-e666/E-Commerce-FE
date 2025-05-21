@@ -3,31 +3,19 @@ import {
     createOrderFromCartAPI,
     getOrderAPI,
     getUserOrdersAPI,
+    getAllOrdersAPI,
     updateOrderItemAPI,
     deleteOrderItemAPI,
     cancelOrderAPI,
     confirmOrderAPI,
     shipOrderAPI,
     deliverOrderAPI,
-    getOrdersAPI
+    OrderItemInterface,
+    OrderInterface
 } from '@/services/order/endpoints';
 
-export interface OrderItem {
-    id: string;
-    product_id: string;
-    name: string;
-    quantity: number;
-    price: number;
-    image: string
-}
-export interface Order {
-    id: string;
-    user_id?: string;
-    status: string;
-    total_price: number;
-    created_at: string;
-    items: OrderItem[];
-}
+export type OrderItem = OrderItemInterface;
+export type Order = OrderInterface;
 
 export interface OrderInput {
     order_id: string;
@@ -38,16 +26,18 @@ export interface OrderInput {
     recipient_name?: string;
     recipient_phone?: string;
 }
+
 export interface OrderFilter {
+    userId?: string;
     status?: string;
     createdAfter?: string;
     createdBefore?: string;
 }
+
 export const useOrder = () => {
     const [loading, setLoading] = useState<boolean>(false);
     const [orders, setOrders] = useState<Order[]>([]);
     const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
-
 
     const getUserOrders = async () => {
         setLoading(true);
@@ -72,25 +62,26 @@ export const useOrder = () => {
             setLoading(false);
         }
     };
+
     const getOrders = async (filters?: OrderFilter) => {
         setLoading(true);
         try {
-            const { status, createdAfter, createdBefore } = filters || {};
+            const { userId, status, createdAfter, createdBefore } = filters || {};
 
-            console.log("Fetching orders with filters:", { status, createdAfter, createdBefore });
+            console.log("Fetching orders with filters:", { userId, status, createdAfter, createdBefore });
 
-            // Kiểm tra token trước khi gọi API
+            // Check for token before API call
             const token = localStorage.getItem('token') || localStorage.getItem('access_token');
             if (!token) {
                 console.error("No authentication token found for getOrders");
                 throw new Error("Vui lòng đăng nhập lại để xem danh sách đơn hàng");
             }
 
-            const response = await getOrdersAPI(status, createdAfter, createdBefore);
+            const response = await getAllOrdersAPI(userId, status, createdAfter, createdBefore);
             console.log("Orders API response:", response);
 
             if (!response) {
-                console.error("Empty response from getOrders API");
+                console.error("Empty response from getAllOrders API");
                 throw new Error("Không thể lấy danh sách đơn hàng - Phản hồi trống");
             }
 
@@ -99,12 +90,12 @@ export const useOrder = () => {
                 throw new Error("Không thể lấy danh sách đơn hàng - Thiếu dữ liệu");
             }
 
-            if (!response.data.getOrders) {
-                console.error("Response missing getOrders property:", response.data);
+            if (!response.data.getAllOrders) {
+                console.error("Response missing getAllOrders property:", response.data);
                 throw new Error("Không thể lấy danh sách đơn hàng - Cấu trúc không hợp lệ");
             }
 
-            const { code, message, orders } = response.data.getOrders;
+            const { code, message, orders } = response.data.getAllOrders;
 
             if (code === 200) {
                 console.log("Successfully fetched orders:", orders?.length || 0);
@@ -116,7 +107,7 @@ export const useOrder = () => {
             }
         } catch(error) {
             console.error("Error fetching admin orders:", error);
-            // Trả về mảng rỗng thay vì ném lỗi để tránh crash UI
+            // Return empty array to avoid UI crash
             setOrders([]);
             throw error;
         } finally {
@@ -147,6 +138,7 @@ export const useOrder = () => {
             setLoading(false);
         }
     };
+
     const createOrderFromCart = async () => {
         setLoading(true);
         try {
@@ -170,6 +162,7 @@ export const useOrder = () => {
             setLoading(false);
         }
     };
+
     const createOrder = async (orderData: OrderInput) => {
         setLoading(true);
         try {
@@ -243,6 +236,7 @@ export const useOrder = () => {
             setLoading(false);
         }
     };
+
     const deleteOrderItem = async (orderItemId: string) => {
         setLoading(true);
         try {
@@ -355,6 +349,7 @@ export const useOrder = () => {
             setLoading(false);
         }
     };
+
     const shipOrder = async (orderId: string) => {
         setLoading(true);
         try {

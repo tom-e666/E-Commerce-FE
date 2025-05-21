@@ -14,6 +14,12 @@ interface CurrentUserResponse {
   } | null;
 }
 
+// Base response interface for common responses
+export interface BaseResponse {
+  code: number;
+  message: string;
+}
+
 export const LOGIN_MUTATION = gql`
   mutation Login($email: String!, $password: String!) {
     login(email: $email, password: $password) {
@@ -156,4 +162,86 @@ return apolloClient.mutate({
   }
 });
 }
+
+// Updated email verification mutations
+
+export const SEND_VERIFICATION_EMAIL = gql`
+  mutation SendVerificationEmail {
+    sendVerificationEmail {
+      code
+      message
+    }
+  }
+`;
+
+// Updated email verification mutation to match the schema that only requires token
+export const VERIFY_EMAIL = gql`
+  mutation VerifyEmail($token: String!) {
+    verifyEmail(token: $token) {
+      code
+      message
+    }
+  }
+`;
+
+export const RESEND_VERIFICATION_EMAIL = gql`
+  mutation ResendVerificationEmail {
+    resendVerificationEmail {
+      code
+      message
+    }
+  }
+`;
+
+export const sendVerificationEmail = async (): Promise<BaseResponse> => {
+  try {
+    const response = await apolloClient.mutate({
+      mutation: SEND_VERIFICATION_EMAIL,
+      context: {
+        requiresAuth: true
+      }
+    });
+    return response.data.sendVerificationEmail;
+  } catch (error) {
+    console.error('Error sending verification email:', error);
+    return {
+      code: 500,
+      message: 'An error occurred while sending verification email'
+    };
+  }
+};
+
+export const verifyEmail = async (token: string): Promise<BaseResponse> => {
+  try {
+    const response = await apolloClient.mutate({
+      mutation: VERIFY_EMAIL,
+      variables: { token }
+    });
+    return response.data.verifyEmail;
+  } catch (error) {
+    console.error('Error verifying email:', error);
+    return {
+      code: 500,
+      message: 'An error occurred during email verification'
+    };
+  }
+};
+
+export const resendVerificationEmail = async (): Promise<BaseResponse> => {
+  try {
+    const response = await apolloClient.mutate({
+      mutation: RESEND_VERIFICATION_EMAIL,
+      context: {
+        requiresAuth: true
+      }
+    });
+    return response.data.resendVerificationEmail;
+  } catch (error) {
+    console.error('Error resending verification email:', error);
+    return {
+      code: 500,
+      message: 'An error occurred while resending verification email'
+    };
+  }
+};
 

@@ -97,7 +97,7 @@ export default function CredentialPage() {
         setIsUpdating(true);
         try {
             await changePassword(currentPassword, newPassword);
-            toast.success("Đổi mật khẩu thành côngcông");
+            toast.success("Đổi mật khẩu thành công");
             setCurrentPassword('');
             setNewPassword('');
             setConfirmPassword('');

@@ -110,7 +110,7 @@ export default function AdminPage() {
                             <h2 className="text-xl font-bold mb-2">Hỗ trợ</h2>
                             <div className="flex-1 w-full flex justify-center items-center mb-3">
                                 <Image
-                                    src="/support.png"
+                                    src="/support.jpg"
                                     alt="Support"
                                     width={120}
                                     height={120}

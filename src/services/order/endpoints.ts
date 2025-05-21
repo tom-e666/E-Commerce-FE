@@ -27,8 +27,8 @@ export const CREATE_ORDER_FROM_CART = gql`
 `;
 
 export const UPDATE_ORDER_ITEM = gql`
-  mutation UpdateOrderItem($orderItemId: ID!, $quantity: Int!) {
-    updateOrderItem(order_item_id: $orderItemId, quantity: $quantity) {
+  mutation UpdateOrderItem($order_item_id: ID!, $quantity: Int!) {
+    updateOrderItem(order_item_id: $order_item_id, quantity: $quantity) {
       code
       message
     }
@@ -36,8 +36,8 @@ export const UPDATE_ORDER_ITEM = gql`
 `;
 
 export const DELETE_ORDER_ITEM = gql`
-  mutation DeleteOrderItem($orderItemId: ID!) {
-    deleteOrderItem(order_item_id: $orderItemId) {
+  mutation DeleteOrderItem($order_item_id: ID!) {
+    deleteOrderItem(order_item_id: $order_item_id) {
       code
       message
     }
@@ -45,8 +45,8 @@ export const DELETE_ORDER_ITEM = gql`
 `;
 
 export const CANCEL_ORDER = gql`
-  mutation CancelOrder($orderId: ID!) {
-    cancelOrder(order_id: $orderId) {
+  mutation CancelOrder($order_id: ID!) {
+    cancelOrder(order_id: $order_id) {
       code
       message
     }
@@ -54,8 +54,8 @@ export const CANCEL_ORDER = gql`
 `;
 
 export const CONFIRM_ORDER = gql`
-  mutation ConfirmOrder($orderId: ID!) {
-    confirmOrder(order_id: $orderId) {
+  mutation ConfirmOrder($order_id: ID!) {
+    confirmOrder(order_id: $order_id) {
       code
       message
     }
@@ -63,8 +63,8 @@ export const CONFIRM_ORDER = gql`
 `;
 
 export const SHIP_ORDER = gql`
-  mutation ShipOrder($orderId: ID!) {
-    shipOrder(order_id: $orderId) {
+  mutation ShipOrder($order_id: ID!) {
+    shipOrder(order_id: $order_id) {
       code
       message
     }
@@ -72,8 +72,8 @@ export const SHIP_ORDER = gql`
 `;
 
 export const DELIVER_ORDER = gql`
-  mutation DeliverOrder($orderId: ID!) {
-    deliverOrder(order_id: $orderId) {
+  mutation DeliverOrder($order_id: ID!) {
+    deliverOrder(order_id: $order_id) {
       code
       message
     }
@@ -81,8 +81,8 @@ export const DELIVER_ORDER = gql`
 `;
 
 export const GET_ORDER = gql`
-  query GetOrder($orderId: ID!) {
-    getOrder(order_id: $orderId) {
+  query GetOrder($order_id: ID!) {
+    getOrder(order_id: $order_id) {
       code
       message
       order {
@@ -128,12 +128,13 @@ export const GET_USER_ORDERS = gql`
   }
 `;
 
-export const GET_ORDERS = gql`
-  query GetOrders($status: String, $createdAfter: String, $createdBefore: String) {
-    getOrders(
+export const GET_ALL_ORDERS = gql`
+  query GetAllOrders($user_id: ID, $status: String, $created_after: String, $created_before: String) {
+    getAllOrders(
+      user_id: $user_id
       status: $status
-      created_after: $createdAfter
-      created_before: $createdBefore
+      created_after: $created_after
+      created_before: $created_before
     ) {
       code
       message
@@ -156,7 +157,7 @@ export const GET_ORDERS = gql`
   }
 `;
 
-
+// API function implementations
 export const createOrderFromCartAPI = async () => {
   try {
     const response = await apolloClient.mutate({
@@ -176,7 +177,7 @@ export const updateOrderItemAPI = async (orderItemId: string, quantity: number) 
   try {
     const response = await apolloClient.mutate({
       mutation: UPDATE_ORDER_ITEM,
-      variables: { orderItemId, quantity },
+      variables: { order_item_id: orderItemId, quantity },
       context: {
         requiresAuth: true
       }
@@ -192,7 +193,7 @@ export const deleteOrderItemAPI = async (orderItemId: string) => {
   try {
     const response = await apolloClient.mutate({
       mutation: DELETE_ORDER_ITEM,
-      variables: { orderItemId },
+      variables: { order_item_id: orderItemId },
       context: {
         requiresAuth: true
       }
@@ -208,7 +209,7 @@ export const cancelOrderAPI = async (orderId: string) => {
   try {
     const response = await apolloClient.mutate({
       mutation: CANCEL_ORDER,
-      variables: { orderId },
+      variables: { order_id: orderId },
       context: {
         requiresAuth: true
       }
@@ -224,7 +225,7 @@ export const confirmOrderAPI = async (orderId: string) => {
   try {
     const response = await apolloClient.mutate({
       mutation: CONFIRM_ORDER,
-      variables: { orderId },
+      variables: { order_id: orderId },
       context: {
         requiresAuth: true
       }
@@ -240,7 +241,7 @@ export const shipOrderAPI = async (orderId: string) => {
   try {
     const response = await apolloClient.mutate({
       mutation: SHIP_ORDER,
-      variables: { orderId },
+      variables: { order_id: orderId },
       context: {
         requiresAuth: true
       }
@@ -256,7 +257,7 @@ export const deliverOrderAPI = async (orderId: string) => {
   try {
     const response = await apolloClient.mutate({
       mutation: DELIVER_ORDER,
-      variables: { orderId },
+      variables: { order_id: orderId },
       context: {
         requiresAuth: true
       }
@@ -272,7 +273,7 @@ export const getOrderAPI = async (orderId: string) => {
   try {
     const response = await apolloClient.query({
       query: GET_ORDER,
-      variables: { orderId },
+      variables: { order_id: orderId },
       fetchPolicy: 'network-only',
       context: {
         requiresAuth: true
@@ -300,51 +301,73 @@ export const getUserOrdersAPI = async () => {
     throw error;
   }
 };
-export const getOrdersAPI = async (
+
+export const getAllOrdersAPI = async (
+  userId?: string,
   status?: string,
   createdAfter?: string,
   createdBefore?: string
 ) => {
   try {
-    // Kiểm tra token trước khi gọi API
-    const token = localStorage.getItem('token') || localStorage.getItem('access_token');
-    if (!token) {
-      console.error('No token available for getOrdersAPI');
-      throw new Error('Vui lòng đăng nhập lại để xem danh sách đơn hàng');
-    }
-
-    console.log('Calling getOrders API with token:', token.substring(0, 15) + '...');
-    console.log('Query variables:', { status, createdAfter, createdBefore });
-
     const response = await apolloClient.query({
-      query: GET_ORDERS,
+      query: GET_ALL_ORDERS,
       variables: {
+        user_id: userId,
         status,
-        createdAfter,
-        createdBefore
+        created_after: createdAfter,
+        created_before: createdBefore
       },
       fetchPolicy: 'network-only',
       context: {
-        requiresAuth: true,
-        headers: {
-          authorization: `Bearer ${token}` // Thêm token vào header
-        }
+        requiresAuth: true
       }
     });
-
-    console.log('getOrders API response:', response);
     return response;
   } catch (error) {
-    console.error('Error fetching orders:', error);
-    // Trả về một đối tượng giả để tránh lỗi "Cannot read properties of undefined"
+    console.error('Error fetching all orders:', error);
     return {
       data: {
-        getOrders: {
+        getAllOrders: {
           code: 500,
-          message: 'Lỗi khi lấy danh sách đơn hàng',
+          message: 'Error fetching orders',
           orders: []
         }
       }
     };
   }
 };
+
+export interface OrderItemInterface {
+  id: string;
+  product_id: string;
+  name: string;
+  quantity: number;
+  price: number;
+  image?: string;
+}
+
+export interface OrderInterface {
+  id: string;
+  user_id: string;
+  status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
+  created_at: string;
+  total_price: number;
+  items: OrderItemInterface[];
+}
+
+export interface OrderResponse {
+  code: number;
+  message: string;
+  order?: OrderInterface;
+}
+
+export interface OrdersResponse {
+  code: number;
+  message: string;
+  orders: OrderInterface[];
+}
+
+export interface BaseResponse {
+  code: number;
+  message: string;
+}

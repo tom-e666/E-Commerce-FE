@@ -101,7 +101,15 @@ export default function OrderManagement() {
                 const statusClass = statusColors.get(status) || "bg-gray-100 text-gray-800";
                 // @ts-expect-error object deref
                 const icon = statusIcons[status] || <AlertCircle className="h-4 w-4 mr-1" />;
-                const displayText = status.charAt(0).toUpperCase() + status.slice(1);
+                let displayText = status.charAt(0).toUpperCase() + status.slice(1);
+
+                switch(status) {
+                    case 'pending': displayText = "Chờ xác nhận"; break;
+                    case 'confirmed': displayText = "Đã xác nhận"; break;
+                    case 'shipped': displayText = "Đang giao"; break;
+                    case 'delivered': displayText = "Đã giao"; break;
+                    case 'cancelled': displayText = "Đã hủy"; break;
+                }
 
                 return (
                     <div className={`flex items-center justify-center px-2 py-1 rounded-full ${statusClass}`}>
@@ -112,16 +120,10 @@ export default function OrderManagement() {
             }
         },
         {
-            field: "payment_status",
-            headerName: "Thanh toán",
+            field: "user_id",
+            headerName: "Mã khách hàng",
             flex: 1.5,
             minWidth: 120,
-            // @ts-expect-error any
-            valueFormatter: (params) => {
-                if (params.value === "paid") return "Đã thanh toán";
-                if (params.value === "pending") return "Chưa thanh toán";
-                return params.value;
-            }
         },
         {
             field: "items",
@@ -332,16 +334,17 @@ export default function OrderManagement() {
                                                     <span className="text-muted-foreground">Trạng thái:</span>
                                                     <Badge className={statusColors.get(selectedOrder.status)}>
                                                         {statusIcons[selectedOrder.status]}
-                                                        {selectedOrder.status.charAt(0).toUpperCase() + selectedOrder.status.slice(1)}
+                                                        {selectedOrder.status === 'pending' ? 'Chờ xác nhận' :
+                                                          selectedOrder.status === 'confirmed' ? 'Đã xác nhận' :
+                                                          selectedOrder.status === 'shipped' ? 'Đang giao hàng' :
+                                                          selectedOrder.status === 'delivered' ? 'Đã giao hàng' :
+                                                          selectedOrder.status === 'cancelled' ? 'Đã hủy' :
+                                                          selectedOrder.status.charAt(0).toUpperCase() + selectedOrder.status.slice(1)}
                                                     </Badge>
                                                 </div>
                                                 <div className="flex justify-between">
-                                                    <span className="text-muted-foreground">Thanh toán:</span>
-                                                    <span>{selectedOrder.payment_status === "paid" ? "Đã thanh toán" : "Chưa thanh toán"}</span>
-                                                </div>
-                                                <div className="flex justify-between">
-                                                    <span className="text-muted-foreground">Phương thức thanh toán:</span>
-                                                    <span>{selectedOrder.payment_method === "cod" ? "Thanh toán khi nhận hàng" : selectedOrder.payment_method || "N/A"}</span>
+                                                    <span className="text-muted-foreground">Mã khách hàng:</span>
+                                                    <span>{selectedOrder.user_id || "N/A"}</span>
                                                 </div>
                                                 <div className="flex justify-between">
                                                     <span className="text-muted-foreground">Tổng tiền:</span>
@@ -447,16 +450,22 @@ export default function OrderManagement() {
                                         {selectedOrder.items.map((item) => (
                                             <div key={item.id} className="flex items-center p-3 border rounded-md">
                                                 <div className="h-16 w-16 relative rounded overflow-hidden flex-shrink-0 mr-4">
-                                                    <Image
-                                                        src={item.product?.image || "/laptop.png"}
-                                                        alt={item.product?.name || "Sản phẩm"}
-                                                        fill
-                                                        className="object-cover"
-                                                    />
+                                                    {item.image ? (
+                                                        <Image
+                                                            src={item.image}
+                                                            alt={item.name}
+                                                            fill
+                                                            className="object-contain"
+                                                        />
+                                                    ) : (
+                                                        <div className="h-full w-full bg-gray-100 flex items-center justify-center">
+                                                            <Package className="h-8 w-8 text-gray-400" />
+                                                        </div>
+                                                    )}
                                                 </div>
                                                 <div className="flex-1">
                                                     <div className="flex justify-between">
-                                                        <h4 className="font-medium">{item.product?.name || "Sản phẩm"}</h4>
+                                                        <h4 className="font-medium">{item.name}</h4>
                                                         <span>{formatCurrency(item.price)}</span>
                                                     </div>
                                                     <div className="flex justify-between mt-1 text-sm text-muted-foreground">

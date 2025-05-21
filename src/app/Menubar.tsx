@@ -309,7 +309,7 @@ const Menubar = () => {
                                         <div className="px-4 py-2 text-white font-medium">
                                             Xin chào, {user.full_name.split(" ").pop()}
                                         </div>
-                                        <Link href="/profile" passHref>
+                                        <Link href="/credential" passHref>
                                             <Button variant="ghost" className="w-full justify-start text-white">
                                                 Trang cá nhân
                                             </Button>
