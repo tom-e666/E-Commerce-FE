@@ -124,7 +124,7 @@ export default function SmartSearchPage() {
         <p className="text-gray-600">
           {query ? (
             <>
-              Kết quả tìm kiếm cho <span className="font-semibold">"{query}"</span>
+              Kết quả tìm kiếm cho <span className="font-semibold">&ldquo;{query}&rdquo;</span>
             </>
           ) : (
             'Vui lòng nhập từ khóa tìm kiếm'
@@ -164,13 +164,12 @@ export default function SmartSearchPage() {
             </Alert>
           ) : (
             <>
-              {/* Debug log */}
               {/* Hiển thị metadata */}
               <div className="mb-6 p-4 bg-gray-50 rounded-lg">
                 <p className="text-sm text-gray-600">
-                  Tìm thấy {searchResults.total} kết quả cho "{query}"
+                  Tìm thấy {searchResults.total} kết quả cho &ldquo;{query}&rdquo;
                   {searchResults.metadata && searchResults.metadata.interpreted_query !== searchResults.metadata.original_query && (
-                    <> (đã hiểu là "{searchResults.metadata.interpreted_query}")</>
+                    <> (đã hiểu là &ldquo;{searchResults.metadata.interpreted_query}&rdquo;)</>
                   )}
                   {searchResults.metadata && searchResults.metadata.processing_time_ms && (
                     <> trong {searchResults.metadata.processing_time_ms}ms</>
@@ -278,7 +277,7 @@ export default function SmartSearchPage() {
                   <AlertCircle className="h-4 w-4" />
                   <AlertTitle>Không tìm thấy sản phẩm</AlertTitle>
                   <AlertDescription>
-                    Không tìm thấy sản phẩm nào phù hợp với từ khóa "{query}". Vui lòng thử lại với từ khóa khác.
+                    Không tìm thấy sản phẩm nào phù hợp với từ khóa &ldquo;{query}&rdquo;. Vui lòng thử lại với từ khóa khác.
                   </AlertDescription>
                 </Alert>
               )}

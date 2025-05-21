@@ -4,7 +4,7 @@ import { apolloClient } from "../apollo/client";
 // Query: Get a single support ticket by ID
 export const GET_SUPPORT_TICKET = gql`
   query GetSupportTicket($id: ID!) {
-    getSupportTicket(ticket_id: $id) {
+    getSupportTicket(id: $id) {
       code
       message
       supportTicket {
@@ -12,10 +12,20 @@ export const GET_SUPPORT_TICKET = gql`
         subject
         message
         status
+        user_id
         created_at
-        user {
+        responses {
           id
-          full_name
+          subject
+          message
+          ticket_id
+          user_id
+          created_at
+          user {
+            id
+            role
+            full_name
+          }
         }
       }
     }
@@ -24,23 +34,23 @@ export const GET_SUPPORT_TICKET = gql`
 
 // Query: Get all support tickets with filters
 export const GET_SUPPORT_TICKETS = gql`
-  query GetSupportTickets($status: String, $page: Int, $per_page: Int) {
-    getSupportTickets(status: $status, page: $page, per_page: $per_page) {
+  query GetSupportTickets($userId: ID, $status: String, $createdAfter: String, $createdBefore: String) {
+    getSupportTickets(
+      user_id: $userId, 
+      status: $status, 
+      created_after: $createdAfter, 
+      created_before: $createdBefore
+    ) {
       code
       message
       supportTickets {
         id
         subject
+        message
         status
+        user_id
         created_at
-        user {
-          id
-          full_name
-        }
       }
-      total
-      current_page
-      per_page
     }
   }
 `;
@@ -51,14 +61,17 @@ export const GET_SUPPORT_TICKET_RESPONSES = gql`
     getSupportTicketResponses(ticket_id: $ticketId) {
       code
       message
-      responses {
+      supportTicketResponses {
         id
+        subject
         message
+        ticket_id
+        user_id
         created_at
         user {
           id
-          full_name
           role
+          full_name
         }
       }
     }
@@ -76,6 +89,7 @@ export const CREATE_SUPPORT_TICKET = gql`
         subject
         message
         status
+        user_id
         created_at
       }
     }
@@ -84,8 +98,13 @@ export const CREATE_SUPPORT_TICKET = gql`
 
 // Mutation: Update an existing ticket
 export const UPDATE_SUPPORT_TICKET = gql`
-  mutation UpdateSupportTicket($id: ID!, $subject: String, $message: String) {
-    updateSupportTicket(ticket_id: $id, subject: $subject, message: $message) {
+  mutation UpdateSupportTicket($id: ID!, $subject: String, $message: String, $status: String) {
+    updateSupportTicket(
+      id: $id, 
+      subject: $subject, 
+      message: $message, 
+      status: $status
+    ) {
       code
       message
       supportTicket {
@@ -93,55 +112,81 @@ export const UPDATE_SUPPORT_TICKET = gql`
         subject
         message
         status
-        updated_at
+        user_id
+        created_at
       }
     }
   }
 `;
 
-// Mutation: Update ticket status (admin/staff only)
-export const UPDATE_SUPPORT_TICKET_STATUS = gql`
-  mutation UpdateSupportTicketStatus($id: ID!, $status: String!) {
-    updateSupportTicketStatus(ticket_id: $id, status: $status) {
+// Mutation: Add a response to a support ticket
+export const CREATE_SUPPORT_TICKET_RESPONSE = gql`
+  mutation CreateSupportTicketResponse($ticketId: ID!, $subject: String, $message: String!) {
+    createSupportTicketResponse(
+      ticket_id: $ticketId, 
+      subject: $subject, 
+      message: $message
+    ) {
       code
       message
-      supportTicket {
+      supportTicketResponse {
         id
-        status
-        updated_at
-      }
-    }
-  }
-`;
-
-// Mutation: Add a response to a ticket
-export const RESPOND_TO_SUPPORT_TICKET = gql`
-  mutation RespondToSupportTicket($ticketId: ID!, $message: String!) {
-    respondToSupportTicket(ticket_id: $ticketId, message: $message) {
-      code
-      message
-      response {
-        id
+        subject
         message
+        ticket_id
+        user_id
         created_at
         user {
           id
-          full_name
           role
+          full_name
         }
-      }
-      ticket {
-        id
-        status
       }
     }
   }
 `;
 
-// Mutation: Delete a support ticket (admin/staff only)
+// Mutation: Update a support ticket response
+export const UPDATE_SUPPORT_TICKET_RESPONSE = gql`
+  mutation UpdateSupportTicketResponse($id: ID!, $subject: String, $message: String) {
+    updateSupportTicketResponse(
+      id: $id,
+      subject: $subject,
+      message: $message
+    ) {
+      code
+      message
+      supportTicketResponse {
+        id
+        subject
+        message
+        ticket_id
+        user_id
+        created_at
+        user {
+          id
+          role
+          full_name
+        }
+      }
+    }
+  }
+`;
+
+// Mutation: Delete a support ticket
 export const DELETE_SUPPORT_TICKET = gql`
   mutation DeleteSupportTicket($id: ID!) {
-    deleteSupportTicket(ticket_id: $id) {
+    deleteSupportTicket(id: $id) {
+      code
+      message
+    }
+  }
+`;
+
+// Mutation: Delete a support ticket response
+export const DELETE_SUPPORT_TICKET_RESPONSE = gql`
+  mutation DeleteSupportTicketResponse($id: ID!) {
+    deleteSupportTicketResponse(id: $id) {
       code
       message
     }
@@ -156,7 +201,8 @@ export const getSupportTicket = async (id: string) => {
       variables: { id },
       context: {
         requiresAuth: true
-      }
+      },
+      fetchPolicy: 'network-only'
     });
     return data.getSupportTicket;
   } catch (error) {
@@ -166,18 +212,20 @@ export const getSupportTicket = async (id: string) => {
 };
 
 // Helper function to get all support tickets with filters
-export const getSupportTickets = async (
-  status?: string,
-  page: number = 1,
-  per_page: number = 10
-) => {
+export const getSupportTickets = async (filters?: {
+  userId?: string;
+  status?: string;
+  createdAfter?: string;
+  createdBefore?: string;
+}) => {
   try {
     const { data } = await apolloClient.query({
       query: GET_SUPPORT_TICKETS,
-      variables: { status, page, per_page },
+      variables: filters || {},
       context: {
         requiresAuth: true
-      }
+      },
+      fetchPolicy: 'network-only'
     });
     return data.getSupportTickets;
   } catch (error) {
@@ -194,7 +242,8 @@ export const getSupportTicketResponses = async (ticketId: string) => {
       variables: { ticketId },
       context: {
         requiresAuth: true
-      }
+      },
+      fetchPolicy: 'network-only'
     });
     return data.getSupportTicketResponses;
   } catch (error) {
@@ -223,13 +272,16 @@ export const createSupportTicket = async (subject: string, message: string) => {
 // Helper function to update an existing ticket
 export const updateSupportTicket = async (
   id: string,
-  subject?: string,
-  message?: string
+  updates: {
+    subject?: string;
+    message?: string;
+    status?: string;
+  }
 ) => {
   try {
     const { data } = await apolloClient.mutate({
       mutation: UPDATE_SUPPORT_TICKET,
-      variables: { id, subject, message },
+      variables: { id, ...updates },
       context: {
         requiresAuth: true
       }
@@ -241,41 +293,51 @@ export const updateSupportTicket = async (
   }
 };
 
-// Helper function to update ticket status (admin/staff only)
-export const updateSupportTicketStatus = async (id: string, status: string) => {
-  try {
-    const { data } = await apolloClient.mutate({
-      mutation: UPDATE_SUPPORT_TICKET_STATUS,
-      variables: { id, status },
-      context: {
-        requiresAuth: true
-      }
-    });
-    return data.updateSupportTicketStatus;
-  } catch (error) {
-    console.error("Error updating ticket status:", error);
-    throw error;
-  }
-};
-
 // Helper function to add a response to a ticket
-export const respondToSupportTicket = async (ticketId: string, message: string) => {
+export const createSupportTicketResponse = async (
+  ticketId: string, 
+  message: string,
+  subject?: string
+) => {
   try {
     const { data } = await apolloClient.mutate({
-      mutation: RESPOND_TO_SUPPORT_TICKET,
-      variables: { ticketId, message },
+      mutation: CREATE_SUPPORT_TICKET_RESPONSE,
+      variables: { ticketId, message, subject },
       context: {
         requiresAuth: true
       }
     });
-    return data.respondToSupportTicket;
+    return data.createSupportTicketResponse;
   } catch (error) {
     console.error("Error responding to support ticket:", error);
     throw error;
   }
 };
 
-// Helper function to delete a support ticket (admin/staff only)
+// Helper function to update a response
+export const updateSupportTicketResponse = async (
+  id: string,
+  updates: {
+    subject?: string;
+    message?: string;
+  }
+) => {
+  try {
+    const { data } = await apolloClient.mutate({
+      mutation: UPDATE_SUPPORT_TICKET_RESPONSE,
+      variables: { id, ...updates },
+      context: {
+        requiresAuth: true
+      }
+    });
+    return data.updateSupportTicketResponse;
+  } catch (error) {
+    console.error("Error updating support ticket response:", error);
+    throw error;
+  }
+};
+
+// Helper function to delete a support ticket
 export const deleteSupportTicket = async (id: string) => {
   try {
     const { data } = await apolloClient.mutate({
@@ -292,37 +354,51 @@ export const deleteSupportTicket = async (id: string) => {
   }
 };
 
+// Helper function to delete a support ticket response
+export const deleteSupportTicketResponse = async (id: string) => {
+  try {
+    const { data } = await apolloClient.mutate({
+      mutation: DELETE_SUPPORT_TICKET_RESPONSE,
+      variables: { id },
+      context: {
+        requiresAuth: true
+      }
+    });
+    return data.deleteSupportTicketResponse;
+  } catch (error) {
+    console.error("Error deleting support ticket response:", error);
+    throw error;
+  }
+};
+
 // Types for support ticket
 export interface SupportTicket {
   id: string;
   subject: string;
   message: string;
-  status: 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
+  status: 'open' | 'in_progress' | 'resolved' | 'closed';
+  user_id: string;
   created_at: string;
-  updated_at?: string;
-  user: {
-    id: string;
-    full_name: string;
-  };
+  responses?: TicketResponse[];
+}
+
+// Types for user
+export interface UserCredential {
+  id: string;
+  full_name: string;
+  email?: string;
+  role?: string;
 }
 
 // Types for support ticket response
 export interface TicketResponse {
   id: string;
+  subject: string;
   message: string;
+  ticket_id: string;
+  user_id: string;
   created_at: string;
-  user: {
-    id: string;
-    full_name: string;
-    role?: string;
-  };
-}
-
-// Types for pagination
-export interface PaginationData {
-  total: number;
-  current_page: number;
-  per_page: number;
+  user?: UserCredential;
 }
 
 // Response types
@@ -332,7 +408,7 @@ export interface SupportTicketResponse {
   supportTicket?: SupportTicket;
 }
 
-export interface SupportTicketsResponse extends PaginationData {
+export interface SupportTicketsResponse {
   code: number;
   message: string;
   supportTickets: SupportTicket[];
@@ -341,15 +417,16 @@ export interface SupportTicketsResponse extends PaginationData {
 export interface TicketResponsesResponse {
   code: number;
   message: string;
-  responses: TicketResponse[];
+  supportTicketResponses: TicketResponse[];
 }
 
-export interface RespondToTicketResponse {
+export interface SingleTicketResponseResponse {
   code: number;
   message: string;
-  response: TicketResponse;
-  ticket: {
-    id: string;
-    status: string;
-  };
+  supportTicketResponse: TicketResponse;
+}
+
+export interface BaseResponse {
+  code: number;
+  message: string;
 }

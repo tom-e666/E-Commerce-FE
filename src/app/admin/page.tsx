@@ -18,10 +18,9 @@ export default function AdminPage() {
             
             <div className="absolute top-20 left-0 right-0">
                 <div className="container mx-auto px-4">
-                    {/* Updated grid layout with metrics card spanning 2 rows */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {/* First row: 4 main admin modules */}
-                        <div className="rounded-xl shadow-lg bg-white p-4 flex flex-col items-center">
+                    {/* Grid layout with fixed width for each card */}
+                    <div className="flex flex-wrap justify-center gap-6">
+                        <div className="rounded-xl shadow-lg bg-white p-4 flex flex-col items-center w-72">
                             <h2 className="text-xl font-bold mb-2">Brand</h2>
                             <div className="flex-1 w-full flex justify-center items-center mb-3">
                                 <Image
@@ -38,7 +37,7 @@ export default function AdminPage() {
                             </Link>
                         </div>
 
-                        <div className="rounded-xl shadow-lg bg-white p-4 flex flex-col items-center">
+                        <div className="rounded-xl shadow-lg bg-white p-4 flex flex-col items-center w-72">
                             <h2 className="text-xl font-bold mb-2">Sản phẩm</h2>
                             <div className="flex-1 w-full flex justify-center items-center mb-3">
                                 <Image
@@ -55,7 +54,7 @@ export default function AdminPage() {
                             </Link>
                         </div>
 
-                        <div className="rounded-xl shadow-lg bg-white p-4 flex flex-col items-center">
+                        <div className="rounded-xl shadow-lg bg-white p-4 flex flex-col items-center w-72">
                             <h2 className="text-xl font-bold mb-2">Đơn hàng</h2>
                             <div className="flex-1 w-full flex justify-center items-center mb-3">
                                 <Image
@@ -72,7 +71,7 @@ export default function AdminPage() {
                             </Link>
                         </div>
 
-                        <div className="rounded-xl shadow-lg bg-white p-4 flex flex-col items-center">
+                        <div className="rounded-xl shadow-lg bg-white p-4 flex flex-col items-center w-72">
                             <h2 className="text-xl font-bold mb-2">Người dùng</h2>
                             <div className="flex-1 w-full flex justify-center items-center mb-3">
                                 <Image
@@ -89,27 +88,38 @@ export default function AdminPage() {
                             </Link>
                         </div>
 
-                        {/* Second row: Metrics card spanning 2 cols on larger screens */}
-                        <div className="rounded-xl shadow-lg bg-white p-6 flex flex-col items-center col-span-1 sm:col-span-2 lg:col-span-4 min-h-[300px]">
-                            <h2 className="text-2xl font-bold mb-4">Thống kê & Báo cáo</h2>
-                            <div className="flex-1 w-full flex justify-center items-center mb-6">
+                        <div className="rounded-xl shadow-lg bg-white p-4 flex flex-col items-center w-72">
+                            <h2 className="text-xl font-bold mb-2">Thống kê</h2>
+                            <div className="flex-1 w-full flex justify-center items-center mb-3">
                                 <Image
-                                    src="/statistics.png"
+                                    src="/metric.png"
                                     alt="Statistics"
-                                    width={180}
-                                    height={180}
+                                    width={120}
+                                    height={120}
                                     className="object-contain"
                                 />
                             </div>
-                            <p className="text-center mb-6 max-w-2xl">
-                                Xem báo cáo chi tiết và phân tích dữ liệu kinh doanh, 
-                                bao gồm doanh số bán hàng, sản phẩm bán chạy, 
-                                và hành vi người dùng.
-                            </p>
+                            <p className="text-center mb-4">Xem báo cáo và phân tích dữ liệu</p>
                             <Link href="/admin/metrics">
-                                <AnimatedButton className="px-8 py-3 text-lg">
-                                    Xem Thống kê & Báo cáo
-                                </AnimatedButton>
+                                <AnimatedButton>Xem Thống kê</AnimatedButton>
+                            </Link>
+                        </div>
+
+                        {/* Add a new card for Support Ticket management */}
+                        <div className="rounded-xl shadow-lg bg-white p-4 flex flex-col items-center w-72">
+                            <h2 className="text-xl font-bold mb-2">Hỗ trợ</h2>
+                            <div className="flex-1 w-full flex justify-center items-center mb-3">
+                                <Image
+                                    src="/support.png"
+                                    alt="Support"
+                                    width={120}
+                                    height={120}
+                                    className="object-contain"
+                                />
+                            </div>
+                            <p className="text-center mb-4">Quản lý yêu cầu hỗ trợ từ khách hàng</p>
+                            <Link href="/admin/support">
+                                <AnimatedButton>Quản lý Hỗ trợ</AnimatedButton>
                             </Link>
                         </div>
                     </div>
