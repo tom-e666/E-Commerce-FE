@@ -64,7 +64,7 @@ export default function ProductListPage() {
     };
     
     loadData();
-  }, []);
+}, []);
   
   // Filter products based on selected filters
   const filteredProducts = products.filter(product => {

@@ -23,12 +23,17 @@ const Menubar = () => {
 
     const handleLogout = async () => {
         try {
-            await logout();
-            setTimeout(() => {
-                router.push("/login");
-            }, 100);
+            const result = await logout();
+            toast.success(result.message);
+            
+            // Use router.replace instead of push to prevent back navigation to protected pages
+            router.replace("/login");
         } catch (error) {
-            console.log(error)
+            console.error("Logout error:", error);
+            toast.error("Có lỗi xảy ra khi đăng xuất");
+            
+            // Still try to redirect even if there was an error
+            router.replace("/login");
         }
     }
 

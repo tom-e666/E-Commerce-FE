@@ -71,11 +71,7 @@ export function ParallaxProduct({ id, image, title, price, description, index, o
               width={300}
               height={300}
               className="product-image"
-              objectFit="contain" // Corrected from objectFit to style object for Next.js Image
-              // For Next.js 13+ with app directory, `objectFit` is deprecated, use `style={{ objectFit: 'contain' }}` or ensure parent has correct layout
-              // However, if you are using older Next.js or `pages` directory, `objectFit` prop might still work as expected.
-              // For this example, I'll assume it's handled by className or newer Next.js will manage it.
-              // If image sizing issues occur, check Next.js Image component documentation for current best practices.
+              style={{ objectFit: 'contain' }} // Fixed: Replace legacy objectFit prop with style
               onError={(e) => {
                 e.currentTarget.src = "/laptop.png" // Fallback image
               }}

@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import Image from "next/image";
-import { CalendarIcon, Clock, Home, ChevronRight, Tag, Eye, AlertCircle } from "lucide-react";
+import { CalendarIcon, Home, ChevronRight, Eye, AlertCircle } from "lucide-react";
 
 // Interface cho dữ liệu bản tin
 interface NewsItem {
@@ -24,10 +24,8 @@ interface NewsItem {
   url: string;
 }
 
-// Hàm để lấy dữ liệu từ NewsAPI (không yêu cầu API key)
 async function fetchTechNews(): Promise<NewsItem[]> {
   try {
-    // Sử dụng NewsAPI miễn phí không yêu cầu API key
     const response = await fetch('https://saurav.tech/NewsAPI/top-headlines/category/technology/us.json');
 
     if (!response.ok) {
@@ -40,8 +38,9 @@ async function fetchTechNews(): Promise<NewsItem[]> {
     if (!data.articles || !Array.isArray(data.articles)) {
       throw new Error('Invalid data structure');
     }
-
+    
     // Chuyển đổi dữ liệu sang định dạng NewsItem
+    //@ts-expect-error nothing
     return data.articles.map((article: any, index: number) => ({
       id: article.url ? encodeURIComponent(article.url) : `tech-${index}`,
       title: article.title || 'Không có tiêu đề',
@@ -79,9 +78,7 @@ export default function NewsPage() {
           setHasMore(techNews.length > visibleNews);
           setError(null);
         } else {
-          // Nếu không lấy được dữ liệu, hiển thị thông báo lỗi
           setError('Không thể tải dữ liệu bản tin công nghệ');
-          // Sử dụng dữ liệu mẫu làm dự phòng
           const fallbackNews = [
             {
               id: '1',

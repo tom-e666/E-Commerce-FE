@@ -50,8 +50,20 @@ export default function BrandManagement() {
     const [forceUpdateKey, setForceUpdateKey] = useState(0);
     const [gridData, setGridData] = useState<Brand[]>([]);
     const [colDefs] = useState([
-        { field: "id", headerName: "ID", width: 100 },
-        { field: "name", headerName: "Tên thương hiệu", flex: 1 }
+        { 
+            field: "id", 
+            headerName: "ID", 
+            width: 100, 
+            suppressCellFlash: true, 
+            cellClass: 'no-click' 
+        },
+        { 
+            field: "name", 
+            headerName: "Tên thương hiệu", 
+            flex: 1, 
+            suppressCellFlash: true, 
+            cellClass: 'no-click' 
+        }
     ]);
     useEffect(() => { setGridData(brands); forceUpdate(); }, [brands]);
     const forceUpdate = () => {
@@ -115,8 +127,21 @@ export default function BrandManagement() {
                     paginationAutoPageSize={true}
                     animateRows={true}
                     domLayout="autoHeight"
+                    suppressCellFocus={true}
+                    suppressRowClickSelection={false}
+                    rowSelection="single"
                 />
             </div>
+            
+            <style jsx global>{`
+                .ag-theme-alpine .no-click {
+                    pointer-events: none;
+                }
+                .ag-theme-alpine .ag-row {
+                    cursor: pointer;
+                }
+            `}</style>
+            
             <BrandFormDialog
                 open={openForm}
                 onClose={handleCloseForm}

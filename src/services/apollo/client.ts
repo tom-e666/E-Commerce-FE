@@ -3,6 +3,8 @@ import { onError } from "@apollo/client/link/error";
 import { refreshTokenAPI } from "../auth/endpoints";
 import { Observable } from "@apollo/client";
 import { toast } from "sonner";
+import { tokenEvents, TOKEN_UPDATED, TOKEN_REMOVED } from '../auth/tokenEvents';
+
 const getTokens = () => {
   if (typeof window === 'undefined') return { accessToken: null, refreshToken: null };
 
@@ -17,7 +19,7 @@ const getTokens = () => {
 
   return { accessToken, refreshToken };
 };
-// @ts-ignore
+// @ts-expect-error nothing
 const errorLink = onError(({ graphQLErrors, networkError, operation, forward }) => {
   // Xử lý lỗi GraphQL
   if (graphQLErrors) {
@@ -35,23 +37,35 @@ const errorLink = onError(({ graphQLErrors, networkError, operation, forward }) 
         const { refreshToken } = getTokens();
 
         if (!refreshToken) {
-            console.error('No refresh token available, redirecting to login');
-            toast.error('Phiên đăng nhập hết hạn, vui lòng đăng nhập lại');
-            // Không chuyển hướng tự động, để tránh vòng lặp chuyển hướng
-            return;
-          }
+          console.error('No refresh token available, redirecting to login');
+          toast.error('Phiên đăng nhập hết hạn, vui lòng đăng nhập lại');
+          // Không chuyển hướng tự động, để tránh vòng lặp chuyển hướng
+          return;
+        }
 
         console.log('Attempting to refresh token...');
-        return new Promise(resolve => {
+        return new Observable(observer => {
           refreshTokenAPI(refreshToken)
             .then(response => {
-              if (response?.data?.refreshToken?.access_token) {
-                const newAccessToken = response.data.refreshToken.access_token;
+              if (response?.access_token) {
+                const newAccessToken = response.access_token;
                 console.log('Token refreshed successfully');
 
-                // Lưu token mới vào localStorage
+                // Lưu token mới vào localStorage (lưu cả hai định dạng để đảm bảo tương thích)
                 localStorage.setItem('token', newAccessToken);
                 localStorage.setItem('access_token', newAccessToken);
+                
+                if (response.refresh_token) {
+                  localStorage.setItem('refreshToken', response.refresh_token);
+                  localStorage.setItem('refresh_token', response.refresh_token);
+                }
+                
+                if (response.expires_at) {
+                  localStorage.setItem('expiresAt', response.expires_at);
+                }
+
+                // Kích hoạt sự kiện token đã được cập nhật
+                tokenEvents.emit(TOKEN_UPDATED);
 
                 // Cập nhật header authorization cho request hiện tại
                 const oldHeaders = operation.getContext().headers || {};
@@ -61,19 +75,39 @@ const errorLink = onError(({ graphQLErrors, networkError, operation, forward }) 
                     authorization: `Bearer ${newAccessToken}`,
                   },
                 });
-                resolve(forward(operation));
+
+                // Forward lại operation với token mới
+                forward(operation).subscribe({
+                  next: observer.next.bind(observer),
+                  error: observer.error.bind(observer),
+                  complete: observer.complete.bind(observer),
+                });
               } else {
                 console.error('Failed to refresh token, invalid response:', response);
                 toast.error('Không thể làm mới phiên đăng nhập, vui lòng đăng nhập lại');
-                // Không chuyển hướng tự động, để tránh vòng lặp chuyển hướng
-                resolve(forward(operation));
+                
+                // Chuyển tiếp lỗi
+                observer.error(new Error('Failed to refresh token'));
+                observer.complete();
               }
             })
             .catch((refreshError) => {
               console.error('Error refreshing token:', refreshError);
               toast.error('Lỗi khi làm mới phiên đăng nhập, vui lòng đăng nhập lại');
-              // Không chuyển hướng tự động, để tránh vòng lặp chuyển hướng
-              resolve(forward(operation));
+              
+              // Xóa token lưu trữ vì không thể refresh
+              localStorage.removeItem('token');
+              localStorage.removeItem('access_token');
+              localStorage.removeItem('refreshToken');
+              localStorage.removeItem('refresh_token');
+              localStorage.removeItem('expiresAt');
+              
+              // Kích hoạt sự kiện token đã bị xóa
+              tokenEvents.emit(TOKEN_REMOVED);
+              
+              // Chuyển tiếp lỗi
+              observer.error(refreshError);
+              observer.complete();
             });
         });
       }
@@ -163,3 +197,20 @@ export const resetApolloClient = () => {
   // Xóa cache
   apolloClient.resetStore();
 };
+
+// Lắng nghe sự kiện token thay đổi để reset Apollo Cache
+if (typeof window !== 'undefined') {
+  // Khi token được cập nhật, xóa cache để tránh dữ liệu cũ
+  tokenEvents.on(TOKEN_UPDATED, () => {
+    console.log('Token updated, resetting Apollo cache');
+    apolloClient.resetStore().catch(err => {
+      console.error('Error resetting Apollo cache:', err);
+    });
+  });
+
+  // Khi token bị xóa (đăng xuất), reset store
+  tokenEvents.on(TOKEN_REMOVED, () => {
+    console.log('Token removed, resetting Apollo store');
+    resetApolloClient();
+  });
+}

@@ -98,22 +98,26 @@ export default function ProductManagement() {
     const [gridData, setGridData] = useState<Product[]>([]);
 
     const [colDefs] = useState([
-        { field: "id", headerName: "ID", width: 100 },
-        { field: "name", headerName: "Tên sản phẩm", flex: 1 },
+        { field: "id", headerName: "ID", width: 100, suppressCellFlash: true, cellClass: 'no-click' },
+        { field: "name", headerName: "Tên sản phẩm", flex: 1, suppressCellFlash: true, cellClass: 'no-click' },
         {
             field: "price",
             headerName: "Giá (VNĐ)",
             width: 150,
+            suppressCellFlash: true,
+            cellClass: 'no-click',
             // @ts-expect-error any
             valueFormatter: (params) => {
                 return new Intl.NumberFormat('vi-VN').format(params.value);
             }
         },
-        { field: "stock", headerName: "Tồn kho", width: 120 },
+        { field: "stock", headerName: "Tồn kho", width: 120, suppressCellFlash: true, cellClass: 'no-click' },
         {
             field: "status",
             headerName: "Trạng thái",
             width: 150,
+            suppressCellFlash: true,
+            cellClass: 'no-click',
             // @ts-expect-error any
             cellRenderer: (params) => {
                 return params.value ?
@@ -124,6 +128,8 @@ export default function ProductManagement() {
             field: "brand_id",
             headerName: "Thương hiệu",
             width: 150,
+            suppressCellFlash: true,
+            cellClass: 'no-click',
             // @ts-expect-error any
             valueFormatter: (params) => {
                 const brand = brands.find(b => b.id === params.value);
@@ -141,11 +147,6 @@ export default function ProductManagement() {
         setForceUpdateKey(prev => prev + 1);
     };
 
-    useEffect(() => {
-        loadProducts();
-        getBrands();
-    }, []);
-
     const loadProducts = async () => {
         try {
             await toast.promise(
@@ -162,10 +163,20 @@ export default function ProductManagement() {
             console.error(error);
         }
     };
+
+    useEffect(() => {
+        loadProducts();
+        getBrands();
+    }, []);
+
     // @ts-expect-error any
     const handleRowClick = (event) => {
-        setSelectedProduct(event.data);
-        setOpenForm(true);
+        // Check that this is a row click event, not a cell click
+        if (event.event && event.event.target) {
+            // Only process if this is an actual row click, not on a cell
+            setSelectedProduct(event.data);
+            setOpenForm(true);
+        }
     };
 
     const handleAddNew = () => {
@@ -202,8 +213,20 @@ export default function ProductManagement() {
                     paginationAutoPageSize={true}
                     animateRows={true}
                     domLayout="autoHeight"
+                    suppressCellFocus={true}
+                    suppressRowClickSelection={false}
+                    rowSelection="single"
                 />
             </div>
+            <style jsx global>{`
+                .ag-theme-alpine .no-click {
+                    pointer-events: none;
+                }
+                .ag-theme-alpine .ag-row {
+                    cursor: pointer;
+                }
+            `}</style>
+
             <ProductFormDialog
                 open={openForm}
                 onClose={handleCloseForm}

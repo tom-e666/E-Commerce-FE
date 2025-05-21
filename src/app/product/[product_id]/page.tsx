@@ -25,82 +25,49 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ProductDetailPage() {
   const params = useParams();
-  // Log params to debug
-  console.log("URL Params:", params);
-
-  // In Next.js 15, params is a Promise, so we need to handle it properly
-  const [productId, setProductId] = useState<string | null>(null);
+  const product_id = params.product_id as string;
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
-
+  
   const { isAuthenticated } = useAuthContext();
   const { brands, getBrands } = useBrand();
   const { products, getProducts } = useProduct();
 
-  // First, extract the product_id from params (which is now a Promise in Next.js 15)
-  useEffect(() => {
-    async function extractParams() {
-      try {
-        // Handle params as a Promise in Next.js 15
-        if (params instanceof Promise) {
-          const resolvedParams = await params;
-          const id = resolvedParams.product_id as string;
-          console.log("Resolved Product ID from params:", id);
-          setProductId(id);
-        } else {
-          // Fallback for older Next.js versions or if params is not a Promise
-          const id = params.product_id as string;
-          console.log("Product ID from params:", id);
-          setProductId(id);
-        }
-      } catch (error) {
-        console.error("Error extracting params:", error);
-        toast.error("Có lỗi xảy ra khi xử lý thông tin sản phẩm");
-      }
-    }
-
-    extractParams();
-  }, [params]);
-
-  // Then, fetch the product data once we have the productId
   useEffect(() => {
     async function loadData() {
-      if (!productId) return;
+        try {
+            setLoading(true);
+            
+            // Load the product details
+            const response = await getProduct(product_id);
+            if (response.code === 200) {
+                setProduct(response.product);
+                setSelectedImage(response.product.details.images?.[0] || null);
+                
+                // Load brands for brand name display
+                await getBrands();
 
-      try {
-        setLoading(true);
-        console.log("Fetching product with ID:", productId);
-
-        // Load the product details
-        const response = await getProduct(productId);
-        if (response.code === 200) {
-          setProduct(response.product);
-          setSelectedImage(response.product.details.images?.[0] || null);
-
-          // Load brands for brand name display
-          await getBrands();
-
-          // Load some products for the related products section
-          await getProducts();
-        } else {
-          toast.error("Không thể tải thông tin sản phẩm");
+                // Load some products for the related products section
+                await getProducts();
+            } else {
+                toast.error("Không thể tải thông tin sản phẩm");
+            }
+        } catch (error) {
+            toast.error("Có lỗi xảy ra khi tải thông tin sản phẩm");
+            console.error(error);
+        } finally {
+            setLoading(false);
         }
-      } catch (error) {
-        toast.error("Có lỗi xảy ra khi tải thông tin sản phẩm");
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
     }
     
-    if (productId) {
+    if (product_id) {
       loadData();
     }
-  }, [productId, getBrands, getProducts]);
+  }, [product_id, getBrands, getProducts]);
 
   // When products are loaded, filter for related products (same brand)
   useEffect(() => {
@@ -127,7 +94,7 @@ export default function ProductDetailPage() {
       for (let i = 0; i < quantity; i++) {
         await addToCart(product.id);
       }
-
+      
       toast.success(`Đã thêm ${quantity} sản phẩm vào giỏ hàng`);
     } catch (error) {
       console.error("Failed to add to cart:", error);
@@ -222,27 +189,27 @@ export default function ProductDetailPage() {
         {/* Product Images */}
         <div>
           <div className="aspect-square relative rounded-lg overflow-hidden bg-white border">
-            <Image
-              src={selectedImage || product.details.images?.[0] || "/laptop.png"}
+            <Image 
+              src={selectedImage || product.details.images?.[0] || "/laptop.png"} 
               alt={product.name}
               fill
               className="object-contain p-4"
               priority
             />
           </div>
-
+          
           {/* Thumbnail gallery */}
           <div className="grid grid-cols-5 gap-2 mt-4">
             {product.details.images && product.details.images.length > 0 ? (
               product.details.images.map((img, index) => (
-                <div
+                <div 
                   key={index}
-                  className={`aspect-square relative rounded-md overflow-hidden border cursor-pointer
+                  className={`aspect-square relative rounded-md overflow-hidden border cursor-pointer 
                     ${selectedImage === img ? 'ring-2 ring-primary' : ''}`}
                   onClick={() => setSelectedImage(img)}
                 >
-                  <Image
-                    src={img}
+                  <Image 
+                    src={img} 
                     alt={`${product.name} - view ${index + 1}`}
                     fill
                     className="object-contain p-1"
@@ -251,7 +218,7 @@ export default function ProductDetailPage() {
               ))
             ) : (
               <div className="aspect-square relative rounded-md overflow-hidden border">
-                <Image
+                <Image 
                   src="/laptop.png"
                   alt={product.name}
                   fill
@@ -275,7 +242,7 @@ export default function ProductDetailPage() {
             </div>
 
             <h1 className="text-3xl font-bold">{product.name}</h1>
-
+            
             <div className="flex items-center gap-2 mt-2">
               <div className="flex">
                 {[1, 2, 3, 4, 5].map((star) => (
@@ -292,7 +259,7 @@ export default function ProductDetailPage() {
               </p>
             </div>
           </div>
-
+          
           <div className="prose prose-sm max-w-none">
             <p>{product.details.description}</p>
           </div>
@@ -302,15 +269,15 @@ export default function ProductDetailPage() {
             <div className="flex items-center">
               <span className="mr-4">Số lượng:</span>
               <div className="flex items-center border rounded-md">
-                <Button
-                  variant="ghost"
+                <Button 
+                  variant="ghost" 
                   size="icon"
                   disabled={quantity <= 1}
                   onClick={() => setQuantity(prev => Math.max(1, prev - 1))}
                 >-</Button>
                 <span className="w-12 text-center">{quantity}</span>
-                <Button
-                  variant="ghost"
+                <Button 
+                  variant="ghost" 
                   size="icon"
                   disabled={quantity >= product.stock}
                   onClick={() => setQuantity(prev => Math.min(product.stock, prev + 1))}
@@ -320,11 +287,11 @@ export default function ProductDetailPage() {
                 {product.stock} sản phẩm có sẵn
               </span>
             </div>
-
+            
             {/* Add to cart button */}
-            <Button
-              className="w-full"
-              size="lg"
+            <Button 
+              className="w-full" 
+              size="lg" 
               onClick={handleAddToCart}
               disabled={isAddingToCart || product.stock <= 0}
             >
@@ -338,7 +305,7 @@ export default function ProductDetailPage() {
               )}
             </Button>
           </div>
-
+          
           {/* Benefits */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-6">
             <div className="flex items-center gap-2 text-sm">
@@ -368,7 +335,7 @@ export default function ProductDetailPage() {
             <TabsTrigger value="description">Mô tả</TabsTrigger>
             <TabsTrigger value="reviews">Đánh giá</TabsTrigger>
           </TabsList>
-
+          
           <TabsContent value="specifications" className="mt-6">
             <Card>
               <CardContent className="p-6">
@@ -390,14 +357,14 @@ export default function ProductDetailPage() {
               </CardContent>
             </Card>
           </TabsContent>
-
+          
           <TabsContent value="description" className="mt-6">
             <Card>
               <CardContent className="p-6">
                 <h3 className="text-lg font-medium mb-4">Mô tả sản phẩm</h3>
                 <div className="prose prose-sm max-w-none">
                   <p>{product.details.description || "Không có mô tả chi tiết cho sản phẩm này."}</p>
-
+                  
                   {/* Keywords/tags if available */}
                   {product.details.keywords && product.details.keywords.length > 0 && (
                     <div className="mt-4">
@@ -415,7 +382,7 @@ export default function ProductDetailPage() {
               </CardContent>
             </Card>
           </TabsContent>
-
+          
           <TabsContent value="reviews" className="mt-6">
             <Card>
               <CardContent className="p-6">
@@ -437,7 +404,7 @@ export default function ProductDetailPage() {
               <ChevronRight className="h-4 w-4 ml-1" />
             </Link>
           </div>
-
+          
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {relatedProducts.map((relatedProduct) => (
               <Card key={relatedProduct.id} className="overflow-hidden">
@@ -458,14 +425,14 @@ export default function ProductDetailPage() {
                   <div className="mt-2 font-bold text-primary">
                     {formatCurrency(relatedProduct.price)}
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
                     className="w-full mt-3"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-
+                      
                       if (isAuthenticated) {
                         toast.promise(
                           addToCart(relatedProduct.id),

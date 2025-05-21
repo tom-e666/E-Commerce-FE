@@ -1,11 +1,12 @@
 'use client'
 import { useState } from "react";
-import { login as loginAPI, signup as signupAPI } from "@/services/auth/endpoints";
-import { useRouter } from "next/navigation";
+import { login as loginAPI, signup as signupAPI, logout as logoutAPI } from "@/services/auth/endpoints";
+import { useAuthContext } from '@/contexts/AuthContext';
+import { tokenEvents, AUTH_STATE_CHANGED, TOKEN_REMOVED } from "@/services/auth/tokenEvents";
 
 export const useAuth = () => {
   const [loading, setLoading] = useState<boolean>(false);
-  const router = useRouter();
+  const { saveAuthData, clearAuthStorage } = useAuthContext();
 
   const login = async (email: string, password: string): Promise<{message: string, user?: any}> => {
     setLoading(true);
@@ -15,28 +16,18 @@ export const useAuth = () => {
       if (response?.data?.login?.code === 200) {
         const { access_token, refresh_token, expires_at, user } = response.data.login;
 
-        // Lưu thông tin xác thực vào localStorage
-        // Lưu cả hai cách để đảm bảo tương thích
-        localStorage.setItem('token', access_token);
-        localStorage.setItem('access_token', access_token);
-        localStorage.setItem('refreshToken', refresh_token);
-        localStorage.setItem('refresh_token', refresh_token);
-        localStorage.setItem('expiresAt', expires_at);
-
-        // Lưu thêm thông tin user để dễ truy cập
-        if (user) {
-          localStorage.setItem('userRole', user.role);
-          localStorage.setItem('userId', user.id);
-          localStorage.setItem('userName', user.full_name);
-
-          // Lưu toàn bộ thông tin user dưới dạng JSON
-          localStorage.setItem('userData', JSON.stringify(user));
-        }
-
+        // Lưu thông tin xác thực đầy đủ
+        saveAuthData(access_token, refresh_token, expires_at);
+        
         console.log("Đăng nhập thành công với vai trò:", user?.role);
-        console.log("Token đã được lưu:", access_token.substring(0, 15) + "...");
+        
+        // Emit an event that authentication state has changed
+        // This helps components react to auth changes
+        setTimeout(() => {
+          tokenEvents.emit(AUTH_STATE_CHANGED);
+        }, 100);
 
-        // Trả về thông báo thành công và thông tin user
+        // Trả về thông tin người dùng
         return {
           message: "Đăng nhập thành công",
           user: user
@@ -70,22 +61,30 @@ export const useAuth = () => {
     }
   };
 
-  const logout = () => {
-    // Xóa tất cả thông tin xác thực
-    localStorage.removeItem('token');
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('expiresAt');
-    localStorage.removeItem('userRole');
-    localStorage.removeItem('userId');
-    localStorage.removeItem('userName');
-    localStorage.removeItem('userData');
-
-    console.log("Đã đăng xuất và xóa tất cả thông tin xác thực");
-
-    // Chuyển hướng về trang đăng nhập
-    router.push('/login');
+  const logout = async (): Promise<{message: string}> => {
+    setLoading(true);
+    try {
+      // Gọi API logout
+      await logoutAPI();
+      
+      // Xóa thông tin xác thực
+      clearAuthStorage();
+      
+      // Emit event for logout
+      tokenEvents.emit(TOKEN_REMOVED);
+      
+      return { message: "Đăng xuất thành công" };
+    } catch (error) {
+      console.error("Logout error:", error);
+      
+      // Still clear auth storage on error
+      clearAuthStorage();
+      tokenEvents.emit(TOKEN_REMOVED);
+      
+      return { message: "Đăng xuất thành công" };
+    } finally {
+      setLoading(false);
+    }
   };
 
   return { login, signup, logout, loading };

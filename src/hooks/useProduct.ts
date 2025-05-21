@@ -14,16 +14,15 @@ export const useProduct = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [currentProduct, setCurrentProduct] = useState<Product | null>(null);
 
+  // Định nghĩa hàm handleGetProducts trong hook useProduct
   const handleGetProducts = async (status = "1") => {
     setLoading(true);
     try {
       const response = await apiGetProducts(status);
-      const { code, message, products } = response;
+      const { code, products } = response;
 
       if (code === 200) {
         setProducts(products);
-        console.log("Products:", products);
-        console.log("Message:", message);
         return products;
       } else {
         throw new Error("Không thể lấy danh sách sản phẩm");
