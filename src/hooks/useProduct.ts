@@ -35,22 +35,23 @@ export const useProduct = () => {
   const handleGetProduct = async (id: string) => {
     setLoading(true);
     try {
-      console.log("handleGetProduct: Fetching product with ID:", id);
       const response = await apiGetProduct(id);
-      console.log("handleGetProduct: API response:", response);
       const { code, product } = response;
 
-      if (code === 200) {
-        console.log("handleGetProduct: Setting current product:", product);
+      if (code === 200 && product) {
         setCurrentProduct(product);
         return product;
       } else {
-        console.error("handleGetProduct: Failed to get product:", response);
-        throw new Error("Không thể lấy thông tin sản phẩm");
+        // Trả về response thay vì throw error để component có thể xử lý lỗi
+        return response;
       }
     } catch (error) {
-      console.error("handleGetProduct: Error:", error);
-      throw error;
+      // Trả về một đối tượng lỗi có cấu trúc giống response
+      return {
+        code: 500,
+        message: error instanceof Error ? error.message : "Không thể lấy thông tin sản phẩm",
+        product: null
+      };
     } finally {
       setLoading(false);
     }

@@ -9,22 +9,22 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "@/components/ui/select";
 import { ShoppingCart, Filter, X, Check } from 'lucide-react';
-import { 
-  Sheet, 
-  SheetClose, 
-  SheetContent, 
-  SheetFooter, 
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetFooter,
   SheetHeader,
-  SheetTitle, 
-  SheetTrigger 
+  SheetTitle,
+  SheetTrigger
 } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import Image from "next/image";
@@ -40,16 +40,16 @@ export default function ProductListPage() {
   const { products, getProducts, loading } = useProduct();
   const { brands, getBrands } = useBrand();
   const { isAuthenticated } = useAuthContext();
-  
+
   // Filter states
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 50000000]);
   const [sortOption, setSortOption] = useState<string>("featured");
   const [searchQuery, setSearchQuery] = useState("");
-  
+
   // Display state
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  
+
   // Fetch initial data
   useEffect(() => {
     const loadData = async () => {
@@ -62,37 +62,37 @@ export default function ProductListPage() {
         toast.error("Không thể tải danh sách sản phẩm");
       }
     };
-    
+
     loadData();
 }, []);
-  
+
   // Filter products based on selected filters
   const filteredProducts = products.filter(product => {
     // Brand filter
     if (selectedBrands.length > 0 && !selectedBrands.includes(product.brand_id)) {
       return false;
     }
-    
+
     // Price filter
     if (product.price < priceRange[0] || product.price > priceRange[1]) {
       return false;
     }
-    
+
     // Search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       return (
         product.name.toLowerCase().includes(query) ||
         (product.details.description && product.details.description.toLowerCase().includes(query)) ||
-        (product.details.keywords && product.details.keywords.some(keyword => 
+        (product.details.keywords && product.details.keywords.some(keyword =>
           keyword.toLowerCase().includes(query)
         ))
       );
     }
-    
+
     return true;
   });
-  
+
   // Sort products
   const sortedProducts = [...filteredProducts].sort((a, b) => {
     switch (sortOption) {
@@ -108,7 +108,7 @@ export default function ProductListPage() {
         return 0; // Keep original order
     }
   });
-  
+
   // Handle brand filter change
   const handleBrandChange = (brandId: string) => {
     setSelectedBrands(prev => {
@@ -119,19 +119,19 @@ export default function ProductListPage() {
       }
     });
   };
-  
+
   // Handle price range change
   const handlePriceChange = (values: number[]) => {
     setPriceRange([values[0], values[1]]);
   };
-  
+
   // Add to cart handler
   const handleAddToCart = async (productId: string) => {
     if (!isAuthenticated) {
       toast.error("Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng");
       return;
     }
-    
+
     try {
       await toast.promise(addToCart(productId), {
         loading: "Đang thêm sản phẩm vào giỏ hàng...",
@@ -142,7 +142,7 @@ export default function ProductListPage() {
       console.error("Failed to add to cart:", error);
     }
   };
-  
+
   // Clear all filters
   const clearFilters = () => {
     setSelectedBrands([]);
@@ -150,18 +150,18 @@ export default function ProductListPage() {
     setSearchQuery("");
     setSortOption("featured");
   };
-  
+
   // Format price for display
   const formatPriceRange = () => {
     return `${formatCurrency(priceRange[0])} - ${formatCurrency(priceRange[1])}`;
   };
-  
+
   // Check if any filter is active
-  const hasActiveFilters = selectedBrands.length > 0 || 
-    priceRange[0] > 0 || 
+  const hasActiveFilters = selectedBrands.length > 0 ||
+    priceRange[0] > 0 ||
     priceRange[1] < 50000000 ||
     searchQuery !== "";
-  
+
   return (
     <div className="container mx-auto py-8 px-4 md:px-6">
       <div className="flex flex-col md:flex-row gap-6">
@@ -171,29 +171,29 @@ export default function ProductListPage() {
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold">Bộ lọc</h2>
               {hasActiveFilters && (
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={clearFilters} 
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearFilters}
                   className="h-8 px-2 text-muted-foreground"
                 >
                   <X className="mr-1 h-4 w-4" /> Xóa lọc
                 </Button>
               )}
             </div>
-            
+
             {/* Brand filter */}
             <div className="mb-6">
               <h3 className="font-medium mb-3">Thương hiệu</h3>
               <div className="space-y-2">
                 {brands.map(brand => (
                   <div key={brand.id} className="flex items-center">
-                    <Checkbox 
+                    <Checkbox
                       id={`brand-${brand.id}`}
                       checked={selectedBrands.includes(brand.id)}
                       onCheckedChange={() => handleBrandChange(brand.id)}
                     />
-                    <Label 
+                    <Label
                       htmlFor={`brand-${brand.id}`}
                       className="ml-2 text-sm font-normal cursor-pointer flex items-center justify-between w-full"
                     >
@@ -206,9 +206,9 @@ export default function ProductListPage() {
                 ))}
               </div>
             </div>
-            
+
             <Separator className="my-4" />
-            
+
             {/* Price range filter */}
             <div className="mb-6">
               <h3 className="font-medium mb-3">Giá</h3>
@@ -227,7 +227,7 @@ export default function ProductListPage() {
                 <span>{formatCurrency(priceRange[0])}</span>
                 <span>{formatCurrency(priceRange[1])}</span>
               </div>
-              
+
               {/* Optional: Price input ranges for direct number entry */}
               <div className="flex items-center gap-2 mt-4">
                 <Input
@@ -259,7 +259,7 @@ export default function ProductListPage() {
             </div>
           </div>
         </div>
-        
+
         {/* Mobile Filters */}
         <div className="md:hidden w-full">
           <Sheet>
@@ -278,17 +278,17 @@ export default function ProductListPage() {
               <SheetHeader>
                 <SheetTitle>Bộ lọc</SheetTitle>
                 {hasActiveFilters && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={clearFilters} 
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearFilters}
                     className="absolute right-4 top-4"
                   >
                     <X className="mr-1 h-4 w-4" /> Xóa lọc
                   </Button>
                 )}
               </SheetHeader>
-              
+
               <div className="py-4 overflow-y-auto h-[calc(100%-10rem)]">
                 {/* Brand filter */}
                 <div className="mb-6">
@@ -296,12 +296,12 @@ export default function ProductListPage() {
                   <div className="grid grid-cols-2 gap-2">
                     {brands.map(brand => (
                       <div key={brand.id} className="flex items-center">
-                        <Checkbox 
+                        <Checkbox
                           id={`mobile-brand-${brand.id}`}
                           checked={selectedBrands.includes(brand.id)}
                           onCheckedChange={() => handleBrandChange(brand.id)}
                         />
-                        <Label 
+                        <Label
                           htmlFor={`mobile-brand-${brand.id}`}
                           className="ml-2 text-sm font-normal cursor-pointer"
                         >
@@ -311,9 +311,9 @@ export default function ProductListPage() {
                     ))}
                   </div>
                 </div>
-                
+
                 <Separator className="my-4" />
-                
+
                 {/* Price range filter in mobile sheet */}
                 <div className="mb-6">
                   <h3 className="font-medium mb-3">Giá: {formatPriceRange()}</h3>
@@ -332,7 +332,7 @@ export default function ProductListPage() {
                     <span>{formatCurrency(priceRange[0])}</span>
                     <span>{formatCurrency(priceRange[1])}</span>
                   </div>
-                  
+
                   {/* Direct input for mobile */}
                   <div className="flex items-center gap-2 mt-4">
                     <Input
@@ -363,7 +363,7 @@ export default function ProductListPage() {
                   </div>
                 </div>
               </div>
-              
+
               <SheetFooter>
                 <SheetClose asChild>
                   <Button className="w-full">Áp dụng</Button>
@@ -372,7 +372,7 @@ export default function ProductListPage() {
             </SheetContent>
           </Sheet>
         </div>
-        
+
         {/* Main Content */}
         <div className="flex-1">
           {/* Search and Sort Controls */}
@@ -395,7 +395,7 @@ export default function ProductListPage() {
                 </Button>
               )}
             </div>
-            
+
             <div className="flex gap-2">
               <Select
                 value={sortOption}
@@ -412,7 +412,7 @@ export default function ProductListPage() {
                   <SelectItem value="name-desc">Tên: Z-A</SelectItem>
                 </SelectContent>
               </Select>
-              
+
               <div className="flex border rounded-md">
                 <Button
                   variant={viewMode === 'grid' ? "default" : "ghost"}
@@ -445,7 +445,7 @@ export default function ProductListPage() {
               </div>
             </div>
           </div>
-          
+
           {/* Active Filters Display */}
           {hasActiveFilters && (
             <div className="mb-6">
@@ -455,50 +455,50 @@ export default function ProductListPage() {
                   return brand ? (
                     <Badge variant="outline" key={brand.id} className="flex items-center gap-1">
                       {brand.name}
-                      <X 
-                        className="h-3 w-3 cursor-pointer" 
-                        onClick={() => handleBrandChange(brand.id)} 
+                      <X
+                        className="h-3 w-3 cursor-pointer"
+                        onClick={() => handleBrandChange(brand.id)}
                       />
                     </Badge>
                   ) : null;
                 })}
-                
+
                 {(priceRange[0] > 0 || priceRange[1] < 50000000) && (
                   <Badge variant="outline" className="flex items-center gap-1">
                     Giá: {formatPriceRange()}
-                    <X 
-                      className="h-3 w-3 cursor-pointer" 
-                      onClick={() => setPriceRange([0, 50000000])} 
+                    <X
+                      className="h-3 w-3 cursor-pointer"
+                      onClick={() => setPriceRange([0, 50000000])}
                     />
                   </Badge>
                 )}
-                
+
                 {searchQuery && (
                   <Badge variant="outline" className="flex items-center gap-1">
                     Tìm kiếm: {searchQuery}
-                    <X 
-                      className="h-3 w-3 cursor-pointer" 
-                      onClick={() => setSearchQuery("")} 
+                    <X
+                      className="h-3 w-3 cursor-pointer"
+                      onClick={() => setSearchQuery("")}
                     />
                   </Badge>
                 )}
               </div>
             </div>
           )}
-          
+
           {/* Products Grid/List */}
           {loading ? (
-            <div className={viewMode === 'grid' 
-              ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" 
+            <div className={viewMode === 'grid'
+              ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
               : "space-y-4"
             }>
               {Array(8).fill(0).map((_, index) => (
-                <div key={index} className={viewMode === 'grid' 
-                  ? "border rounded-lg overflow-hidden" 
+                <div key={index} className={viewMode === 'grid'
+                  ? "border rounded-lg overflow-hidden"
                   : "border rounded-lg overflow-hidden flex flex-col sm:flex-row"
                 }>
-                  <Skeleton className={viewMode === 'grid' 
-                    ? "w-full h-48" 
+                  <Skeleton className={viewMode === 'grid'
+                    ? "w-full h-48"
                     : "w-full sm:w-48 h-48"
                   } />
                   <div className="p-4 flex-1">
@@ -527,16 +527,20 @@ export default function ProductListPage() {
               <Button onClick={clearFilters}>Xóa tất cả bộ lọc</Button>
             </div>
           ) : (
-            <div className={viewMode === 'grid' 
-              ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" 
+            <div className={viewMode === 'grid'
+              ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
               : "space-y-4"
             }>
               {sortedProducts.map((product) => (
                 <Card key={product.id} className={viewMode === 'list' ? "flex flex-col sm:flex-row" : ""}>
                   <div className={viewMode === 'list' ? "sm:w-48 relative" : "relative"}>
-                    <Link href={`/product/${product.id}`} className="block">
-                      <div className={viewMode === 'list' 
-                        ? "h-48 relative" 
+                    <Link
+                      href={`/product/${product.id}`}
+                      className="block"
+                      prefetch={true} // Prefetch the product detail page
+                    >
+                      <div className={viewMode === 'list'
+                        ? "h-48 relative"
                         : "aspect-square relative"
                       }>
                         <Image
@@ -544,13 +548,14 @@ export default function ProductListPage() {
                           alt={product.name}
                           fill
                           className="object-contain p-2"
+                          priority={true} // Prioritize loading this image
                         />
                       </div>
                     </Link>
-                    
+
                     {/* Brand badge */}
                     {brands.find(b => b.id === product.brand_id) && (
-                      <Badge 
+                      <Badge
                         className="absolute top-2 left-2 bg-white text-black border"
                         variant="outline"
                       >
@@ -558,10 +563,14 @@ export default function ProductListPage() {
                       </Badge>
                     )}
                   </div>
-                  
+
                   <div className="flex-1 flex flex-col">
                     <CardContent className={viewMode === 'list' ? "p-4 pb-2" : "p-4"}>
-                      <Link href={`/product/${product.id}`} className="block">
+                      <Link
+                        href={`/product/${product.id}`}
+                        className="block"
+                        prefetch={true} // Prefetch the product detail page
+                      >
                         <h3 className="font-medium text-lg mb-1 hover:underline line-clamp-2">{product.name}</h3>
                       </Link>
                       <div className="text-lg font-bold text-primary mb-2">
@@ -570,7 +579,7 @@ export default function ProductListPage() {
                       <p className="text-sm text-muted-foreground line-clamp-2">
                         {product.details?.description}
                       </p>
-                      
+
                       {/* Product features badges (viewMode: list only) */}
                       {viewMode === 'list' && product.details?.specifications && (
                         <div className="mt-3 flex flex-wrap gap-2">
@@ -582,10 +591,10 @@ export default function ProductListPage() {
                         </div>
                       )}
                     </CardContent>
-                    
+
                     <CardFooter className={viewMode === 'list' ? "p-4 pt-1 mt-auto" : "p-4 pt-0"}>
                       <div className="w-full flex gap-2">
-                        <Button 
+                        <Button
                           onClick={() => handleAddToCart(product.id)}
                           className="flex-1"
                         >
@@ -593,7 +602,12 @@ export default function ProductListPage() {
                           Thêm vào giỏ
                         </Button>
                         <Button variant="outline" asChild>
-                          <Link href={`/product/${product.id}`}>Chi tiết</Link>
+                          <Link
+                            href={`/product/${product.id}`}
+                            prefetch={true} // Prefetch the product detail page
+                          >
+                            Chi tiết
+                          </Link>
                         </Button>
                       </div>
                     </CardFooter>
@@ -602,7 +616,7 @@ export default function ProductListPage() {
               ))}
             </div>
           )}
-          
+
           {/* Result Count */}
           <div className="mt-6 text-center text-sm text-muted-foreground">
             {!loading && (

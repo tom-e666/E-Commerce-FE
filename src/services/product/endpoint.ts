@@ -54,7 +54,7 @@ export interface PaginatedProductsResponse extends BaseResponse {
 }
 
 // GraphQL queries and mutations
-const GET_PRODUCT = gql`
+export const GET_PRODUCT = gql`
   query GetProduct($getProductId: ID!) {
     getProduct(id: $getProductId) {
       code
@@ -306,15 +306,40 @@ const DELETE_PRODUCT = gql`
 // API methods
 export const getProduct = async (id: string): Promise<ProductResponse> => {
   try {
+    // Thực hiện request
     const response = await apolloClient.query({
       query: GET_PRODUCT,
       variables: { getProductId: id },
-      fetchPolicy: 'network-only',
+      fetchPolicy: 'network-only', // Luôn lấy dữ liệu mới từ server
+      context: {
+        requiresAuth: false // Chỉ định rõ ràng rằng API này không yêu cầu xác thực (không thêm token vào header)
+      }
     });
+
+    if (!response.data || !response.data.getProduct) {
+      return {
+        code: 500,
+        message: 'Không thể tải thông tin sản phẩm',
+        product: null as any
+      };
+    }
+
     return response.data.getProduct;
   } catch (error) {
-    console.error('Error fetching product:', error);
-    throw error;
+    // Kiểm tra lỗi kết nối
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const isNetworkError = errorMessage.includes('Failed to fetch') ||
+                           errorMessage.includes('Network error') ||
+                           errorMessage.includes('timeout');
+
+    // Return a formatted error response instead of throwing
+    return {
+      code: 500,
+      message: isNetworkError
+        ? 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng và thử lại.'
+        : 'Có lỗi xảy ra khi tải thông tin sản phẩm',
+      product: null as any
+    };
   }
 };
 
@@ -324,11 +349,28 @@ export const getProducts = async (status?: string): Promise<ProductsResponse> =>
       query: GET_PRODUCTS,
       variables: status ? { status } : {},
       fetchPolicy: 'network-only',
+      context: {
+        requiresAuth: false // Chỉ định rõ ràng rằng API này không yêu cầu xác thực (không thêm token vào header)
+      }
     });
     return response.data.getProducts;
   } catch (error) {
     console.error('Error fetching products:', error);
-    throw error;
+
+    // Kiểm tra lỗi kết nối
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const isNetworkError = errorMessage.includes('Failed to fetch') ||
+                           errorMessage.includes('Network error') ||
+                           errorMessage.includes('timeout');
+
+    // Return a formatted error response instead of throwing
+    return {
+      code: 500,
+      message: isNetworkError
+        ? 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng và thử lại.'
+        : 'Không thể tải danh sách sản phẩm',
+      products: []
+    };
   }
 };
 
@@ -349,11 +391,37 @@ export const getPaginatedProducts = async (filters?: {
       query: GET_PAGINATED_PRODUCTS,
       variables: filters || {},
       fetchPolicy: 'network-only',
+      context: {
+        requiresAuth: false // Chỉ định rõ ràng rằng API này không yêu cầu xác thực (không thêm token vào header)
+      }
     });
     return response.data.getPaginatedProducts;
   } catch (error) {
     console.error('Error fetching paginated products:', error);
-    throw error;
+
+    // Kiểm tra lỗi kết nối
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const isNetworkError = errorMessage.includes('Failed to fetch') ||
+                           errorMessage.includes('Network error') ||
+                           errorMessage.includes('timeout');
+
+    // Return a formatted error response instead of throwing
+    return {
+      code: 500,
+      message: isNetworkError
+        ? 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng và thử lại.'
+        : 'Không thể tải danh sách sản phẩm',
+      products: [],
+      pagination: {
+        total: 0,
+        current_page: 1,
+        per_page: 10,
+        last_page: 1,
+        from: null,
+        to: null,
+        has_more_pages: false
+      }
+    };
   }
 };
 

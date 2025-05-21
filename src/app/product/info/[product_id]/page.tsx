@@ -1,6 +1,6 @@
 "use client";
 import { useParams } from "next/navigation";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { getProduct } from "@/services/product/endpoint";
@@ -96,7 +96,7 @@ export default function ProductDetailPage() {
         setLoading(false);
       }
     }
-    
+
     if (productId) {
       loadData();
     }
@@ -198,22 +198,22 @@ export default function ProductDetailPage() {
       <Breadcrumb className="mb-6">
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink href="/">
-              <Home className="h-4 w-4 mr-1" />
-              Trang chủ
+            <BreadcrumbLink href="/" className="text-black flex items-center">
+              <Home className="h-4 w-4 mr-1 text-black" />
+              <span>Trang chủ</span>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator>
             <ChevronRight className="h-4 w-4" />
           </BreadcrumbSeparator>
           <BreadcrumbItem>
-            <BreadcrumbLink href="/product">Sản phẩm</BreadcrumbLink>
+            <BreadcrumbLink href="/product" className="text-black">Sản phẩm</BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator>
             <ChevronRight className="h-4 w-4" />
           </BreadcrumbSeparator>
           <BreadcrumbItem>
-            <BreadcrumbLink>{product.name}</BreadcrumbLink>
+            <BreadcrumbLink className="text-black">{product.name}</BreadcrumbLink>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
@@ -287,15 +287,10 @@ export default function ProductDetailPage() {
 
             <div className="mt-4">
               <span className="text-3xl font-bold text-primary">{formatCurrency(product.price)}</span>
-              <p className="text-sm text-muted-foreground mt-1">
-                Đã bao gồm thuế và phí vận chuyển
-              </p>
             </div>
           </div>
 
-          <div className="prose prose-sm max-w-none">
-            <p>{product.details.description}</p>
-          </div>
+
 
           <div className="flex flex-col space-y-4 mt-6">
             {/* Quantity selector */}
@@ -340,21 +335,21 @@ export default function ProductDetailPage() {
           </div>
 
           {/* Benefits */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-6">
-            <div className="flex items-center gap-2 text-sm">
-              <Truck className="h-4 w-4 text-primary" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+            <div className="flex items-center gap-3 text-base font-medium">
+              <Truck className="h-5 w-5 text-primary" />
               <span>Giao hàng miễn phí</span>
             </div>
-            <div className="flex items-center gap-2 text-sm">
-              <Shield className="h-4 w-4 text-primary" />
+            <div className="flex items-center gap-3 text-base font-medium">
+              <Shield className="h-5 w-5 text-primary" />
               <span>Bảo hành 24 tháng</span>
             </div>
-            <div className="flex items-center gap-2 text-sm">
-              <Package className="h-4 w-4 text-primary" />
+            <div className="flex items-center gap-3 text-base font-medium">
+              <Package className="h-5 w-5 text-primary" />
               <span>Đổi trả trong 30 ngày</span>
             </div>
-            <div className="flex items-center gap-2 text-sm">
-              <Check className="h-4 w-4 text-primary" />
+            <div className="flex items-center gap-3 text-base font-medium">
+              <Check className="h-5 w-5 text-primary" />
               <span>Sản phẩm chính hãng</span>
             </div>
           </div>
@@ -372,16 +367,66 @@ export default function ProductDetailPage() {
           <TabsContent value="specifications" className="mt-6">
             <Card>
               <CardContent className="p-6">
-                <h3 className="text-lg font-medium mb-4">Thông số kỹ thuật</h3>
-                <div className="space-y-1">
+                <h3 className="text-xl font-semibold mb-4 text-gray-800 flex items-center">
+                  <span className="w-1 h-6 bg-primary rounded-full mr-2"></span>
+                  Thông số kỹ thuật
+                </h3>
+                <div>
                   {product.details.specifications && product.details.specifications.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
-                      {product.details.specifications.map((spec, index) => (
-                        <div key={index} className="flex items-start">
-                          <div className="w-1/3 font-medium text-muted-foreground">{spec.name}</div>
-                          <div className="w-2/3">{spec.value}</div>
-                        </div>
-                      ))}
+                    <div className="overflow-hidden rounded-lg border shadow-sm">
+                      <table className="w-full border-collapse">
+                        <thead className="bg-primary/10">
+                          <tr>
+                            <th className="p-3 text-left font-semibold text-primary border-r">Thông số</th>
+                            <th className="p-3 text-left font-semibold text-primary border-r">Giá trị</th>
+                            <th className="p-3 text-left font-semibold text-primary border-r">Thông số</th>
+                            <th className="p-3 text-left font-semibold text-primary">Giá trị</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {/* Chia thông số thành các cặp để hiển thị theo hàng */}
+                          {Array.from({ length: Math.ceil(product.details.specifications.length / 2) }).map((_, rowIndex) => {
+                            // Lấy 2 thông số cho mỗi hàng
+                            const startIdx = rowIndex * 2;
+                            return (
+                              <tr
+                                key={rowIndex}
+                                className={`${rowIndex % 2 === 0 ? 'bg-blue-50' : 'bg-gray-100'}`}
+                              >
+                                {/* Cột 1: Thông số đầu tiên trong hàng */}
+                                {startIdx < product.details.specifications.length && (
+                                  <>
+                                    <td className="p-3 w-1/6 font-medium text-gray-700 border-r">
+                                      {product.details.specifications[startIdx].name}
+                                    </td>
+                                    <td className="p-3 w-1/3 border-r">
+                                      {product.details.specifications[startIdx].value}
+                                    </td>
+                                  </>
+                                )}
+
+                                {/* Cột 2: Thông số thứ hai trong hàng (nếu có) */}
+                                {startIdx + 1 < product.details.specifications.length ? (
+                                  <>
+                                    <td className="p-3 w-1/6 font-medium text-gray-700 border-r">
+                                      {product.details.specifications[startIdx + 1].name}
+                                    </td>
+                                    <td className="p-3 w-1/3">
+                                      {product.details.specifications[startIdx + 1].value}
+                                    </td>
+                                  </>
+                                ) : (
+                                  // Nếu không có thông số thứ hai, thêm ô trống
+                                  <>
+                                    <td className="p-3 border-r"></td>
+                                    <td className="p-3"></td>
+                                  </>
+                                )}
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
                     </div>
                   ) : (
                     <p className="text-muted-foreground">Không có thông tin thông số kỹ thuật.</p>
@@ -394,17 +439,78 @@ export default function ProductDetailPage() {
           <TabsContent value="description" className="mt-6">
             <Card>
               <CardContent className="p-6">
-                <h3 className="text-lg font-medium mb-4">Mô tả sản phẩm</h3>
-                <div className="prose prose-sm max-w-none">
-                  <p>{product.details.description || "Không có mô tả chi tiết cho sản phẩm này."}</p>
+                <h3 className="text-xl font-semibold mb-4 text-gray-800 flex items-center">
+                  <span className="w-1 h-6 bg-primary rounded-full mr-2"></span>
+                  Mô tả sản phẩm
+                </h3>
+
+                <div className="max-w-none">
+                  {/* Format description with proper paragraphs and bullet points */}
+                  {product.details.description ? (
+                    <div className="space-y-6 text-base leading-relaxed">
+                      {product.details.description.split('\n\n').map((paragraph, idx) => (
+                        <div key={idx} className="text-gray-700 bg-white rounded-lg">
+                          {paragraph.split('\n').map((line, lineIdx) => {
+                            // Kiểm tra xem dòng có bắt đầu bằng dấu • hay không
+                            if (line.trim().startsWith('•')) {
+                              // Nếu là bullet point, hiển thị với padding bên trái
+                              return (
+                                <div key={lineIdx} className="flex items-start mb-3 bg-gray-50 p-2 rounded-md">
+                                  <span className="text-primary mr-2 font-bold">•</span>
+                                  <span className="text-gray-800">{line.trim().substring(1).trim()}</span>
+                                </div>
+                              );
+                            } else if (line.includes('•')) {
+                              // Nếu dòng chứa dấu • ở giữa, tách thành nhiều phần
+                              const parts = line.split('•').map(part => part.trim()).filter(Boolean);
+
+                              if (parts.length > 0) {
+                                return (
+                                  <div key={lineIdx} className="space-y-3 mb-3">
+                                    {parts.map((part, partIdx) => (
+                                      partIdx === 0 ? (
+                                        // Phần đầu tiên hiển thị như văn bản thông thường
+                                        <p key={`${lineIdx}-${partIdx}`} className="font-medium text-gray-800">{part}</p>
+                                      ) : (
+                                        // Các phần sau hiển thị như bullet points
+                                        <div key={`${lineIdx}-${partIdx}`} className="flex items-start ml-4 bg-gray-50 p-2 rounded-md">
+                                          <span className="text-primary mr-2 font-bold">•</span>
+                                          <span className="text-gray-800">{part}</span>
+                                        </div>
+                                      )
+                                    ))}
+                                  </div>
+                                );
+                              }
+                            }
+
+                            // Dòng thông thường
+                            return (
+                              <React.Fragment key={lineIdx}>
+                                <span className="text-gray-800">{line}</span>
+                                {lineIdx < paragraph.split('\n').length - 1 && <br />}
+                              </React.Fragment>
+                            );
+                          })}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="bg-gray-50 p-4 rounded-lg text-center">
+                      <p className="text-gray-700">Không có mô tả chi tiết cho sản phẩm này.</p>
+                    </div>
+                  )}
 
                   {/* Keywords/tags if available */}
                   {product.details.keywords && product.details.keywords.length > 0 && (
-                    <div className="mt-4">
-                      <h4 className="text-sm font-medium mb-2">Tags:</h4>
+                    <div className="mt-8 bg-primary/5 p-4 rounded-lg border border-primary/10">
+                      <h4 className="text-base font-medium mb-3 text-gray-800 flex items-center">
+                        <span className="w-1 h-4 bg-primary rounded-full mr-2"></span>
+                        Từ khóa liên quan
+                      </h4>
                       <div className="flex flex-wrap gap-2">
                         {product.details.keywords.map((keyword, idx) => (
-                          <Badge key={idx} variant="secondary">
+                          <Badge key={idx} variant="outline" className="px-3 py-1 text-sm bg-white border-primary/20 text-primary hover:bg-primary/5">
                             {keyword}
                           </Badge>
                         ))}
@@ -419,7 +525,10 @@ export default function ProductDetailPage() {
           <TabsContent value="reviews" className="mt-6">
             <Card>
               <CardContent className="p-6">
-                <h3 className="text-lg font-medium mb-4">Đánh giá sản phẩm</h3>
+                <h3 className="text-xl font-semibold mb-4 text-gray-800 flex items-center">
+                  <span className="w-1 h-6 bg-primary rounded-full mr-2"></span>
+                  Đánh giá sản phẩm
+                </h3>
                 <p className="text-muted-foreground">Chưa có đánh giá nào cho sản phẩm này.</p>
               </CardContent>
             </Card>
@@ -433,35 +542,52 @@ export default function ProductDetailPage() {
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold">Sản phẩm liên quan</h2>
             <Link href="/product" className="text-primary hover:underline flex items-center">
-              Xem tất cả
+              <span className="text-sm font-medium">Tất cả sản phẩm</span>
               <ChevronRight className="h-4 w-4 ml-1" />
             </Link>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {relatedProducts.map((relatedProduct) => (
-              <Card key={relatedProduct.id} className="overflow-hidden">
-                <div className="aspect-square relative">
-                  <Image
-                    src={relatedProduct.details.images?.[0] || "/laptop.png"}
-                    alt={relatedProduct.name}
-                    fill
-                    className="object-contain p-4"
-                  />
-                </div>
-                <CardContent className="p-4">
-                  <h3 className="font-medium line-clamp-2 min-h-[2.5rem]">
-                    <Link href={`/product/${relatedProduct.id}`} className="hover:underline">
-                      {relatedProduct.name}
-                    </Link>
-                  </h3>
-                  <div className="mt-2 font-bold text-primary">
-                    {formatCurrency(relatedProduct.price)}
+              <Card key={relatedProduct.id} className="overflow-hidden group transition-all duration-300 hover:shadow-md">
+                <Link href={`/product/${relatedProduct.id}`} className="block">
+                  <div className="aspect-square relative bg-white">
+                    <Image
+                      src={relatedProduct.details.images?.[0] || "/laptop.png"}
+                      alt={relatedProduct.name}
+                      fill
+                      className="object-contain p-4 transition-transform duration-300 group-hover:scale-105"
+                    />
                   </div>
+                  <CardContent className="p-4">
+                    <div className="flex flex-col h-full">
+                      <h3 className="font-medium line-clamp-2 min-h-[2.5rem] text-gray-800 group-hover:text-primary transition-colors">
+                        {relatedProduct.name}
+                      </h3>
+                      <div className="mt-2 font-bold text-primary text-lg">
+                        {formatCurrency(relatedProduct.price)}
+                      </div>
+                      <div className="flex items-center mt-2 text-sm text-gray-500">
+                        <Badge variant="outline" className="mr-2">
+                          {getBrandName(relatedProduct.brand_id)}
+                        </Badge>
+                        {relatedProduct.status ? (
+                          <span className="text-green-600 flex items-center">
+                            <Check className="h-3 w-3 mr-1" />
+                            Còn hàng
+                          </span>
+                        ) : (
+                          <span className="text-red-500">Hết hàng</span>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Link>
+                <div className="px-4 pb-4">
                   <Button
                     variant="outline"
                     size="sm"
-                    className="w-full mt-3"
+                    className="w-full group-hover:bg-primary group-hover:text-white transition-colors"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -483,7 +609,7 @@ export default function ProductDetailPage() {
                     <ShoppingCart className="h-4 w-4 mr-2" />
                     Thêm vào giỏ
                   </Button>
-                </CardContent>
+                </div>
               </Card>
             ))}
           </div>
