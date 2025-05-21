@@ -26,7 +26,7 @@ export const LOGIN_MUTATION = gql`
         id
         full_name
         role
-      } 
+      }
     }
   }
 `;
@@ -88,13 +88,83 @@ export const GET_CURRENT_USER = gql`
 // Thêm hàm getCurrentUser
 export const getCurrentUser = async (): Promise<CurrentUserResponse> => {
   try {
+    // Kiểm tra token trước khi gọi API
+    const token = localStorage.getItem('token') || localStorage.getItem('access_token');
+    if (!token) {
+      console.log('No token available for getCurrentUser');
+      return {
+        code: 401,
+        message: 'No authentication token found',
+        user: null
+      };
+    }
+
+    // Thử lấy thông tin user từ localStorage trước
+    const storedUserData = localStorage.getItem('userData');
+    if (storedUserData) {
+      try {
+        const userData = JSON.parse(storedUserData);
+        console.log('Using stored user data:', userData);
+        // Trả về dữ liệu từ localStorage nếu có
+        return {
+          code: 200,
+          message: 'User data retrieved from localStorage',
+          user: userData
+        };
+      } catch (parseError) {
+        console.warn('Error parsing stored user data, will try API call:', parseError);
+      }
+    }
+
+    // Nếu không có dữ liệu trong localStorage hoặc parse thất bại, gọi API
+    console.log('Calling getCurrentUser API with token:', token.substring(0, 15) + '...');
+
     const response = await apolloClient.query({
       query: GET_CURRENT_USER,
       fetchPolicy: 'network-only', // Không sử dụng cache để luôn lấy dữ liệu mới nhất
       context: {
-        requiresAuth: true // Cần token xác thực
+        requiresAuth: true, // Cần token xác thực
+        headers: {
+          authorization: `Bearer ${token}` // Thêm token vào header
+        }
       }
     });
+
+    console.log('getCurrentUser API response:', response);
+
+    // Kiểm tra response trước khi truy cập data
+    if (!response) {
+      console.error('Empty response from server');
+      return {
+        code: 500,
+        message: 'Empty response from server',
+        user: null
+      };
+    }
+
+    if (!response.data) {
+      console.error('Response missing data property:', response);
+      return {
+        code: 500,
+        message: 'Response missing data property',
+        user: null
+      };
+    }
+
+    if (!response.data.getCurrentUser) {
+      console.error('Response missing getCurrentUser property:', response.data);
+      return {
+        code: 500,
+        message: 'Response missing getCurrentUser property',
+        user: null
+      };
+    }
+
+    // Lưu thông tin user vào localStorage để sử dụng sau này
+    if (response.data.getCurrentUser.user) {
+      localStorage.setItem('userData', JSON.stringify(response.data.getCurrentUser.user));
+    }
+
     return response.data.getCurrentUser;
   } catch (error) {
     console.error('Error fetching current user:', error);

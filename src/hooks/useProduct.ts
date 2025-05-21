@@ -19,7 +19,7 @@ export const useProduct = () => {
     try {
       const response = await apiGetProducts(status);
       const { code, message, products } = response;
-      
+
       if (code === 200) {
         setProducts(products);
         console.log("Products:", products);
@@ -36,15 +36,22 @@ export const useProduct = () => {
   const handleGetProduct = async (id: string) => {
     setLoading(true);
     try {
+      console.log("handleGetProduct: Fetching product with ID:", id);
       const response = await apiGetProduct(id);
+      console.log("handleGetProduct: API response:", response);
       const { code, product } = response;
-      
+
       if (code === 200) {
+        console.log("handleGetProduct: Setting current product:", product);
         setCurrentProduct(product);
         return product;
       } else {
+        console.error("handleGetProduct: Failed to get product:", response);
         throw new Error("Không thể lấy thông tin sản phẩm");
       }
+    } catch (error) {
+      console.error("handleGetProduct: Error:", error);
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -70,10 +77,10 @@ export const useProduct = () => {
         details,
         weight: 0 // Default weight since it's required but not in the original function signature
       };
-      
+
       const response = await apiCreateProduct(productData);
       const { code, product } = response;
-      
+
       if (code === 200) {
         setProducts(prev => [...prev, product]);
         return product;
@@ -87,13 +94,13 @@ export const useProduct = () => {
 
   const handleUpdateProduct = async (
     id: string,
-    data: Partial<Omit<Product, "id">>  
+    data: Partial<Omit<Product, "id">>
   ) => {
     setLoading(true);
     try {
       const response = await apiUpdateProduct(id, data);
       const { code, product } = response;
-      
+
       if (code === 200) {
         setProducts(prev => prev.map(item => item.id === id ? product : item));
         if (currentProduct?.id === id) {
@@ -114,7 +121,7 @@ export const useProduct = () => {
     try {
       const response = await apiDeleteProduct(id);
       const { code } = response;
-      
+
       if (code === 200) {
         setProducts(prev => prev.filter(item => item.id !== id));
         if (currentProduct?.id === id) {

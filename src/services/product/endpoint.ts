@@ -80,7 +80,47 @@ const GET_PRODUCT = gql`
     }
   }
 `;
-
+export const SMART_SEARCH = gql`query SmartSearch($query: String!) {
+  smartSearch(query: $query) {
+    code
+    filters {
+      brands {
+        count
+        id
+        name
+      }
+      categories {
+        count
+        id
+        name
+      }
+      price_range {
+        max
+        min
+      }
+    }
+    message
+    products {
+      brand_id
+      details {
+        description
+        images
+        keywords
+        specifications {
+          name
+          value
+        }
+      }
+      id
+      name
+      price
+      status
+      stock
+      weight
+    }
+    total
+  }
+}`
 const GET_PRODUCTS = gql`
   query GetProducts($status: String) {
     getProducts(status: $status) {
@@ -268,7 +308,7 @@ export const getProduct = async (id: string): Promise<ProductResponse> => {
   try {
     const response = await apolloClient.query({
       query: GET_PRODUCT,
-      variables: { getProductId: id }, // Update variable name here
+      variables: { getProductId: id },
       fetchPolicy: 'network-only',
     });
     return response.data.getProduct;
@@ -336,7 +376,7 @@ export const createProduct = async (
 };
 
 export const updateProduct = async (
-  id: string, 
+  id: string,
   productData: Partial<Product>
 ): Promise<ProductResponse> => {
   try {

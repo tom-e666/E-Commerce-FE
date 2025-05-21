@@ -11,14 +11,23 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
     // Thêm bảo vệ kép để đảm bảo chỉ admin/staff mới có thể truy cập
     useEffect(() => {
-        if (!isLoading && isAuthenticated) {
-            if (!hasRole(['admin', 'staff'])) {
-                console.log("Redirecting non-admin user from admin area");
-                router.push('/unauthorized');
+        if (!isLoading) {
+            console.log("Admin layout - Auth state:", { isAuthenticated, isAdmin: hasRole(['admin', 'staff']) });
+
+            if (isAuthenticated) {
+                // Đã đăng nhập, kiểm tra quyền
+                if (!hasRole(['admin', 'staff'])) {
+                    console.log("Redirecting non-admin user from admin area");
+                    router.push('/unauthorized');
+                } else {
+                    console.log("Admin user confirmed, staying on admin page");
+                }
+            } else {
+                // Nếu chưa đăng nhập, chuyển đến trang login
+                // KHÔNG thêm redirect parameter để tránh vòng lặp chuyển hướng
+                console.log("User not authenticated, redirecting to login page");
+                router.push('/login');
             }
-        } else if (!isLoading && !isAuthenticated) {
-            // Nếu chưa đăng nhập, chuyển đến trang login với redirect về admin
-            router.push('/login?redirect=/admin');
         }
     }, [isAuthenticated, hasRole, isLoading, router]);
 

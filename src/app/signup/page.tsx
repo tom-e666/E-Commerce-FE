@@ -32,10 +32,19 @@ const Page = () => {
         try {
             const success = await signup(email, phone, password, full_name);
             toast.success(success);
-            
+
             // After successful signup, try to log in automatically
-            await login(email, password);
-            router.push('/');
+            const loginResult = await login(email, password);
+            console.log("Auto login after signup successful:", loginResult);
+
+            // Kiểm tra role để chuyển hướng đúng
+            if (loginResult.user && (loginResult.user.role === 'admin' || loginResult.user.role === 'staff')) {
+                console.log("Admin/staff user detected after signup, redirecting to admin dashboard");
+                router.push('/admin');
+            } else {
+                console.log("Regular user detected after signup, redirecting to home page");
+                router.push('/');
+            }
         } catch (error) {
             // @ts-expect-error any
             toast.error(error.message);

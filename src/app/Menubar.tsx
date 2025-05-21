@@ -7,16 +7,19 @@ import InputBase from '@mui/material/InputBase';
 import IconButton from '@mui/material/IconButton';
 import MenuIcon from '@mui/icons-material/Menu';
 import SearchIcon from '@mui/icons-material/Search';
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
+import { useSearch } from "@/hooks/useSearch";
 import { toast } from "sonner";
 const Menubar = () => {
     const { user } = useAuthContext();
     const router = useRouter();
     const { logout } = useAuth();
+    const { query, setQuery, handleSubmit } = useSearch();
 
     const handleLogout = async () => {
         try {
@@ -26,6 +29,26 @@ const Menubar = () => {
             }, 100);
         } catch (error) {
             console.log(error)
+        }
+    }
+
+    // Hàm xử lý tìm kiếm
+    const handleSearchSubmit = async (e?: React.FormEvent) => {
+        if (e) {
+            e.preventDefault();
+        }
+
+        try {
+            // Thực hiện tìm kiếm và đợi kết quả
+            await handleSubmit(e, false);
+
+            // Chuyển hướng đến trang kết quả tìm kiếm
+            if (query.trim()) {
+                router.push(`/smartSearch?q=${encodeURIComponent(query)}`);
+            }
+        } catch (error) {
+            console.error('Error in handleSearchSubmit:', error);
+            toast.error('Có lỗi xảy ra khi tìm kiếm. Vui lòng thử lại sau.');
         }
     }
 
@@ -46,6 +69,7 @@ const Menubar = () => {
                     component="form"
                     sx={{ p: '2px 4px', display: 'flex', alignItems: 'center', width: 400, height: 37 }}
                     className="mr-3"
+                    onSubmit={handleSearchSubmit}
                 >
                     <IconButton sx={{ p: '10px' }} aria-label="menu">
                         <MenuIcon />
@@ -54,9 +78,20 @@ const Menubar = () => {
                         sx={{ ml: 1, flex: 1 }}
                         placeholder="Tìm kiếm sản phẩm"
                         inputProps={{ 'aria-label': 'search products' }}
-                        onClick={() => { toast.info("Chức năng tìm kiếm chưa khả dụng") }}
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleSearchSubmit();
+                            }
+                        }}
                     />
-                    <IconButton type="button" sx={{ p: '10px' }} aria-label="search">
+                    <IconButton
+                        type="submit"
+                        sx={{ p: '10px' }}
+                        aria-label="search"
+                    >
                         <SearchIcon />
                     </IconButton>
                 </Paper>
@@ -65,6 +100,14 @@ const Menubar = () => {
                     <Link href="/hotline" passHref>
                         <Button variant={"outline"} className="bg-transparent border-0">
                             Hotline
+                        </Button>
+                    </Link>
+                </div>
+
+                <div className="h-full w-20 flex justify-center items-center">
+                    <Link href="/news" passHref>
+                        <Button variant={"outline"} className="bg-transparent border-0">
+                            Bản tin
                         </Button>
                     </Link>
                 </div>

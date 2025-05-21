@@ -7,23 +7,40 @@ export const useAuth = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const router = useRouter();
 
-  const login = async (email: string, password: string): Promise<string> => {
+  const login = async (email: string, password: string): Promise<{message: string, user?: any}> => {
     setLoading(true);
     try {
       const response = await loginAPI(email, password);
-      
+
       if (response?.data?.login?.code === 200) {
         const { access_token, refresh_token, expires_at, user } = response.data.login;
-        
+
         // Lưu thông tin xác thực vào localStorage
+        // Lưu cả hai cách để đảm bảo tương thích
         localStorage.setItem('token', access_token);
+        localStorage.setItem('access_token', access_token);
         localStorage.setItem('refreshToken', refresh_token);
+        localStorage.setItem('refresh_token', refresh_token);
         localStorage.setItem('expiresAt', expires_at);
-        
+
+        // Lưu thêm thông tin user để dễ truy cập
+        if (user) {
+          localStorage.setItem('userRole', user.role);
+          localStorage.setItem('userId', user.id);
+          localStorage.setItem('userName', user.full_name);
+
+          // Lưu toàn bộ thông tin user dưới dạng JSON
+          localStorage.setItem('userData', JSON.stringify(user));
+        }
+
         console.log("Đăng nhập thành công với vai trò:", user?.role);
-        
-        // Trả về thông báo thành công
-        return "Đăng nhập thành công";
+        console.log("Token đã được lưu:", access_token.substring(0, 15) + "...");
+
+        // Trả về thông báo thành công và thông tin user
+        return {
+          message: "Đăng nhập thành công",
+          user: user
+        };
       } else {
         throw new Error(response?.data?.login?.message || "Đăng nhập thất bại");
       }
@@ -39,7 +56,7 @@ export const useAuth = () => {
     setLoading(true);
     try {
       const response = await signupAPI(email, phone, password, full_name);
-      
+
       if (response?.data?.signup?.code === 200) {
         return "Đăng ký thành công";
       } else {
@@ -54,11 +71,19 @@ export const useAuth = () => {
   };
 
   const logout = () => {
-    // Xóa thông tin xác thực
+    // Xóa tất cả thông tin xác thực
     localStorage.removeItem('token');
+    localStorage.removeItem('access_token');
     localStorage.removeItem('refreshToken');
+    localStorage.removeItem('refresh_token');
     localStorage.removeItem('expiresAt');
-    
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('userData');
+
+    console.log("Đã đăng xuất và xóa tất cả thông tin xác thực");
+
     // Chuyển hướng về trang đăng nhập
     router.push('/login');
   };

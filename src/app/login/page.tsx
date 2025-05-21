@@ -32,12 +32,32 @@ const Page = () => {
   // Kiểm tra nếu người dùng đã đăng nhập và chuyển hướng phù hợp
   useEffect(() => {
     if (isAuthenticated) {
-      // Kiểm tra role của người dùng
+      console.log("User is already authenticated, checking role for redirection");
+
+      // Kiểm tra role từ user object trong context
       if (user && (user.role === 'admin' || user.role === 'staff')) {
-        console.log("Đã phát hiện admin/staff, chuyển hướng đến trang admin");
-        router.push('/admin');
+        console.log("Admin/staff user detected from context, redirecting to admin dashboard");
+        // Sử dụng window.location.href thay vì router.push để đảm bảo trang được tải lại hoàn toàn
+        window.location.href = '/admin';
+        return;
+      }
+
+      // Kiểm tra role từ localStorage như một phương án dự phòng
+      const userRole = localStorage.getItem('userRole');
+      if (userRole === 'admin' || userRole === 'staff') {
+        console.log("Admin/staff user detected from localStorage, redirecting to admin dashboard");
+        window.location.href = '/admin';
+        return;
+      }
+
+      // Nếu không phải admin/staff, chuyển hướng đến trang thông thường
+      console.log("Regular user detected, redirecting to:", redirectUrl);
+
+      // Kiểm tra nếu redirectUrl là /admin nhưng user không phải admin
+      if (redirectUrl === '/admin' || redirectUrl.startsWith('/admin/')) {
+        console.log("Non-admin user trying to access admin area, redirecting to home");
+        router.push('/');
       } else {
-        console.log("Chuyển hướng người dùng thông thường đến:", redirectUrl);
         router.push(redirectUrl !== '/login' ? redirectUrl : '/');
       }
     }
@@ -48,19 +68,47 @@ const Page = () => {
 
     try {
       await toast.promise(
-        login(username, password), 
+        login(username, password),
         {
           loading: 'Đang đăng nhập...',
-          success: (data) => {
-            // Kiểm tra role ngay sau đăng nhập thành công
-            setTimeout(() => {
-              // Thêm setTimeout để đảm bảo context auth đã được cập nhật
-              if (hasRole(['admin', 'staff'])) {
-                router.push('/admin');
-              } else {
-                router.push(redirectUrl !== '/login' ? redirectUrl : '/');
-              }
-            }, 300);
+          success: (result) => {
+            console.log("Login successful, checking user role...");
+
+            // Lấy thông tin user trực tiếp từ kết quả đăng nhập
+            const user = result.user;
+            console.log("User info from login result:", user);
+
+            // Kiểm tra nếu là admin/staff
+            if (user && (user.role === 'admin' || user.role === 'staff')) {
+              console.log("Admin/staff user detected directly from login response");
+
+              // Chuyển hướng ngay lập tức đến trang admin
+              // Sử dụng window.location.href thay vì router.push để đảm bảo trang được tải lại hoàn toàn
+              window.location.href = '/admin';
+              return 'Đăng nhập thành công, đang chuyển hướng đến trang quản trị';
+            }
+
+            // Kiểm tra role từ localStorage như một phương án dự phòng
+            const userRole = localStorage.getItem('userRole');
+            console.log("User role from localStorage:", userRole);
+
+            if (userRole === 'admin' || userRole === 'staff') {
+              console.log("Admin/staff user detected from localStorage");
+              window.location.href = '/admin';
+              return 'Đăng nhập thành công, đang chuyển hướng đến trang quản trị';
+            }
+
+            // Nếu không phải admin/staff, chuyển hướng đến trang thông thường
+            console.log("Regular user detected, redirecting to:", redirectUrl !== '/login' ? redirectUrl : '/');
+
+            // Kiểm tra nếu redirectUrl là /admin nhưng user không phải admin
+            if (redirectUrl === '/admin' || redirectUrl.startsWith('/admin/')) {
+              console.log("Non-admin user trying to access admin area, redirecting to home");
+              router.push('/');
+            } else {
+              router.push(redirectUrl !== '/login' ? redirectUrl : '/');
+            }
+
             return 'Đăng nhập thành công';
           },
           error: (err) => `${err.message || 'Đăng nhập thất bại'}`

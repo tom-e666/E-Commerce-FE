@@ -21,19 +21,37 @@ import OrderItem from "@/components/checkout/OrderItem";
 
 export default function CheckoutSuccessPage() {
     const router = useRouter();
-    const params = useParams<{ orderId: string, paymentMethod: string }>()
-    //@ts-expect-error nothing
-    const paymentMethod = params.paymentMethod;
-    //@ts-expect-error nothing
-    const orderId = params.orderId;
+    const params = useParams<{ orderId: string, paymentMethod: string }>();
+    const [orderId, setOrderId] = useState<string | null>(null);
+    const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
     const { getOrder, loading: orderLoading, currentOrder } = useOrder();
     const { handleFetchShippingByOrderId, shippingData, loading: shippingLoading } = useShipping();
     const [loading, setLoading] = useState(true);
 
+    // First, resolve the params which is now a Promise in Next.js 15
+    useEffect(() => {
+        async function resolveParams() {
+            try {
+                // In Next.js 15, params is a Promise that needs to be resolved
+                const resolvedParams = await params;
+
+                if (resolvedParams) {
+                    setOrderId(resolvedParams.orderId);
+                    setPaymentMethod(resolvedParams.paymentMethod);
+                }
+            } catch (error) {
+                console.error("Error resolving params:", error);
+                router.push('/');
+            }
+        }
+
+        resolveParams();
+    }, [params, router]);
+
+    // Then, load the order data once we have the orderId
     useEffect(() => {
         async function loadData() {
             if (!orderId) {
-                router.push('/');
                 return;
             }
             try {
@@ -46,8 +64,11 @@ export default function CheckoutSuccessPage() {
                 setLoading(false);
             }
         }
-        loadData();
-    }, [orderId, router, getOrder, handleFetchShippingByOrderId]);
+
+        if (orderId) {
+            loadData();
+        }
+    }, [orderId, getOrder, handleFetchShippingByOrderId]);
 
     if (loading || orderLoading || shippingLoading) {
         return (
