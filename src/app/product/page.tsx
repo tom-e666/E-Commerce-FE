@@ -534,7 +534,7 @@ export default function ProductListPage() {
               {sortedProducts.map((product) => (
                 <Card key={product.id} className={viewMode === 'list' ? "flex flex-col sm:flex-row" : ""}>
                   <div className={viewMode === 'list' ? "sm:w-48 relative" : "relative"}>
-                    <Link href={`/product/${product.id}`} className="block">
+                    <Link href={`/product/info/${product.id}`} className="block">
                       <div className={viewMode === 'list' 
                         ? "h-48 relative" 
                         : "aspect-square relative"
@@ -561,7 +561,7 @@ export default function ProductListPage() {
                   
                   <div className="flex-1 flex flex-col">
                     <CardContent className={viewMode === 'list' ? "p-4 pb-2" : "p-4"}>
-                      <Link href={`/product/${product.id}`} className="block">
+                      <Link href={`/product/info/${product.id}`} className="block">
                         <h3 className="font-medium text-lg mb-1 hover:underline line-clamp-2">{product.name}</h3>
                       </Link>
                       <div className="text-lg font-bold text-primary mb-2">
@@ -593,7 +593,7 @@ export default function ProductListPage() {
                           Thêm vào giỏ
                         </Button>
                         <Button variant="outline" asChild>
-                          <Link href={`/product/${product.id}`}>Chi tiết</Link>
+                          <Link href={`/product/info/${product.id}`}>Chi tiết</Link>
                         </Button>
                       </div>
                     </CardFooter>

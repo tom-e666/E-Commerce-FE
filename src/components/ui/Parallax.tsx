@@ -79,7 +79,7 @@ export function ParallaxProduct({ id, image, title, price, description, index, o
           </div>
 
           <div className="product-details">
-            <Link href={`/product/${id}`} className="product-link" onClick={(e) => e.stopPropagation()}>
+            <Link href={`/product/info/${id}`} className="product-link" onClick={(e) => e.stopPropagation()}>
               <h3 className="product-title">{title}</h3>
             </Link>
             <p className="product-price">{formatCurrency(price)}</p>
