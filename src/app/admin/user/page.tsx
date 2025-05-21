@@ -31,7 +31,7 @@ import { Badge } from "@/components/ui/badge";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { Shield, User, UserCog } from "lucide-react";
+import { Shield, User, UserCog, CheckCircle, XCircle } from "lucide-react";
 
 import { provideGlobalGridOptions } from 'ag-grid-community';
 provideGlobalGridOptions({
@@ -83,6 +83,26 @@ export default function UserManagement() {
                     <div className={`flex items-center justify-center px-2 py-1 rounded-full ${roleClass}`}>
                         {roleIcon}
                         <span>{roleText}</span>
+                    </div>
+                );
+            }
+        },
+        {
+            field: "email_verified",
+            headerName: "Đã xác thực",
+            width: 120,
+            // @ts-expect-error any
+            cellRenderer: (params) => {
+                const verified = params.value === true;
+                const statusClass = verified
+                    ? "bg-green-100 text-green-800"
+                    : "bg-red-100 text-red-800";
+                return (
+                    <div className={`flex items-center justify-center px-2 py-1 rounded-full ${statusClass}`}>
+                        {verified
+                            ? <CheckCircle className="h-4 w-4 mr-1" />
+                            : <XCircle className="h-4 w-4 mr-1" />}
+                        <span>{verified ? "Đã xác thực" : "Chưa xác thực"}</span>
                     </div>
                 );
             }
@@ -188,9 +208,11 @@ interface UserRoleDialogProps {
         full_name: string;
         phone: string;
         role?: string;
+        email_verified?: boolean;
         created_at?: string;
     } | null;
     onSubmit: () => void;
+    //@ts-expect-error any
     updateUserRole: (userId: string, role: string) => Promise<any>;
 }
 
@@ -269,6 +291,22 @@ function UserRoleDialog({
                             <div>
                                 <div className="text-sm font-medium text-muted-foreground">Số điện thoại:</div>
                                 <div className="font-medium">{user.phone || "Chưa cung cấp"}</div>
+                            </div>
+                            <div>
+                                <div className="text-sm font-medium text-muted-foreground">Trạng thái email:</div>
+                                <div className="font-medium flex items-center">
+                                    {user.email_verified ? (
+                                        <>
+                                            <CheckCircle className="h-4 w-4 mr-1 text-green-500" />
+                                            <span className="text-green-600">Đã xác thực</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <XCircle className="h-4 w-4 mr-1 text-red-500" />
+                                            <span className="text-red-600">Chưa xác thực</span>
+                                        </>
+                                    )}
+                                </div>
                             </div>
                             <div>
                                 <div className="text-sm font-medium text-muted-foreground">Ngày tạo:</div>

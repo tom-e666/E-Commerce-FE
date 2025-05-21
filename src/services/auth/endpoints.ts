@@ -8,9 +8,10 @@ interface CurrentUserResponse {
   user: {
     id: string;
     full_name: string;
-    role: string;
     email?: string;
     phone?: string;
+    role: string;
+    email_verified: boolean;
   } | null;
 }
 
@@ -28,11 +29,14 @@ export const LOGIN_MUTATION = gql`
       access_token
       refresh_token
       expires_at
-      user{
+      user {
         id
+        email
+        phone
         full_name
         role
-      } 
+        email_verified
+      }
     }
   }
 `;
@@ -48,28 +52,34 @@ export const login = async (email: string, password: string) => {
 };
 
 export const SIGNUP_MUTATION = gql`
-  mutation Signup(
-    $email:String!
-    $phone:String!
-    $password:String!
-    $full_name:String!
+  mutation Signup($email: String!, $phone: String!, $password: String!, $fullName: String!) {
+    signup(
+      email: $email
+      phone: $phone
+      password: $password
+      full_name: $fullName
     ) {
-
-    signup(email: $email,phone: $phone,password: $password,full_name: $full_name) {
       code
       message
+      user {
+        id
+        email
+        phone
+        full_name
+        email_verified
+      }
     }
   }
 `;
 
-export const signup = async (email: string, phone: string, password: string, full_name: string) => {
+export const signup = async (email: string, phone: string, password: string, fullName: string) => {
   return apolloClient.mutate({
     mutation: SIGNUP_MUTATION,
     variables: {
       email,
       phone,
       password,
-      full_name
+      fullName
     }
   });
 };
@@ -82,10 +92,11 @@ export const GET_CURRENT_USER = gql`
       message
       user {
         id
-        full_name
-        role
         email
         phone
+        full_name
+        role
+        email_verified
       }
     }
   }
@@ -113,20 +124,21 @@ export const getCurrentUser = async (): Promise<CurrentUserResponse> => {
   }
 };
 
-// Logout Mutation nếu cần
+// Logout Mutation
 export const LOGOUT_MUTATION = gql`
-  mutation Logout {
-    logout {
+  mutation Logout($refreshToken: String!) {
+    logout(refresh_token: $refreshToken) {
       code
       message
     }
   }
 `;
 
-export const logout = async () => {
+export const logout = async (refreshToken: string) => {
   try {
     const response = await apolloClient.mutate({
       mutation: LOGOUT_MUTATION,
+      variables: { refreshToken },
       context: {
         requiresAuth: true
       }
@@ -137,34 +149,34 @@ export const logout = async () => {
     throw error;
   }
 };
-export const REFRESHTOKEN_MUTATION = gql`
-mutation refresh_token( $refresh_token:String!){
-  refreshToken(
-    refresh_token:$refresh_token
-  ){
-    code
-    access_token
-    refresh_token
-    user
-    {
-      full_name
-      id
-      role
+
+export const REFRESH_TOKEN_MUTATION = gql`
+  mutation RefreshToken($refreshToken: String!) {
+    refreshToken(refresh_token: $refreshToken) {
+      code
+      message
+      access_token
+      refresh_token
+      expires_at
+      user {
+        id
+        email
+        full_name
+      }
     }
-    expires_at
   }
-}`;
-export const refreshTokenAPI = async (refresh_token: string) => {
-return apolloClient.mutate({
-  mutation: REFRESHTOKEN_MUTATION,
-  variables: {
-    refresh_token
-  }
-});
-}
+`;
 
-// Updated email verification mutations
+export const refreshTokenAPI = async (refreshToken: string) => {
+  return apolloClient.mutate({
+    mutation: REFRESH_TOKEN_MUTATION,
+    variables: {
+      refreshToken
+    }
+  });
+};
 
+// Email verification mutations
 export const SEND_VERIFICATION_EMAIL = gql`
   mutation SendVerificationEmail {
     sendVerificationEmail {
@@ -174,7 +186,6 @@ export const SEND_VERIFICATION_EMAIL = gql`
   }
 `;
 
-// Updated email verification mutation to match the schema that only requires token
 export const VERIFY_EMAIL = gql`
   mutation VerifyEmail($token: String!) {
     verifyEmail(token: $token) {
@@ -232,7 +243,6 @@ export const resendVerificationEmail = async (): Promise<BaseResponse> => {
     const response = await apolloClient.mutate({
       mutation: RESEND_VERIFICATION_EMAIL,
       context: {
-        requiresAuth: true
       }
     });
     return response.data.resendVerificationEmail;

@@ -15,10 +15,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
 
 // Icons
-import { Package, Clock, ShoppingCart, Search, CheckCircle, Truck, XCircle, ChevronRight, Home } from 'lucide-react';
+import { Package, Clock, ShoppingCart, Search, CheckCircle, Truck, XCircle, ChevronRight } from 'lucide-react';
 
 // Order status badge map
 const getStatusBadge = (status: string) => {

@@ -1,96 +1,82 @@
 import { useState } from 'react';
-import { getUsersAPI, auditRoleAPI } from '@/services/user/endpoints';
-import { User } from 'lucide-react';
-
-interface User {
-  id: string;
-  email: string;
-  full_name: string;
-  phone: string;
-  created_at: string;
-  role: string;
-}
+import { 
+  getAllUsersAPI, 
+  getUserAPI, 
+  updateUserRoleAPI, 
+  deleteUserAPI,
+  User
+} from '@/services/user/endpoints';
 
 export const useUser = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [users, setUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const getUsers = async () => {
+
+  // Get all users with optional filters
+  const getUsers = async (role?: string, search?: string) => {
     setLoading(true);
     try {
-      // Kiểm tra token trước khi gọi API
-      const token = localStorage.getItem('token') || localStorage.getItem('access_token');
-      if (!token) {
-        console.error("No authentication token found for getUsers");
-        throw new Error("Vui lòng đăng nhập lại để xem danh sách người dùng");
-      }
-
-      console.log("Fetching users with token:", token.substring(0, 15) + "...");
-
-      const response = await getUsersAPI();
-      console.log("Users API response:", response);
-
-      if (!response) {
-        console.error("Empty response from getUsers API");
-        throw new Error("Không thể lấy danh sách người dùng - Phản hồi trống");
-      }
-
-      if (!response.data) {
-        console.error("Response missing data property:", response);
-        throw new Error("Không thể lấy danh sách người dùng - Thiếu dữ liệu");
-      }
-
-      if (!response.data.getUsers) {
-        console.error("Response missing getUsers property:", response.data);
-        throw new Error("Không thể lấy danh sách người dùng - Cấu trúc không hợp lệ");
-      }
-
-      const { code, message, users } = response.data.getUsers;
-
-      if (code === 200) {
-        console.log("Successfully fetched users:", users?.length || 0);
-        setUsers(users || []);
-        return users;
+      const response = await getAllUsersAPI(role, search);
+      
+      if (response.code === 200) {
+        setUsers(response.users || []);
+        return response.users;
       } else {
-        console.error("API returned error:", { code, message });
-        throw new Error(message || "Không thể lấy danh sách người dùng");
+        throw new Error(response.message || "Không thể lấy danh sách người dùng");
       }
     } catch (error) {
       console.error("Error fetching users:", error);
-      // Trả về mảng rỗng thay vì ném lỗi để tránh crash UI
       setUsers([]);
       throw error;
     } finally {
       setLoading(false);
     }
   };
-  const selectUser = (user: User | null) => {
-    setSelectedUser(user);
+
+  // Get user by ID
+  const getUser = async (userId: string) => {
+    setLoading(true);
+    try {
+      const response = await getUserAPI(userId);
+      
+      if (response.code === 200) {
+        setSelectedUser(response.user);
+        return response.user;
+      } else {
+        throw new Error(response.message || "Không thể lấy thông tin người dùng");
+      }
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
   };
+
+  // Update user role
   const updateUserRole = async (userId: string, role: string) => {
     setLoading(true);
     try {
-      const response = await auditRoleAPI(userId, role);
-      if (!response?.data) {
-        throw new Error("Không thể cập nhật vai trò người dùng");
-      }
-
-      const { code, message } = response.data.auditRole;
-
-      if (code === 200) {
+      const response = await updateUserRoleAPI(userId, role);
+      
+      if (response.code === 200) {
+        // Update users list if the user exists in it
         setUsers(prevUsers =>
           prevUsers.map(user =>
             user.id === userId
-              ? { ...user, role }
+              ? { ...user, role } // Update just the role property
               : user
           )
         );
+        
+        // Update selected user if it's the one being modified
         if (selectedUser && selectedUser.id === userId) {
-          setSelectedUser({ ...selectedUser, role });
+          setSelectedUser({...selectedUser, role});
         }
-        return { success: true, message: "Đã cập nhật vai trò người dùng" };
+        
+        return response;
       } else {
-        throw new Error(message || "Không thể cập nhật vai trò người dùng");
+        throw new Error(response.message || "Không thể cập nhật vai trò người dùng");
       }
     } catch (error) {
       console.error("Error updating user role:", error);
@@ -100,17 +86,36 @@ export const useUser = () => {
     }
   };
 
-  const searchUsers = (query: string) => {
-    if (!query.trim()) {
-      return users;
+  // Delete user
+  const deleteUser = async (userId: string) => {
+    setLoading(true);
+    try {
+      const response = await deleteUserAPI(userId);
+      
+      if (response.code === 200) {
+        // Remove user from the list
+        setUsers(prevUsers => prevUsers.filter(user => user.id !== userId));
+        
+        // Clear selected user if it's the one being deleted
+        if (selectedUser && selectedUser.id === userId) {
+          setSelectedUser(null);
+        }
+        
+        return response;
+      } else {
+        throw new Error(response.message || "Không thể xóa người dùng");
+      }
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      throw error;
+    } finally {
+      setLoading(false);
     }
+  };
 
-    const lowerQuery = query.toLowerCase();
-    return users.filter(user =>
-      user.email.toLowerCase().includes(lowerQuery) ||
-      user.full_name.toLowerCase().includes(lowerQuery) ||
-      user.phone.toLowerCase().includes(lowerQuery)
-    );
+  // Helper to manually select a user
+  const selectUser = (user: User | null) => {
+    setSelectedUser(user);
   };
 
   return {
@@ -118,10 +123,12 @@ export const useUser = () => {
     users,
     selectedUser,
     getUsers,
+    getUser,
     selectUser,
     updateUserRole,
-    searchUsers,
-    User
+    deleteUser,
+    // Empty user object for type usage
+    User: {} as User 
   };
 };
 

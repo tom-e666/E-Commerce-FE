@@ -32,12 +32,14 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Provider>
           <AuthProvider>
-            <div className="flex flex-col w-full min-h-screen justify-center items-center">
+            <div className="flex flex-col w-full min-h-screen">
               <Menubar />
-              <div className="flex flex-grow w-full justify-center items-center">
-                {children}
-                <Toaster />
-              </div>
+              <main className="flex-grow w-full flex pb-8"> {/* Added padding bottom */}
+                <div className="w-full">
+                  {children}
+                  <Toaster />
+                </div>
+              </main>
               <Footer />
             </div>
           </AuthProvider>

@@ -126,4 +126,17 @@ element::-webkit-scrollbar {
   body {
     @apply bg-background text-foreground;
   }
+  main {
+    min-height: calc(100vh - 160px); /* Adjust based on your header/footer heights */
+    padding-bottom: 2rem;
+  }
+
+  footer {
+    width: 100%;
+    z-index: 10;
+  }
+
+  body {
+    overflow-y: auto;
+  }
 }

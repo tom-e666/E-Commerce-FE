@@ -23,36 +23,36 @@ const Page = () => {
     const [phone, setPhone] = React.useState<string>('');
     const [full_name, setFull_name] = React.useState<string>('');
     const [email, setEmail] = React.useState<string>('');
-    const { signup, login, loading } = useAuth();
+    const { signup, loading } = useAuth();
     const router = useRouter();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         try {
-            const success = await signup(email, phone, password, full_name);
-            toast.success(success);
-
-            // After successful signup, try to log in automatically
-            const loginResult = await login(email, password);
-            console.log("Auto login after signup successful:", loginResult);
-
-            // Kiểm tra role để chuyển hướng đúng
-            if (loginResult.user && (loginResult.user.role === 'admin' || loginResult.user.role === 'staff')) {
-                console.log("Admin/staff user detected after signup, redirecting to admin dashboard");
-                router.push('/admin');
+            // Call signup API
+            const response = await signup(email, phone, password, full_name);
+            
+            if (response && response.data?.signup?.code === 200) {
+                toast.success("Đăng ký thành công! Vui lòng kiểm tra email của bạn.", {
+                    description: "Một email xác minh đã được gửi đến địa chỉ email của bạn."
+                });
+                
+                // Redirect to check-email page with email as query parameter
+                router.push(`/check-email?email=${encodeURIComponent(email)}`);
             } else {
-                console.log("Regular user detected after signup, redirecting to home page");
-                router.push('/');
+                const errorMessage = response?.data?.signup?.message || "Đăng ký không thành công. Vui lòng thử lại.";
+                toast.error(errorMessage);
             }
         } catch (error) {
             // @ts-expect-error any
-            toast.error(error.message);
+            toast.error(error.message || "Đã xảy ra lỗi khi đăng ký. Vui lòng thử lại.");
+            console.error("Signup error:", error);
         }
     };
 
     return (
-        <div className="w-full min-h-screen flex flex-col items-center justify-center p-4">
+        <div className="w-full min-h-screen flex flex-col items-center justify-center p-4 py-16"> {/* Added vertical padding */}
             <Image src="/shapelined.jpg"
                 fill={true}
                 className="object-cover w-full h-full -z-10"

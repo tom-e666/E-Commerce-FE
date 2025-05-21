@@ -9,7 +9,7 @@ import {
   createSupportTicketResponse,
   updateSupportTicket,
   updateSupportTicketResponse,
-  deleteSupportTicket,
+//   deleteSupportTicket,
   deleteSupportTicketResponse,
   SupportTicket,
   TicketResponse
