@@ -126,7 +126,7 @@ const Page = () => {
                   className="w-full"
                 />
                 <div className="flex items-center justify-between">
-                  <Link href="#" className="text-sm font-medium text-blue-600 hover:text-blue-500">
+                  <Link href="/forgotPassword" className="text-sm font-medium text-blue-600 hover:text-blue-500">
                     Quên mật khẩu?
                   </Link>
                 </div>

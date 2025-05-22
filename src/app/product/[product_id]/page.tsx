@@ -70,22 +70,18 @@ export default function ProductDetailPage() {
           ]);
         }
 
-        // Cập nhật state sau khi hình ảnh đã được tải
         setProduct(productData);
         setSelectedImage(productData.details.images?.[0] || null);
         document.title = `${productData.name} | Chi tiết sản phẩm`;
 
-        // Không hiển thị toast để giảm số lượng thông báo
         setLoading(false);
         return true;
       } else {
-        // Hiển thị thông báo lỗi
         toast.error(response.message || "Không thể tải thông tin sản phẩm");
         setLoading(false);
         return false;
       }
-    } catch (error) {
-      // Hiển thị thông báo lỗi
+    } catch {
       toast.error("Có lỗi xảy ra khi tải thông tin sản phẩm");
       setLoading(false);
       return false;

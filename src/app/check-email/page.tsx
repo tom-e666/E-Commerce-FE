@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { resendVerificationEmail } from '@/services/auth/endpoints'
@@ -13,7 +13,6 @@ import { Progress } from '@/components/ui/progress'
 import { Loader2, MailOpen, ArrowLeft, Mail, Info, CheckCircle } from 'lucide-react'
 
 export default function CheckEmailPage() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const email = searchParams.get('email')
   const [isSending, setIsSending] = useState(false)
@@ -31,8 +30,7 @@ export default function CheckEmailPage() {
     } else {
       // When countdown reaches 0, show the success popup
       setShowSuccessPopup(true)
-      toast.success("Đăng ký thành công!", {
-        description: "Vui lòng xác nhận email của bạn để hoàn tất quá trình đăng ký.",
+      toast.success("Vui lòng xác nhận email của bạn để hoàn tất quá trình đăng ký.", {
         duration: 5000,
       })
     }
@@ -55,10 +53,9 @@ export default function CheckEmailPage() {
       setIsSending(false)
     }
   }
-
   return (
     <div className="container mx-auto max-w-md py-12 mb-8"> {/* Added margin bottom */}
-      <Card className="w-full">
+      <Card className="w-full"> 
         <CardHeader className="text-center">
           <Mail className="h-12 w-12 mx-auto mb-4 text-primary" />
           <CardTitle className="text-2xl">Kiểm tra email của bạn</CardTitle>

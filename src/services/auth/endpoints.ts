@@ -254,4 +254,130 @@ export const resendVerificationEmail = async (): Promise<BaseResponse> => {
     };
   }
 };
+export const FORGOT_PASSWORD_MUTATION = gql`
+  mutation ForgotPassword($email: String!) {
+    forgotPassword(email: $email) {
+      code
+      message
+    }
+  }
+`;
+export const forgotPassword = async (email: string): Promise<BaseResponse> => {
+  try {
+    const { data } = await apolloClient.mutate({
+      mutation: FORGOT_PASSWORD_MUTATION,
+      variables: { email }
+    });
+    return data.forgotPassword;
+  } catch (error) {
+    console.error('Error sending password reset email:', error);
+    return {
+      code: 500,
+      message: 'An error occurred while sending password reset email'
+    };
+  }
+};
 
+// Reset Password Mutation
+export const RESET_PASSWORD_MUTATION = gql`
+  mutation ResetPassword(
+    $userId: ID!,
+    $token: String!,
+    $password: String!,
+    $passwordConfirmation: String!
+  ) {
+    resetPassword(
+      user_id: $userId,
+      token: $token,
+      password: $password,
+      password_confirmation: $passwordConfirmation
+    ) {
+      code
+      message
+    }
+  }
+`;
+
+export interface ResetPasswordParams {
+  userId: string;
+  token: string;
+  password: string;
+  passwordConfirmation: string;
+}
+
+// Update the VERIFY_PASSWORD_RESET_TOKEN mutation to match the GraphQL schema
+export const VERIFY_PASSWORD_RESET_TOKEN = gql`
+  mutation VerifyPasswordResetToken($user_id: ID!, $token: String!) {
+    verifyPasswordResetToken(user_id: $user_id, token: $token) {
+      code
+      message
+    }
+  }
+`;
+
+/**
+ * Verify password reset token
+ * @param userId User ID
+ * @param token Reset token
+ */
+export const verifyPasswordResetToken = async (userId: string, token: string): Promise<BaseResponse> => {
+  try {
+    const { data } = await apolloClient.mutate({
+      mutation: VERIFY_PASSWORD_RESET_TOKEN,
+      variables: { 
+        user_id: userId,  // Use user_id to match the GraphQL schema
+        token 
+      }
+    });
+    return data.verifyPasswordResetToken;
+  } catch (error) {
+    console.error('Error verifying password reset token:', error);
+    return {
+      code: 500,
+      message: 'An error occurred while verifying password reset token'
+    };
+  }
+};
+
+const RESET_PASSWORD_WITH_TOKEN = gql`
+  mutation ResetPasswordWithToken(
+    $user_id: ID!,
+    $token: String!,
+    $password: String!,
+    $password_confirmation: String!
+  ) {
+    resetPassword(
+      user_id: $user_id,
+      token: $token,
+      password: $password,
+      password_confirmation: $password_confirmation
+    ) {
+      code
+      message
+    }
+  }
+`;
+export const resetPasswordWithToken = async (
+  userId: string, 
+  token: string, 
+  newPassword: string
+): Promise<BaseResponse> => {
+  try {
+    const { data } = await apolloClient.mutate({
+      mutation: RESET_PASSWORD_WITH_TOKEN,
+      variables: { 
+        user_id: userId, // Use user_id to match the GraphQL schema
+        token,
+        password: newPassword,
+        password_confirmation: newPassword  // Add password confirmation to match mutation
+      }
+    });
+    return data.resetPassword;
+  } catch (error) {
+    console.error('Error resetting password:', error);
+    return {
+      code: 500,
+      message: 'An error occurred while resetting password'
+    };
+  }
+};
