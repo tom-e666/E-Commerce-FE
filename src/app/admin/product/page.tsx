@@ -1,6 +1,6 @@
 'use client'
 import { AgGridReact } from 'ag-grid-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 import { ClientSideRowModelModule } from 'ag-grid-community';
@@ -34,6 +34,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import { motion, useMotionValue, AnimatePresence } from "framer-motion";
+import { Plus, X, Edit, Trash2, Search, RefreshCw, Package, DollarSign, TrendingUp, Archive } from "lucide-react";
 
 import { provideGlobalGridOptions } from 'ag-grid-community';
 provideGlobalGridOptions({
@@ -96,6 +98,18 @@ export default function ProductManagement() {
     const { getBrands, brands } = useBrand();
     const [forceUpdateKey, setForceUpdateKey] = useState(0);
     const [gridData, setGridData] = useState<Product[]>([]);
+    const loadingToastRef = useRef<string | number | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+    const mouseX = useMotionValue(0);
+    const mouseY = useMotionValue(0);
+
+    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+        const { left, top } = e.currentTarget.getBoundingClientRect();
+        mouseX.set(e.clientX - left);
+        mouseY.set(e.clientY - top);
+    };
 
     const [colDefs] = useState([
         { field: "id", headerName: "ID", width: 100, suppressCellFlash: true, cellClass: 'no-click' },
@@ -140,8 +154,17 @@ export default function ProductManagement() {
 
     useEffect(() => {
         setGridData(products);
+        setFilteredProducts(products);
         forceUpdate();
     }, [products]);
+
+    useEffect(() => {
+        const filtered = products.filter(product => 
+            product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            brands.find(b => b.id === product.brand_id)?.name.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+        setFilteredProducts(filtered);
+    }, [searchQuery, products, brands]);
 
     const forceUpdate = () => {
         setForceUpdateKey(prev => prev + 1);
@@ -149,24 +172,29 @@ export default function ProductManagement() {
 
     const loadProducts = async () => {
         try {
-            await toast.promise(
-                getProducts(),
-                {
-                    loading: "Đang tải danh sách sản phẩm...",
-                    success: "Tải danh sách sản phẩm thành công",
-                    error: "Không thể tải danh sách sản phẩm"
-                }
-            );
-            forceUpdate();
+            setIsLoading(true);
+            await getProducts();
         } catch (error) {
             toast.error("Không thể tải danh sách sản phẩm");
-            console.error(error);
+            console.error("Error loading products:", error);
+        } finally {
+            setIsLoading(false);
+            forceUpdate();
         }
     };
 
     useEffect(() => {
         loadProducts();
         getBrands();
+    }, []);
+
+    // Cleanup any loading toasts on unmount
+    useEffect(() => {
+        return () => {
+            if (loadingToastRef.current) {
+                toast.dismiss(loadingToastRef.current);
+            }
+        };
     }, []);
 
     // @ts-expect-error any
@@ -190,43 +218,301 @@ export default function ProductManagement() {
     };
 
     return (
-        <div className="w-full min-h-screen p-8 bg-gray-50">
-            <div className="flex justify-between items-center mb-6">
-                <Button
-                    variant="outline"
-                    className="text-2xl font-bold py-6 px-6 cursor-default"
-                    onClick={() => { }}
-                >
-                    Quản lý sản phẩm
-                </Button>
-                <Button onClick={handleAddNew}>Thêm sản phẩm mới</Button>
-            </div>
-
-            <div className="ag-theme-alpine w-full h-[600px] rounded-md overflow-hidden">
-                <AgGridReact
-                    key={`products-${forceUpdateKey}`}
-                    rowData={gridData}
-                    // @ts-expect-error any
-                    columnDefs={colDefs}
-                    onRowClicked={handleRowClick}
-                    pagination={true}
-                    paginationAutoPageSize={true}
-                    animateRows={true}
-                    domLayout="autoHeight"
-                    suppressCellFocus={true}
-                    suppressRowClickSelection={false}
-                    rowSelection="single"
+        <motion.div 
+            className="w-full min-h-screen p-8 bg-gradient-to-br from-blue-50 to-indigo-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+            onMouseMove={handleMouseMove}
+        >
+            {/* Glossy header */}
+            <motion.div 
+                className="relative p-6 mb-8 rounded-xl bg-white/40 backdrop-blur-sm border border-white/30 shadow-xl overflow-hidden"
+                initial={{ y: -20 }}
+                animate={{ y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+            >
+                <motion.div 
+                    className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10 pointer-events-none"
+                    style={{
+                        background: `radial-gradient(
+                            circle at ${mouseX}px ${mouseY}px,
+                            rgba(79, 70, 229, 0.15) 0%,
+                            rgba(79, 70, 229, 0.05) 40%,
+                            transparent 60%
+                        )`
+                    }}
                 />
-            </div>
+                
+                <div className="relative z-10 flex justify-between items-center">
+                    <div className="flex items-center">
+                        <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ type: "spring", stiffness: 300, damping: 25, delay: 0.3 }}
+                            className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mr-4 shadow-lg"
+                        >
+                            <Package className="text-white w-6 h-6" />
+                        </motion.div>
+                        <div>
+                            <motion.h1 
+                                className="text-2xl font-bold text-indigo-900"
+                                initial={{ x: -20, opacity: 0 }}
+                                animate={{ x: 0, opacity: 1 }}
+                                transition={{ duration: 0.3, delay: 0.4 }}
+                            >
+                                Quản lý sản phẩm
+                            </motion.h1>
+                            <motion.p 
+                                className="text-gray-500"
+                                initial={{ x: -20, opacity: 0 }}
+                                animate={{ x: 0, opacity: 1 }}
+                                transition={{ duration: 0.3, delay: 0.5 }}
+                            >
+                                Thêm, chỉnh sửa và quản lý sản phẩm trong hệ thống
+                            </motion.p>
+                        </div>
+                    </div>
+                    
+                    <div className="flex gap-3">
+                        <motion.div
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                        >
+                            <Button 
+                                variant="outline" 
+                                onClick={loadProducts}
+                                className="flex items-center gap-2 text-indigo-700 border-indigo-200 hover:bg-indigo-100"
+                            >
+                                <RefreshCw className="w-4 h-4" />
+                                <span>Làm mới</span>
+                            </Button>
+                        </motion.div>
+                        
+                        <motion.div
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                        >
+                            <Button 
+                                onClick={handleAddNew} 
+                                className="bg-gradient-to-br from-indigo-600 to-purple-600 text-white border-none flex items-center gap-2 shadow-md"
+                            >
+                                <Plus className="w-4 h-4" />
+                                <span>Thêm sản phẩm</span>
+                            </Button>
+                        </motion.div>
+                    </div>
+                </div>
+            </motion.div>
+            
+            {/* Search bar */}
+            <motion.div 
+                className="mb-6 relative"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.6 }}
+            >
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                    <Input
+                        type="text"
+                        placeholder="Tìm kiếm sản phẩm..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-10 pr-4 py-2 rounded-full border-gray-200 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                    />
+                    {searchQuery && (
+                        <motion.button
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() => setSearchQuery("")}
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        >
+                            <X className="h-4 w-4" />
+                        </motion.button>
+                    )}
+                </div>
+            </motion.div>
+
+            {/* Loading overlay */}
+            <AnimatePresence>
+                {isLoading && (
+                    <motion.div 
+                        className="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center z-50"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                    >
+                        <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                        >
+                            <RefreshCw className="h-8 w-8 text-indigo-600" />
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Data grid with glossy effect */}
+            <motion.div 
+                className="relative overflow-hidden rounded-xl shadow-xl bg-white/80 backdrop-blur-md"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.7 }}
+            >
+                <motion.div 
+                    className="absolute inset-0 bg-gradient-to-tr from-indigo-100/30 via-transparent to-purple-100/30 pointer-events-none"
+                    style={{
+                        background: `radial-gradient(
+                            circle at ${mouseX}px ${mouseY}px,
+                            rgba(99, 102, 241, 0.1) 0%,
+                            rgba(168, 85, 247, 0.05) 25%,
+                            transparent 50%
+                        )`
+                    }}
+                />
+                
+                <div className="relative z-10 p-0.5">
+                    <div className="ag-theme-alpine w-full h-[500px] rounded-lg overflow-hidden">
+                        <AgGridReact
+                            key={`products-${forceUpdateKey}`}
+                            rowData={filteredProducts}
+                            // @ts-expect-error any
+                            columnDefs={colDefs}
+                            onRowClicked={handleRowClick}
+                            pagination={false}
+                            animateRows={true}
+                            domLayout="normal"
+                            suppressCellFocus={true}
+                            suppressRowClickSelection={false}
+                            rowSelection="single"
+                            rowHeight={56}
+                            headerHeight={48}
+                            defaultColDef={{
+                                sortable: true,
+                                resizable: true
+                            }}
+                            overlayNoRowsTemplate={
+                                searchQuery 
+                                    ? "<div class='flex items-center justify-center h-full text-gray-500'>Không tìm thấy sản phẩm nào phù hợp</div>"
+                                    : "<div class='flex items-center justify-center h-full text-gray-500'>Chưa có sản phẩm nào</div>"
+                            }
+                        />
+                    </div>
+                </div>
+                
+                {filteredProducts.length > 0 && (
+                    <motion.div 
+                        className="p-3 flex items-center justify-between border-t border-indigo-100/50 bg-white/50 backdrop-blur-sm"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.9 }}
+                    >
+                        <span className="text-sm text-gray-500">
+                            Hiển thị {filteredProducts.length} sản phẩm
+                        </span>
+                        
+                        <div className="flex items-center space-x-1">
+                            <Button 
+                                variant="ghost" 
+                                size="sm"
+                                className="text-xs h-8 px-3 text-indigo-600"
+                                disabled
+                            >
+                                Xem tất cả
+                            </Button>
+                        </div>
+                    </motion.div>
+                )}
+            </motion.div>
+            
+            {/* Statistics cards */}
+            <motion.div 
+                className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-8"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.9 }}
+            >
+                <StatCard 
+                    title="Tổng sản phẩm" 
+                    value={products.length} 
+                    icon={<Package className="w-5 h-5 text-blue-500" />}
+                    delay={1.0}
+                />
+                <StatCard 
+                    title="Đang bán" 
+                    value={products.filter(p => p.status).length} 
+                    icon={<TrendingUp className="w-5 h-5 text-green-500" />}
+                    delay={1.1}
+                />
+                <StatCard 
+                    title="Hết hàng" 
+                    value={products.filter(p => p.stock === 0).length} 
+                    icon={<Archive className="w-5 h-5 text-red-500" />}
+                    delay={1.2}
+                />
+                <StatCard 
+                    title="Tổng giá trị" 
+                    value={`${(products.reduce((sum, p) => sum + (p.price * p.stock), 0) / 1000000).toFixed(1)}M`} 
+                    icon={<DollarSign className="w-5 h-5 text-purple-500" />}
+                    delay={1.3}
+                />
+            </motion.div>
+            
             <style jsx global>{`
+                .ag-theme-alpine {
+                    --ag-background-color: transparent;
+                    --ag-odd-row-background-color: rgba(240, 245, 255, 0.5);
+                    --ag-header-background-color: rgba(224, 231, 255, 0.7);
+                    --ag-row-hover-color: rgba(224, 231, 255, 0.7);
+                    --ag-selected-row-background-color: rgba(199, 210, 254, 0.5);
+                    --ag-font-family: 'Inter', sans-serif;
+                    --ag-border-color: rgba(199, 210, 254, 0.5);
+                }
+                
+                .ag-theme-alpine .ag-header {
+                    font-weight: 600;
+                    color: #4F46E5;
+                }
+                
+                .ag-theme-alpine .ag-row {
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                    border-bottom: 1px solid rgba(224, 231, 255, 0.7);
+                }
+                
                 .ag-theme-alpine .no-click {
                     pointer-events: none;
                 }
-                .ag-theme-alpine .ag-row {
-                    cursor: pointer;
+                
+                .ag-theme-alpine .ag-row:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+                    z-index: 2;
+                }
+                
+                /* Custom scrollbar for modern browsers */
+                .ag-theme-alpine ::-webkit-scrollbar {
+                    width: 8px;
+                    height: 8px;
+                }
+                
+                .ag-theme-alpine ::-webkit-scrollbar-track {
+                    background: rgba(240, 245, 255, 0.5);
+                    border-radius: 8px;
+                }
+                
+                .ag-theme-alpine ::-webkit-scrollbar-thumb {
+                    background-color: rgba(99, 102, 241, 0.3);
+                    border-radius: 8px;
+                    transition: background-color 0.2s;
+                }
+                
+                .ag-theme-alpine ::-webkit-scrollbar-thumb:hover {
+                    background-color: rgba(99, 102, 241, 0.5);
                 }
             `}</style>
-
+            
             <ProductFormDialog
                 open={openForm}
                 onClose={handleCloseForm}
@@ -237,9 +523,50 @@ export default function ProductManagement() {
                 deleteProduct={deleteProduct}
                 brands={brands}
             />
-        </div>
+        </motion.div>
     );
 }
+
+// Stat Card Component
+const StatCard = ({ title, value, icon, delay = 0 }) => {
+    return (
+        <motion.div 
+            className="bg-white/70 backdrop-blur-sm rounded-xl shadow-md p-6 border border-white/30 relative overflow-hidden"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay }}
+            whileHover={{ 
+                boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+                y: -5
+            }}
+        >
+            <motion.div 
+                className="absolute -right-4 -top-4 w-24 h-24 rounded-full bg-indigo-100/50"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ duration: 0.5, delay: delay + 0.2 }}
+            />
+            
+            <div className="relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-gray-600 font-medium">{title}</h3>
+                    <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center">
+                        {icon}
+                    </div>
+                </div>
+                <div>
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5, delay: delay + 0.3 }}
+                    >
+                        <span className="text-3xl font-bold text-indigo-900">{value}</span>
+                    </motion.div>
+                </div>
+            </div>
+        </motion.div>
+    );
+};
 
 interface ProductFormProps {
     open: boolean;
@@ -269,6 +596,8 @@ function ProductFormDialog({
     const [imageUrl, setImageUrl] = useState("");
     const [keywords, setKeywords] = useState<string[]>([]);
     const [keyword, setKeyword] = useState("");
+    const loadingToastRef = useRef<string | number | null>(null);
+    const [isProcessing, setIsProcessing] = useState(false);
 
     const form = useForm<z.infer<typeof productFormSchema>>({
         // @ts-expect-error any
@@ -371,63 +700,109 @@ function ProductFormDialog({
         form.setValue('keywords', newKeywords);
     };
 
-    const handleSubmit = async (values: z.infer<typeof productFormSchema>) => {
-        try {
-            const details = {
-                description: values.description,
-                images: images,
-                keywords: keywords,
-                specifications: specifications
-            };
+    // Cleanup loading toast on unmount
+    useEffect(() => {
+        return () => {
+            if (loadingToastRef.current) {
+                toast.dismiss(loadingToastRef.current);
+            }
+        };
+    }, []);
 
+    const handleSubmit = async (values: z.infer<typeof productFormSchema>) => {
+        setIsProcessing(true);
+        const details = {
+            description: values.description,
+            images: images,
+            keywords: keywords,
+            specifications: specifications
+        };
+
+        try {
             if (product) {
-                await updateProduct(product.id, {
-                    name: values.name,
-                    price: values.price,
-                    stock: values.stock,
-                    status: values.status,
-                    brand_id: values.brand_id,
-                    details: details
-                });
+                await toast.promise(
+                    updateProduct(product.id, {
+                        name: values.name,
+                        price: values.price,
+                        stock: values.stock,
+                        status: values.status,
+                        brand_id: values.brand_id,
+                        details: details
+                    }),
+                    {
+                        loading: "Đang cập nhật sản phẩm...",
+                        success: "Cập nhật sản phẩm thành công",
+                        error: "Cập nhật sản phẩm thất bại"
+                    }
+                );
             } else {
-                await createProduct(
-                    values.name,
-                    values.price,
-                    values.stock,
-                    values.status,
-                    values.brand_id,
-                    details
+                await toast.promise(
+                    createProduct(
+                        values.name,
+                        values.price,
+                        values.stock,
+                        values.status,
+                        values.brand_id,
+                        details
+                    ),
+                    {
+                        loading: "Đang tạo sản phẩm mới...",
+                        success: "Tạo sản phẩm thành công",
+                        error: "Tạo sản phẩm thất bại"
+                    }
                 );
             }
 
             onClose();
             onSubmit();
         } catch (error) {
-            toast.error("Xử lí không thành công");
-            console.error(error);
+            console.error("Error submitting product:", error);
+        } finally {
+            setIsProcessing(false);
         }
     };
+
     const handleDelete = async () => {
         if (!product) return;
 
+        setIsProcessing(true);
         try {
-            await deleteProduct(product.id);
+            await toast.promise(
+                deleteProduct(product.id),
+                {
+                    loading: "Đang xóa sản phẩm...",
+                    success: "Xóa sản phẩm thành công",
+                    error: "Xóa sản phẩm thất bại"
+                }
+            );
+            
             onClose();
             onSubmit();
         } catch (error) {
-            toast.error("Xóa sản phẩm thất bại");
-            console.error(error);
+            console.error("Error deleting product:", error);
+        } finally {
+            setIsProcessing(false);
         }
     };
 
     return (
         <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto border border-indigo-100 bg-white/95 backdrop-blur-sm shadow-xl">
                 <DialogHeader>
-                    <DialogTitle>
-                        {product ? "Chỉnh sửa sản phẩm" : "Thêm sản phẩm mới"}
+                    <DialogTitle className="text-xl font-bold text-indigo-900 flex items-center gap-2">
+                        {product ? (
+                            <>
+                                <Edit className="h-5 w-5 text-indigo-600" />
+                                Chỉnh sửa sản phẩm
+                            </>
+                        ) : (
+                            <>
+                                <Plus className="h-5 w-5 text-indigo-600" />
+                                Thêm sản phẩm mới
+                            </>
+                        )}
                     </DialogTitle>
-                    <DialogDescription>
+                    <DialogDescription className="text-gray-500">
                         {product
                             ? "Chỉnh sửa thông tin sản phẩm hiện có."
                             : "Thêm một sản phẩm mới vào hệ thống."}
@@ -666,21 +1041,49 @@ function ProductFormDialog({
                         <DialogFooter className="flex items-center justify-between w-full pt-4">
                             <div className="flex gap-2">
                                 {product && (
-                                    <Button
-                                        variant="destructive"
-                                        type="button"
-                                        onClick={handleDelete}
-                                    >
-                                        Xóa
-                                    </Button>
+                                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                        <Button
+                                            variant="destructive"
+                                            type="button"
+                                            onClick={handleDelete}
+                                            disabled={isProcessing}
+                                            className="flex items-center gap-1"
+                                        >
+                                            {isProcessing ? (
+                                                <RefreshCw className="h-4 w-4 animate-spin" />
+                                            ) : (
+                                                <Trash2 className="h-4 w-4" />
+                                            )}
+                                            Xóa
+                                        </Button>
+                                    </motion.div>
                                 )}
-                                <Button variant="outline" type="button" onClick={onClose}>
-                                    Hủy
-                                </Button>
+                                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                    <Button 
+                                        variant="outline" 
+                                        type="button" 
+                                        onClick={onClose}
+                                        className="border-gray-200"
+                                    >
+                                        <X className="h-4 w-4 mr-2" />
+                                        Hủy
+                                    </Button>
+                                </motion.div>
                             </div>
-                            <Button type="submit">
-                                {product ? "Cập nhật" : "Tạo mới"}
-                            </Button>
+                            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                <Button 
+                                    type="submit" 
+                                    disabled={isProcessing}
+                                    className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white"
+                                >
+                                    {isProcessing ? (
+                                        <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+                                    ) : (
+                                        product ? <Edit className="h-4 w-4 mr-2" /> : <Plus className="h-4 w-4 mr-2" />
+                                    )}
+                                    {product ? "Cập nhật" : "Tạo mới"}
+                                </Button>
+                            </motion.div>
                         </DialogFooter>
                     </form>
                 </Form>

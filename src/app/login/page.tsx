@@ -1,5 +1,5 @@
 'use client'
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import Image from "next/image";
 import { useAuth } from "@/hooks/useAuth";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -28,6 +28,7 @@ const Page = () => {
   const searchParams = useSearchParams();
   const redirectParam = searchParams?.get('redirect') || '/';
   const redirectUrl = redirectParam.startsWith('/') ? redirectParam : '/';
+  const loadingToastRef = useRef<string | number | null>(null);
 
   // Kiểm tra nếu người dùng đã đăng nhập và chuyển hướng phù hợp
   useEffect(() => {
@@ -46,32 +47,52 @@ const Page = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Dismiss any existing loading toast
+    if (loadingToastRef.current) {
+      toast.dismiss(loadingToastRef.current);
+      loadingToastRef.current = null;
+    }
+
     try {
-      // Show loading toast
-      const loadingToast = toast.loading("Đang đăng nhập...");
+      // Show loading toast and store the ID
+      loadingToastRef.current = toast.loading("Đang đăng nhập...");
       
       const response = await login(username, password);
       
       // Clear loading toast and show success
-      toast.dismiss(loadingToast);
+      if (loadingToastRef.current) {
+        toast.dismiss(loadingToastRef.current);
+        loadingToastRef.current = null;
+      }
       toast.success("Đăng nhập thành công");
       
-      // Wait for context to update before redirecting
-      // This is important to ensure the redirect logic uses the updated auth state
-      setTimeout(() => {
-        if (response.user && (response.user.role === 'admin' || response.user.role === 'staff')) {
-          console.log("Admin/staff user detected, redirecting to admin dashboard");
-          router.replace('/admin');
-        } else {
-          console.log("Regular user detected, redirecting to:", redirectUrl);
-          router.replace(redirectUrl !== '/login' ? redirectUrl : '/');
-        }
-      }, 500); // Slightly longer delay to ensure context is updated
+      // Redirect immediately based on user role
+      if (response.user && (response.user.role === 'admin' || response.user.role === 'staff')) {
+        console.log("Admin/staff user detected, redirecting to admin dashboard");
+        router.replace('/admin');
+      } else {
+        console.log("Regular user detected, redirecting to:", redirectUrl);
+        router.replace(redirectUrl !== '/login' ? redirectUrl : '/');
+      }
 
     } catch {
+      // Ensure loading toast is dismissed even on error
+      if (loadingToastRef.current) {
+        toast.dismiss(loadingToastRef.current);
+        loadingToastRef.current = null;
+      }
       toast.error("Đăng nhập thất bại");
     }
   };
+
+  // Cleanup loading toast on component unmount
+  useEffect(() => {
+    return () => {
+      if (loadingToastRef.current) {
+        toast.dismiss(loadingToastRef.current);
+      }
+    };
+  }, []);
 
   return (
     <>
