@@ -12,8 +12,9 @@ const nextConfig: NextConfig = {
     
     ],
     domains: ['localhost', '127.0.0.1'],
-    unoptimized: process.env.NODE_ENV !== 'production'
-  }
+    unoptimized: process.env.NODE_ENV !== 'production',
+    
+  },
 };
 
 export default nextConfig;

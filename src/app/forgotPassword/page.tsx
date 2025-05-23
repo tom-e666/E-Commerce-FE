@@ -73,8 +73,7 @@ export default function ForgotPasswordPage() {
       const response = await forgotPassword(email);
 
       if (response.code === 200) {
-        toast.success("Đã gửi yêu cầu đặt lại mật khẩu!", {
-          description: "Vui lòng kiểm tra email của bạn để tiếp tục.",
+        toast.success("Vui lòng kiểm tra email của bạn để tiếp tục!", {
         });
         setEmailSent(true);
         setCountdown(5); // Start countdown from 5 seconds
@@ -91,8 +90,7 @@ export default function ForgotPasswordPage() {
       }
     } catch (error) {
       console.error("Error sending reset email:", error);
-      toast.error("Không thể kết nối đến máy chủ", {
-        description: "Vui lòng thử lại sau hoặc liên hệ hỗ trợ.",
+      toast.error("Vui lòng thử lại sau hoặc liên hệ hỗ trợ.", {
       });
     } finally {
       setIsSubmitting(false);
@@ -105,15 +103,18 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="w-full min-h-screen flex flex-col items-center justify-center p-4 py-16">
-      <Image
-        src="/shapelined.jpg"
-        fill={true}
-        className="object-cover w-full h-full -z-10"
-        alt="background"
-      />
+    <div className="w-full min-h-screen flex flex-col items-center justify-center p-4 py-16 relative">
+      <div className="fixed inset-0 -z-10">
+        <Image
+          src="/shapelined.jpg"
+          fill={true}
+          className="object-cover"
+          alt="background"
+          priority
+        />
+      </div>
       <div className="w-full max-w-md">
-        <Card className="border shadow-md">
+        <Card className="border shadow-md bg-white/95 backdrop-blur-sm">
           <CardHeader className="space-y-1 flex flex-col items-center">
             <Image
               alt="icon"

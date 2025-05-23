@@ -33,7 +33,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { motion, useMotionValue, AnimatePresence } from "framer-motion";
-import { Plus, X, Edit, Trash2, Search, RefreshCw, ShoppingCart, DollarSign, Package, Truck, Check, Clock, AlertCircle } from "lucide-react";
+import {Search, RefreshCw, ShoppingCart, DollarSign, Clock, Check, Truck, Package, X, AlertCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 import { provideGlobalGridOptions } from 'ag-grid-community';

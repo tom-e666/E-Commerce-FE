@@ -186,6 +186,15 @@ const Menubar = () => {
                                             Đơn hàng của tôi
                                         </DropdownMenuItem>
                                     </Link>
+                                    {/* Only show admin menu for admin and staff users */}
+                                    {(user.role === 'admin' || user.role === 'staff') && (
+                                        <Link href="/admin" passHref style={{ textDecoration: 'none' }}>
+                                            <DropdownMenuItem>
+                                                Quản trị viên
+                                            </DropdownMenuItem>
+                                        </Link>
+                                    )}
+
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem onClick={handleLogout}>
                                         Đăng xuất
