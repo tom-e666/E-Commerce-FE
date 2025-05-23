@@ -252,7 +252,7 @@ export const getProvinces = async () => {
   try {
     const response = await apolloClient.query({
       query: GET_PROVINCES,
-      fetchPolicy: 'cache-first' // Provinces don't change often, so caching is fine
+      fetchPolicy: 'cache-first' // Cache provinces data since it doesn't change frequently
     });
     return response.data.getProvinces;
   } catch (error) {
@@ -266,7 +266,7 @@ export const getDistricts = async (provinceId: string) => {
     const response = await apolloClient.query({
       query: GET_DISTRICTS,
       variables: { provinceId },
-      fetchPolicy: 'network-only'
+      fetchPolicy: 'cache-first' // Cache districts data as well
     });
     return response.data.getDistricts;
   } catch (error) {
@@ -280,7 +280,7 @@ export const getWards = async (districtId: string) => {
     const response = await apolloClient.query({
       query: GET_WARDS,
       variables: { districtId },
-      fetchPolicy: 'network-only'
+      fetchPolicy: 'cache-first' // Cache wards data as well
     });
     return response.data.getWards;
   } catch (error) {

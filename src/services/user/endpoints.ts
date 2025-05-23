@@ -9,7 +9,6 @@ export interface User {
   full_name: string;
   role: string;
   email_verified: boolean;
-  created_at?: string;
 }
 
 export interface BaseResponse {
