@@ -144,6 +144,7 @@ export const useCart = () => {
     };
 
     useEffect(() => {
+        
         toast.promise(getCart(), {
             loading: "Đang tải giỏ hàng...",
             success: (message) => message,

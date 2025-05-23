@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast-config";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,7 +23,7 @@ const Page = () => {
   const [username, setUsername] = React.useState<string>('');
   const [password, setPassword] = React.useState<string>('');
   const { login, loading } = useAuth();
-  const { isAuthenticated, hasRole, user } = useAuthContext();
+  const { isAuthenticated, user } = useAuthContext();
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectParam = searchParams?.get('redirect') || '/';
@@ -67,19 +67,23 @@ const Page = () => {
           router.replace(redirectUrl !== '/login' ? redirectUrl : '/');
         }
       }, 500); // Slightly longer delay to ensure context is updated
-      
-    } catch (error: any) {
-      toast.error(error.message || "Đăng nhập thất bại");
+
+    } catch {
+      toast.error("Đăng nhập thất bại");
     }
   };
 
   return (
-    <div className="w-full min-h-screen flex flex-col items-center justify-center p-4">
+    <>
+    <div className="fixed inset-0 -z-10">
       <Image src="/shapelined.jpg"
         fill={true}
-        className="object-cover w-full h-full -z-10"
+        className="object-cover"
         alt="background"
+        priority
       />
+    </div>
+    <div className="w-full min-h-screen flex flex-col items-center justify-center relative">
       <div className="w-full max-w-md">
         <Card className="border shadow-md">
           <CardHeader className="space-y-1 flex flex-col items-center">
@@ -160,6 +164,7 @@ const Page = () => {
         </Card>
       </div>
     </div>
+    </>
   );
 };
 
