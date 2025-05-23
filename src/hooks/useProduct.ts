@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import {
   getProducts as apiGetProducts,
   getProduct as apiGetProduct,
@@ -8,29 +8,31 @@ import {
   Product,
   ProductDetails
 } from '@/services/product/endpoint';
+import { getProductsWithCache } from '@/services/product/cache'; // Import the cache function
 
-export const useProduct = () => {
+export function useProduct() {
   const [loading, setLoading] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [currentProduct, setCurrentProduct] = useState<Product | null>(null);
 
-  // Định nghĩa hàm handleGetProducts trong hook useProduct
-  const handleGetProducts = async (status = "1") => {
+  const getProducts = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await apiGetProducts(status);
-      const { code, products } = response;
-
-      if (code === 200) {
-        setProducts(products);
-        return products;
-      } else {
-        throw new Error("Không thể lấy danh sách sản phẩm");
+      // Use the cached version for better performance
+      const result = await getProductsWithCache();
+      if (result.code === 200) {
+        setProducts(result.products);
+        // Store in localStorage for offline access & quick initial render on next visit
+        localStorage.setItem('cachedProductList', JSON.stringify(result.products));
+        localStorage.setItem('productsTimestamp', Date.now().toString());
       }
-    } finally {
       setLoading(false);
+      return result;
+    } catch (error) {
+      setLoading(false);
+      throw error;
     }
-  };
+  }, []);
 
   const handleGetProduct = async (id: string) => {
     setLoading(true);
@@ -140,7 +142,7 @@ export const useProduct = () => {
     loading,
     products,
     currentProduct,
-    getProducts: handleGetProducts,
+    getProducts,
     getProduct: handleGetProduct,
     createProduct: handleCreateProduct,
     updateProduct: handleUpdateProduct,

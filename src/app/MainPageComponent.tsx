@@ -16,20 +16,8 @@ function shuffleArray<T>(array: T[]): T[] {
     return newArray;
 }
 
-const throttle = (callback: Function, delay: number) => {
-    let lastCall = 0;
-    return (...args: any[]) => {
-        const now = Date.now();
-        if (now - lastCall >= delay) {
-            lastCall = now;
-            callback(...args);
-        }
-    };
-};
-
 export default function MainPageComponent() {
-    const { products, getProducts } = useProduct();
-    const [mousePosition, setMousePosition] = useState({ x: 50, y: 50 }); // Default to center
+    const { products, getProducts, getProductsWithCache } = useProduct();
     const { isAuthenticated } = useAuthContext();
     const [shuffleKey, setShuffleKey] = useState(0);
     
@@ -48,27 +36,17 @@ export default function MainPageComponent() {
     }, []);
 
     useEffect(() => {
-        // Create a throttled handler that only updates at most every 30ms
-        const throttledMouseMoveHandler = throttle((e: MouseEvent) => {
-            if (!isMounted.current) return;
-
-            const x = (e.clientX / window.innerWidth) * 100;
-            const y = (e.clientY / window.innerHeight) * 100;
-            setMousePosition({ x, y });
-        }, 30);
-
-        window.addEventListener('mousemove', throttledMouseMoveHandler);
-
-        return () => {
-            window.removeEventListener('mousemove', throttledMouseMoveHandler);
-        };
-    }, []);
-
-    useEffect(() => {
-        getProducts().catch(error => {
-            toast.error("Không thể tải danh sách sản phẩm");
-            console.error(error);
-        });
+        // Use the optimized cache version instead
+        getProductsWithCache()
+            .then(response => {
+                if (response.code !== 200) {
+                    toast.error("Không thể tải danh sách sản phẩm");
+                }
+            })
+            .catch(error => {
+                toast.error("Không thể tải danh sách sản phẩm");
+                console.error(error);
+            });
     }, []);
 
     const addToCart = async (id: string) => {
@@ -83,48 +61,37 @@ export default function MainPageComponent() {
         });
     };
 
-    const gradientAngle = Math.round((mousePosition.x / 100) * 360);
-    const purpleHue = 270 + (mousePosition.x / 10);
-    const navyHue = 230 + (mousePosition.y / 10);
-    const color1 = `hsl(${purpleHue}, 70%, 25%)`;
-    const color2 = `hsl(${navyHue}, 80%, 20%)`;
-    const lightSpot = `radial-gradient(
-      circle at ${mousePosition.x}% ${mousePosition.y}%, 
-      rgba(255, 255, 255, 0.15) 0%, 
-      rgba(255, 255, 255, 0) 50%
-    )`;
-    const backgroundStyle = {
-        background: `${lightSpot}, linear-gradient(${gradientAngle}deg, ${color1}, ${color2})`,
-        transition: 'background 0.5s ease-out',
-    };
-
     return (
-        <div
-            className="w-screen min-h-screen scroll-auto flex justify-center"
-            style={backgroundStyle}
-        >
-            <div className="py-12 w-full max-w-screen-xl mx-auto">
-                <div className="flex justify-center items-center mb-8">
-                    <h1 className="text-5xl font-bold text-white drop-shadow-lg tracking-tight text-center">
-                        Laptop Gaming
-                    </h1>
+        <div className="w-screen min-h-screen relative overflow-hidden">
+            {/* Animated gradient background */}
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-900 via-purple-900 to-blue-800 animate-gradient-xy"></div>
+            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-purple-500/20 to-transparent animate-pulse"></div>
+            
+            {/* Content */}
+            <div className="relative z-10 flex justify-center">
+                <div className="py-12 w-full max-w-screen-xl mx-auto">
+                    <div className="flex justify-center items-center mb-8">
+                        <h1 className="text-5xl font-bold text-white drop-shadow-lg tracking-tight text-center">
+                            Laptop Gaming
+                        </h1>
+                    </div>
+
+                    <p className="text-lg text-gray-200 text-center max-w-2xl mx-auto mb-12 opacity-90">
+                        Khám phá bộ sưu tập laptop gaming cao cấp với hiệu năng mạnh mẽ,
+                        thiết kế độc đáo và công nghệ tiên tiến
+                    </p>
+
+                    <ParallaxProductGrid
+                        products={shuffledProducts.map((product) => ({
+                            id: product.id,
+                            image: product.details.images[0] || "/laptop.png",
+                            title: product.name,
+                            price: product.price,
+                            description: product.details.description || "Laptop gaming cao cấp với hiệu năng vượt trội"
+                        }))}
+                        onAddToCart={addToCart}
+                    />
                 </div>
-
-                <p className="text-lg text-gray-200 text-center max-w-2xl mx-auto mb-12 opacity-90">
-                    Khám phá bộ sưu tập laptop gaming cao cấp với hiệu năng mạnh mẽ,
-                    thiết kế độc đáo và công nghệ tiên tiến
-                </p>
-
-                <ParallaxProductGrid
-                    products={shuffledProducts.map((product) => ({
-                        id: product.id,
-                        image: product.details.images[0] || "/laptop.png",
-                        title: product.name,
-                        price: product.price,
-                        description: product.details.description || "Laptop gaming cao cấp với hiệu năng vượt trội"
-                    }))}
-                    onAddToCart={addToCart}
-                />
             </div>
         </div>
     );

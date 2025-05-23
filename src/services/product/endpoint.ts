@@ -304,44 +304,69 @@ const DELETE_PRODUCT = gql`
 `;
 
 // API methods
-export const getProduct = async (id: string): Promise<ProductResponse> => {
-  try {
-    // Thực hiện request
-    const response = await apolloClient.query({
-      query: GET_PRODUCT,
-      variables: { getProductId: id },
-      fetchPolicy: 'network-only', // Luôn lấy dữ liệu mới từ server
-      context: {
-        requiresAuth: false // Chỉ định rõ ràng rằng API này không yêu cầu xác thực (không thêm token vào header)
-      }
-    });
-
-    if (!response.data || !response.data.getProduct) {
-      return {
-        code: 500,
-        message: 'Không thể tải thông tin sản phẩm',
-        product: null as any
-      };
+export const getProduct = (() => {
+  // Create a request cache to avoid duplicate in-flight requests
+  const requestCache = new Map<string, Promise<ProductResponse>>();
+  
+  return async (id: string): Promise<ProductResponse> => {
+    // Check if we already have this request in flight
+    if (requestCache.has(id)) {
+      return requestCache.get(id)!;
     }
-
-    return response.data.getProduct;
-  } catch (error) {
-    // Kiểm tra lỗi kết nối
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    const isNetworkError = errorMessage.includes('Failed to fetch') ||
-                           errorMessage.includes('Network error') ||
-                           errorMessage.includes('timeout');
-
-    // Return a formatted error response instead of throwing
-    return {
-      code: 500,
-      message: isNetworkError
-        ? 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng và thử lại.'
-        : 'Có lỗi xảy ra khi tải thông tin sản phẩm',
-      product: null as any
-    };
-  }
-};
+    
+    // Check if we have this in Apollo cache first
+    try {
+      const cachedData = apolloClient.readQuery({
+        query: GET_PRODUCT,
+        variables: { getProductId: id }
+      });
+      
+      if (cachedData?.getProduct) {
+        return cachedData.getProduct;
+      }
+    } catch (e) {
+      // Cache miss, continue with network request
+    }
+    
+    // Create the request promise
+    const requestPromise = (async () => {
+      try {
+        const response = await apolloClient.query({
+          query: GET_PRODUCT,
+          variables: { getProductId: id },
+          fetchPolicy: 'cache-first', // Use cache when available
+          context: {
+            requiresAuth: false
+          }
+        });
+  
+        return response.data.getProduct;
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const isNetworkError = errorMessage.includes('Failed to fetch') ||
+                              errorMessage.includes('Network error') ||
+                              errorMessage.includes('timeout');
+  
+        return {
+          code: 500,
+          message: isNetworkError
+            ? 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng và thử lại.'
+            : 'Có lỗi xảy ra khi tải thông tin sản phẩm',
+          product: null as any
+        };
+      } finally {
+        // Remove from the request cache after a short delay to allow for batched requests
+        setTimeout(() => {
+          requestCache.delete(id);
+        }, 500);
+      }
+    })();
+    
+    // Store the request promise in the cache
+    requestCache.set(id, requestPromise);
+    return requestPromise;
+  };
+})();
 
 export const getProducts = async (status?: string): Promise<ProductsResponse> => {
   try {
@@ -477,6 +502,54 @@ export const deleteProduct = async (id: string): Promise<BaseResponse> => {
     return response.data.deleteProduct;
   } catch (error) {
     console.error('Error deleting product:', error);
+    throw error;
+  }
+};
+
+// Add helper function to get products with optimized caching
+export const getProductsWithCache = async (options = { status: undefined }) => {
+  try {
+    // Check cache first to avoid unnecessary network requests
+    const cachedData = apolloClient.readQuery({
+      query: GET_PRODUCTS,
+      variables: { status: options.status }
+    });
+    
+    if (cachedData) {
+      console.log('Using cached product data');
+      return cachedData.getProducts;
+    }
+    
+    const { data } = await apolloClient.query({
+      query: GET_PRODUCTS,
+      variables: { status: options.status },
+      fetchPolicy: 'cache-first'
+    });
+    
+    return data.getProducts;
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    throw error;
+  }
+};
+
+// Optimized function for product details with 15-minute cache
+export const getProductDetails = async (productId: string) => {
+  try {
+    const { data } = await apolloClient.query({
+      query: GET_PRODUCT,
+      variables: { getProductId: productId },
+      fetchPolicy: 'cache-first',
+      // Cache product details for 15 minutes
+      context: {
+        fetchOptions: {
+          next: { revalidate: 900 }
+        }
+      }
+    });
+    return data.getProduct;
+  } catch (error) {
+    console.error('Error fetching product details:', error);
     throw error;
   }
 };

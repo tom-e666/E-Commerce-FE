@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
@@ -131,6 +131,11 @@ export default function NewsPage() {
     }, 800);
   };
 
+  // Memoize the visible news to prevent unnecessary re-renders
+  const visibleNewsItems = useMemo(() => {
+    return news.slice(0, visibleNews);
+  }, [news, visibleNews]);
+
   return (
     <div className="container mx-auto py-8 px-4">
       {/* Breadcrumb */}
@@ -190,7 +195,7 @@ export default function NewsPage() {
           ))
         ) : (
           // Hiển thị số lượng bản tin giới hạn theo visibleNews
-          news.slice(0, visibleNews).map((item) => (
+          visibleNewsItems.map((item, index) => (
             <Card key={item.id} className="overflow-hidden hover:shadow-lg transition-shadow group flex flex-col h-full">
               <div className="relative h-48 w-full overflow-hidden">
                 <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
@@ -199,7 +204,12 @@ export default function NewsPage() {
                     alt={item.title}
                     fill
                     style={{ objectFit: 'cover' }}
-                    className="transition-transform duration-300 group-hover:scale-105"
+                    className="transition-transform duration-300 group-hover:scale-105 w-auto h-auto"
+                    priority={index < 3} // Priority for first 3 images (above the fold)
+                    loading={index < 3 ? 'eager' : 'lazy'} // Eager loading for first 3
+                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    placeholder="blur"
+                    blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGxwf/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyLli5WHTlw4VrkonMuu5pGpjPzEb5BNbZFcyotMLLxp9CU/SQSfY8gvLWFaHNRFz1g3w=="
                     onError={(e) => {
                       // Fallback image if the original fails to load
                       const target = e.target as HTMLImageElement;

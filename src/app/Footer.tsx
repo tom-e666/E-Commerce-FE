@@ -6,13 +6,6 @@ import { IoMdMail } from "react-icons/io";
 import { MdOutlineCategory, MdInfo, MdSupportAgent } from "react-icons/md";
 import { FaTruckFast } from "react-icons/fa6";
 import Image from 'next/image'
-
-// Import images
-import GHNImage from '../assets/GHN.webp'
-import EMSImage from '../assets/ems.png'
-import zaloImage from '../assets/zalo.webp'
-import facebookImage from '../assets/facebook.png'
-
 const Footer = () => {
   return (
     <footer className='w-full relative overflow-hidden bg-gray-900 text-white'>
@@ -95,17 +88,33 @@ const Footer = () => {
                   href='https://zalo.me/0977769904'
                   target='_blank'
                   rel='noopener noreferrer'
-                  className='bg-blue-500/20 p-1.5 rounded-full'
+                  className='bg-blue-500/20 p-1.5 rounded-full hover:bg-blue-500/30 transition-colors'
                 >
-                  <Image src={zaloImage} className='h-5 w-5' alt="Zalo" width={20} height={20} />
+                  <Image 
+                    src={'/zalo.webp'} 
+                    className='h-5 w-5' 
+                    alt="Zalo" 
+                    width={20} 
+                    height={20}
+                    loading="lazy"
+                    sizes="20px"
+                  />
                 </a>
                 <a
                   href='https://facebook.com'
                   target='_blank'
                   rel='noopener noreferrer'
-                  className='bg-blue-500/20 p-1.5 rounded-full'
+                  className='bg-blue-500/20 p-1.5 rounded-full hover:bg-blue-500/30 transition-colors'
                 >
-                  <Image src={facebookImage} className='h-5 w-5' alt="Facebook" width={20} height={20} />
+                  <Image 
+                    src={'/facebook.png'} 
+                    className='h-5 w-5' 
+                    alt="Facebook" 
+                    width={20} 
+                    height={20}
+                    loading="lazy"
+                    sizes="20px"
+                  />
                 </a>
                 <a
                   href='mailto:info@milkstore.com'
@@ -133,12 +142,17 @@ const Footer = () => {
                 Đơn vị vận chuyển
               </h3>
             </div>
-            <div className='flex flex-col'>
-              <div className='rounded-lg flex items-center '>
-                <Image src={GHNImage} alt='GHN' width={160} height={50} className='h-14 w-50' />
-              </div>
-              <div className='rounded-lg flex items-center '>
-                <Image src={EMSImage} alt='EMS' width={160} height={50} className='h-14 w-50' />
+            <div className='flex flex-col space-y-3'>
+              <div className='rounded-lg flex items-center'>
+                <Image 
+                  src={'/GHN.webp'} 
+                  alt='GHN' 
+                  width={160} 
+                  height={50}
+                  className='h-auto w-auto max-h-12'
+                  loading="lazy"
+                  sizes="160px"
+                />
               </div>
             </div>
           </div>

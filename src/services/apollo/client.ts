@@ -204,17 +204,59 @@ const httpLink = new HttpLink({
   }
 });
 
+// Enhanced cache configuration with typePolicies and field merging
+const cache = new InMemoryCache({
+  typePolicies: {
+    Query: {
+      fields: {
+        // Products don't need refetching on every navigation
+        getProducts: {
+          merge(existing, incoming) {
+            return incoming;
+          },
+          read(existing) {
+            return existing;
+          }
+        },
+        // Brands rarely change - good caching candidate
+        getBrands: {
+          merge(existing, incoming) {
+            return incoming;
+          }
+        },
+        // Provinces and other location data rarely change
+        getProvinces: {
+          merge(existing, incoming) {
+            return incoming;
+          }
+        },
+        getDistricts: {
+          keyArgs: ["province_id"],
+        },
+        getWards: {
+          keyArgs: ["district_id"],
+        }
+      }
+    }
+  }
+});
+
 // Create and export the client instance
 export const apolloClient = new ApolloClient({
   link: from([authLink, errorLink, httpLink]),
-  cache: new InMemoryCache(),
-  // Không lưu trữ truy vấn/kết quả trong localStorage để tránh lưu dữ liệu nhạy cảm
+  cache,
   defaultOptions: {
     watchQuery: {
-      fetchPolicy: 'cache-and-network',
+      // Use cache-first instead of cache-and-network for better performance
+      fetchPolicy: 'cache-first',
+      // Cache results for 5 minutes before considering them stale
+      nextFetchPolicy: 'cache-first',
+      // Only refetch if cache is empty or stale
+      notifyOnNetworkStatusChange: true,
     },
     query: {
-      fetchPolicy: 'network-only',
+      // Change default to cache-first instead of network-only
+      fetchPolicy: 'cache-first',
       errorPolicy: 'all',
     },
     mutate: {
@@ -222,6 +264,15 @@ export const apolloClient = new ApolloClient({
     },
   },
 });
+
+// Add optimized cache reset function that preserves certain cached data
+export const resetApolloClient = () => {
+  // Don't evict static data like brands and provinces when resetting
+  apolloClient.cache.evict({ fieldName: 'getCartItems' });
+  apolloClient.cache.evict({ fieldName: 'getUserInfo' });
+  apolloClient.cache.evict({ fieldName: 'getCurrentUser' });
+  apolloClient.cache.gc();
+};
 
 // Hàm tiện ích để reset client khi đăng xuất
 export const resetApolloClient = () => {
