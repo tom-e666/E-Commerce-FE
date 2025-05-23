@@ -4,6 +4,7 @@ import {
     getOrderAPI,
     getUserOrdersAPI,
     getAllOrdersAPI,
+    getOrderByTransactionAPI,
     updateOrderItemAPI,
     deleteOrderItemAPI,
     cancelOrderAPI,
@@ -133,6 +134,22 @@ export const useOrder = () => {
             }
         } catch (error) {
             console.error("Error fetching order:", error);
+            throw error;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const getOrderByTransaction = async (transactionId: string) => {
+        setLoading(true);
+        try {
+            const response = await getOrderByTransactionAPI(transactionId);
+            if (response?.data?.getOrderByTransaction) {
+                return response?.data?.getOrderByTransaction;
+            }
+            throw new Error("Không thể lấy đơn hàng theo Transaction ID");
+        } catch (error) {
+            console.error("Error fetching order by transaction:", error);
             throw error;
         } finally {
             setLoading(false);
@@ -433,6 +450,7 @@ export const useOrder = () => {
         getUserOrders,
         getOrders,
         getOrder,
+        getOrderByTransaction,
         createOrderFromCart,
         createOrder,
         updateOrderItem,

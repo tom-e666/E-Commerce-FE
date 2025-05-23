@@ -19,7 +19,7 @@ const PaymentForm = React.memo(({ orderId, totalAmount, onBack, onComplete }: Pa
     const router = useRouter();
     const [selectedMethod, setSelectedMethod] = useState<string | null>('cod');
     const [isLoading, setIsLoading] = useState(false);
-    const { createCODPayment } = usePayment();
+    const { createCODPayment, createVNPayPayment } = usePayment();
 
     const handlePayment = async () => {
         if (!selectedMethod) {
@@ -83,6 +83,43 @@ const PaymentForm = React.memo(({ orderId, totalAmount, onBack, onComplete }: Pa
                     }, 5000);
                     break;
 
+                case 'vnpay':
+                  try {
+                    // Pass the required arguments to createVNPayPayment
+                    const vnpayResponse = await createVNPayPayment(
+                      orderId,
+                      totalAmount,            // amount
+                      'Thanh toán đơn hàng', // orderInfo
+                      'billpayment',         // orderType
+                      'VNBANK'                  // bankCode (bank code placeholder)
+                    );
+
+                    console.log("VNPAY response:", vnpayResponse);
+
+                    if (vnpayResponse.code === 200) {
+                      toast.success("Khởi tạo thanh toán VNPay thành công!");
+                        // Redirect to the payment URL
+                        // Uncomment the following line to redirect to the payment URL
+                        if (vnpayResponse.payment_url) {
+                          window.location.href = vnpayResponse.payment_url;
+                        } else {
+                          toast.error("Không tìm thấy đường dẫn thanh toán VNPay");
+                        }
+                    //   onComplete('vnpay');
+
+                      // Demo redirect to success page after 5s
+                    //   setTimeout(() => {
+                    //     router.push(`/checkout/success?orderId=${orderId}&demo=true&method=vnpay`);
+                    //   }, 5000);
+                    } else {
+                      toast.error(vnpayResponse.message || "Lỗi khi khởi tạo thanh toán VNPay");
+                    }
+                  } catch (error) {
+                    console.error("VNPay payment error:", error);
+                    toast.error("Có lỗi xảy ra khi xử lý thanh toán VNPay");
+                  }
+                  break;
+
                 default:
                     toast.error("Phương thức thanh toán không được hỗ trợ");
             }
@@ -145,8 +182,45 @@ const PaymentForm = React.memo(({ orderId, totalAmount, onBack, onComplete }: Pa
                         <div className="w-5 h-5 rounded-full border-2 border-muted flex-shrink-0 opacity-50"></div>
                     </div>
 
-                    {/* Credit Cards */}
+                    {/* VNPAY */}
                     <div
+                        className={`flex items-center p-4 border rounded-md mb-3 cursor-pointer ${selectedMethod === 'vnpay' ? 'border-primary bg-primary/5' : ''}`}
+                        onClick={() => setSelectedMethod('vnpay')}
+                    >
+                        <div className="w-12 h-12 flex-shrink-0 mr-4 flex justify-center items-center">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="48"
+                              height="48"
+                              viewBox="0 0 48 48"
+                              className="text-primary"
+                              strokeWidth={2} 
+                            >
+                              <path fill="none" stroke="currentColor" stroke-linejoin="round"
+                                d="m28.622 37.722l14.445-14.444c.577-.578.577-1.733 0-2.311L34.4 12.3c-.578-.578-1.733-.578-2.311 0l-6.356 6.356L16.49 9.41c-.578-.578-1.734-.578-2.311 0l-9.245 9.245c-.578.577-.578 1.733 0 2.31L21.69 37.723c1.733 1.734 5.2 1.734 6.933 0Z"
+                              />
+                              <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                d="m25.733 18.656l-8.089 8.089c-2.31 2.31-4.622 2.31-6.933 0"
+                              />
+                              <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M18.222 30.789c-1.155 1.156-2.31 1.156-3.467 0m22.534-15.6c-1.262-1.156-2.89-.578-4.045.578L18.222 30.789m0-15.022c-4.622-4.622-10.4 1.155-5.778 5.778l5.2 5.2l-5.2-5.2m10.978-.578l-4.044-4.045"/>
+                                <path d="m21.689 22.7l-4.622-4.622c-.578-.578-1.445-1.445-2.311-1.156m0 3.467c-.578-.578-1.445-1.444-1.156-2.311m5.778 6.933l-4.622-4.622"/>
+                              </g>
+                            </svg>
+                        </div>
+                        <div className="flex-1">
+                            <h4 className="font-medium">Thanh toán qua VNPAY</h4>
+                            <p className="text-sm text-muted-foreground">Thanh toán qua QR code hoặc cổng thanh toán VNPAY</p>
+                        </div>
+                        <div className="w-5 h-5 rounded-full border-2 border-muted flex-shrink-0">
+                            {selectedMethod === 'vnpay' && (
+                                <div className="w-full h-full bg-primary rounded-full"></div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Credit Cards */}
+                    {/* <div
                         className={`flex items-center p-4 border rounded-md mb-3 cursor-pointer ${selectedMethod === 'cc' ? 'border-primary bg-primary/5' : ''}`}
                         onClick={() => setSelectedMethod('cc')}
                     >
@@ -167,10 +241,10 @@ const PaymentForm = React.memo(({ orderId, totalAmount, onBack, onComplete }: Pa
                                 <div className="w-full h-full bg-primary rounded-full"></div>
                             )}
                         </div>
-                    </div>
+                    </div> */}
 
                     {/* ATM cards */}
-                    <div
+                    {/* <div
                         className={`flex items-center p-4 border rounded-md mb-3 cursor-pointer ${selectedMethod === 'atm' ? 'border-primary bg-primary/5' : ''}`}
                         onClick={() => setSelectedMethod('atm')}
                     >
@@ -192,10 +266,10 @@ const PaymentForm = React.memo(({ orderId, totalAmount, onBack, onComplete }: Pa
                                 <div className="w-full h-full bg-primary rounded-full"></div>
                             )}
                         </div>
-                    </div>
+                    </div> */}
 
                     {/* Mobile Banking */}
-                    <div
+                    {/* <div
                         className={`flex items-center p-4 border rounded-md cursor-pointer ${selectedMethod === 'mbanking' ? 'border-primary bg-primary/5' : ''}`}
                         onClick={() => setSelectedMethod('mbanking')}
                     >
@@ -217,7 +291,8 @@ const PaymentForm = React.memo(({ orderId, totalAmount, onBack, onComplete }: Pa
                                 <div className="w-full h-full bg-primary rounded-full"></div>
                             )}
                         </div>
-                    </div>
+                    </div> */}
+
                 </div>
 
                 <div className="bg-muted p-4 rounded-lg space-y-2">

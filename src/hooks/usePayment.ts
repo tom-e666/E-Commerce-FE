@@ -3,10 +3,12 @@ import {
   getPayment as apiGetPayment,
   createCODPayment as apiCreateCODPayment,
   createZaloPayPayment as apiCreateZaloPayPayment,
+  createVNPayPayment as apiCreateVNPayPayment,
   Payment,
   PaymentResponse,
   CODPaymentResponse,
-  ZaloPayPaymentResponse
+  ZaloPayPaymentResponse,
+  VNPayPaymentResponse
 } from '../services/payment/endpoints';
 
 export interface PaymentHookReturn {
@@ -15,6 +17,13 @@ export interface PaymentHookReturn {
   fetchPayment: (orderId: string) => Promise<PaymentResponse>;
   createCODPayment: (orderId: string) => Promise<CODPaymentResponse>;
   createZaloPayPayment: (orderId: string) => Promise<ZaloPayPaymentResponse>;
+  createVNPayPayment: (
+    orderId: string,
+    amount: number,
+    orderInfo: string,
+    orderType: string,
+    bankCode: string
+  ) => Promise<VNPayPaymentResponse>;
   isPaymentComplete: (orderId: string) => Promise<boolean>;
   verifyPayment: (orderId: string, transaction_id: string) => Promise<boolean>;
 }
@@ -91,6 +100,34 @@ export const usePayment = (): PaymentHookReturn => {
   };
 
   /**
+   * Create a new VNPay payment
+   */
+  const createVNPayPayment = async (
+    orderId: string,
+    amount: number,
+    orderInfo: string,
+    orderType: string,
+    bankCode: string
+  ): Promise<VNPayPaymentResponse> => {
+    setLoading(true);
+    try {
+      const response = await apiCreateVNPayPayment(orderId, amount, orderInfo, orderType, bankCode);
+      
+      if (response.code === 200 && response.payment_url) {
+        // You can store transaction ID if needed, similar to ZaloPay
+        // localStorage.setItem(`payment_transaction_${orderId}`, response.transaction_id || '');
+      }
+      
+      return response;
+    } catch (error) {
+      console.error("Error creating VNPay payment:", error);
+      throw new Error(error instanceof Error ? error.message : "Lỗi khi tạo thanh toán VNPay");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
    * Check if payment is complete for an order
    */
   const isPaymentComplete = async (orderId: string): Promise<boolean> => {
@@ -145,6 +182,7 @@ export const usePayment = (): PaymentHookReturn => {
     fetchPayment,
     createCODPayment,
     createZaloPayPayment,
+    createVNPayPayment,
     isPaymentComplete,
     verifyPayment
   };

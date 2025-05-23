@@ -157,6 +157,28 @@ export const GET_ALL_ORDERS = gql`
   }
 `;
 
+export const GET_ORDER_BY_TRANSACTION = gql`
+  query GetOrderByTransaction($transaction_id: String!) {
+    getOrderByTransaction(transaction_id: $transaction_id) {
+      code
+      message
+      order {
+        id
+        status
+        created_at
+        total_price
+        items {
+          product_id
+          name
+          quantity
+          price
+          image
+        }
+      }
+    }
+  }
+`;
+
 // API function implementations
 export const createOrderFromCartAPI = async () => {
   try {
@@ -334,6 +356,23 @@ export const getAllOrdersAPI = async (
         }
       }
     };
+  }
+};
+
+export const getOrderByTransactionAPI = async (transactionId: string) => {
+  try {
+    const response = await apolloClient.query({
+      query: GET_ORDER_BY_TRANSACTION,
+      variables: { transaction_id: transactionId },
+      fetchPolicy: 'network-only',
+      context: {
+        requiresAuth: true
+      }
+    });
+    return response;
+  } catch (error) {
+    console.error('Error fetching order by transaction:', error);
+    throw error;
   }
 };
 
