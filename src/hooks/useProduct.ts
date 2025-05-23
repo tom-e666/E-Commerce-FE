@@ -8,8 +8,6 @@ import {
   Product,
   ProductDetails
 } from '@/services/product/endpoint';
-import { getProductsWithCache } from '@/services/product/cache'; // Import the cache function
-
 export function useProduct() {
   const [loading, setLoading] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
@@ -19,7 +17,7 @@ export function useProduct() {
     setLoading(true);
     try {
       // Use the cached version for better performance
-      const result = await getProductsWithCache();
+      const result = await apiGetProducts();
       if (result.code === 200) {
         setProducts(result.products);
         // Store in localStorage for offline access & quick initial render on next visit

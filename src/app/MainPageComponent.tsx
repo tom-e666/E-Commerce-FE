@@ -17,7 +17,7 @@ function shuffleArray<T>(array: T[]): T[] {
 }
 
 export default function MainPageComponent() {
-    const { products, getProducts, getProductsWithCache } = useProduct();
+    const { products, getProducts } = useProduct();
     const { isAuthenticated } = useAuthContext();
     const [shuffleKey, setShuffleKey] = useState(0);
     
@@ -37,7 +37,7 @@ export default function MainPageComponent() {
 
     useEffect(() => {
         // Use the optimized cache version instead
-        getProductsWithCache()
+        getProducts()
             .then(response => {
                 if (response.code !== 200) {
                     toast.error("Không thể tải danh sách sản phẩm");
