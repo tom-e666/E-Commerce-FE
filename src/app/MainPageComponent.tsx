@@ -2,9 +2,9 @@
 import ParallaxProductGrid from "@/components/ui/Parallax";
 import { useProduct } from "@/hooks/useProduct"
 import { useEffect, useState, useMemo, useRef } from "react";
-import { toast } from "sonner";
 import { addToCart as addToCartAPI } from "@/services/cart/endpoint";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { toast } from "@/lib/toast-config";
 
 // Fisher-Yates shuffle algorithm for randomizing products
 function shuffleArray<T>(array: T[]): T[] {
@@ -47,18 +47,23 @@ export default function MainPageComponent() {
                 toast.error("Không thể tải danh sách sản phẩm");
                 console.error(error);
             });
-    }, []);
+    }, [getProducts]);
 
     const addToCart = async (id: string) => {
         if (!isAuthenticated) {
             toast.error("Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng");
             return;
         }
-        toast.promise(addToCartAPI(id), {
-            loading: "Đang thêm sản phẩm vào giỏ hàng...",
-            success: "Thêm sản phẩm vào giỏ hàng thành công",
-            error: "Không thể thêm sản phẩm vào giỏ hàng"
-        });
+        
+        // Using the new toast utility with proper configuration
+        toast.promise(
+            addToCartAPI(id),
+            {
+                loading: "Đang thêm sản phẩm vào giỏ hàng...",
+                success: "Thêm sản phẩm vào giỏ hàng thành công",
+                error: "Không thể thêm sản phẩm vào giỏ hàng"
+            }
+        );
     };
 
     return (
