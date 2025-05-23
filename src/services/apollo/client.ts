@@ -274,11 +274,11 @@ export const resetApolloClient = () => {
   apolloClient.cache.gc();
 };
 
-// Hàm tiện ích để reset client khi đăng xuất
-export const resetApolloClient = () => {
-  // Xóa cache
-  apolloClient.resetStore();
-};
+// // Hàm tiện ích để reset client khi đăng xuất
+// export const resetApolloClient = () => {
+//   // Xóa cache
+//   apolloClient.resetStore();
+// };
 
 // Lắng nghe sự kiện token thay đổi để reset Apollo Cache
 if (typeof window !== 'undefined') {
