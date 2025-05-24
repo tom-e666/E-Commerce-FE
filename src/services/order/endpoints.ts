@@ -26,6 +26,30 @@ export const CREATE_ORDER_FROM_CART = gql`
   }
 `;
 
+export const CREATE_ORDER = gql`
+  mutation CreateOrder($items: [OrderItemInput!]!) {
+    createOrder(items: $items) {
+      code
+      message
+      order {
+        id
+        user_id
+        status
+        created_at
+        total_price
+        items {
+          id
+          product_id
+          name
+          quantity
+          price
+          image
+        }
+      }
+    }
+  }
+`;
+
 export const UPDATE_ORDER_ITEM = gql`
   mutation UpdateOrderItem($order_item_id: ID!, $quantity: Int!) {
     updateOrderItem(order_item_id: $order_item_id, quantity: $quantity) {
@@ -194,6 +218,24 @@ export const createOrderFromCartAPI = async () => {
     throw error;
   }
 };
+
+export const createOrder = async (items: {product_id: string, quantity: number}[]) => {
+  try {
+    const response = await apolloClient.mutate({
+      mutation: CREATE_ORDER,
+      variables: {
+        items
+      },
+      context: {
+        requiresAuth: true
+      }
+    });
+    return response;
+  } catch (error) {
+    console.error('Error creating order:', error);
+    throw error;
+  }
+}
 
 export const updateOrderItemAPI = async (orderItemId: string, quantity: number) => {
   try {
