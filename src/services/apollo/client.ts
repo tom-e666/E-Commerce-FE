@@ -178,17 +178,18 @@ const authLink = new ApolloLink((operation, forward) => {
 
   return forward(operation);
 });
+console.log(process.env.NEXT_PUBLIC_GRAPHQL_API_URL); // URL API
 
 // HTTP link
 const httpLink = new HttpLink({
-  uri: process.env.NEXT_PUBLIC_GRAPHQL_API_URL || 'http://192.168.2.21:8000/graphql', // URL API
+  uri: process.env.NEXT_PUBLIC_GRAPHQL_API_URL, 
   // Không sử dụng credentials: 'include' để tránh lỗi CORS
   fetch: (uri, options) => {
     // Thêm timeout để tránh chờ quá lâu
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         reject(new Error('Request timeout after 15 seconds'));
-      }, 15000);
+      }, 30000);
 
       fetch(uri, options)
         .then(response => {
