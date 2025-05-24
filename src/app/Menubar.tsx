@@ -146,7 +146,7 @@ const Menubar = () => {
                         </Link>
                     </div>
                     <div className="h-full w-20 flex justify-center items-center">
-                        <Link href="/order" passHref>
+                        <Link href="/Order" passHref>
                             <Button variant={"outline"} className="bg-transparent border-0">
                                 Đơn hàng
                             </Button>
@@ -181,16 +181,18 @@ const Menubar = () => {
                                             Trang cá nhân
                                         </DropdownMenuItem>
                                     </Link>
-                                    <Link href="/orders" passHref style={{ textDecoration: 'none' }}>
+                                    <Link href="/Order" passHref style={{ textDecoration: 'none' }}>
                                         <DropdownMenuItem>
                                             Đơn hàng của tôi
                                         </DropdownMenuItem>
                                     </Link>
+                                    {!user || user.role === "admin" ? (
                                     <Link href="/admin" passHref style={{ textDecoration: 'none' }}>
                                         <DropdownMenuItem>
                                             Quản trị viên
                                         </DropdownMenuItem>
                                     </Link>
+                                    ) : null}
 
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem onClick={handleLogout}>

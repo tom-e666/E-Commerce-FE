@@ -35,7 +35,8 @@ export default function VNPayStatus() {
       if (!vnpTxnRef) return;
       try {
         const response = await getOrderByTransaction(vnpTxnRef);
-        if (response.code === 200 && response.order) {
+        console.log("Response from getOrderByTransaction:", response);
+        if (response.code === 200 && response.order && response.order.status === "CONFIRMED") {
           setOrder(response.order);
           setStatusMessage("Thanh toán thành công!");
           setIsSuccess(true);

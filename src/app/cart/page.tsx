@@ -27,7 +27,7 @@ import {
 import { MinusIcon, PlusIcon, ShoppingCart, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "next/navigation";
-import { createOrderFromCartAPI } from "@/services/order/endpoints";
+import { createOrderFromCartAPI, createOrder } from "@/services/order/endpoints";
 
 export default function CartPage() {
     const router = useRouter();
@@ -41,6 +41,26 @@ export default function CartPage() {
     } = useCart();
 
     const [isUpdating, setIsUpdating] = useState<string | null>(null);
+    // Thêm state để lưu các sản phẩm được chọn
+    const [selectedItems, setSelectedItems] = useState<string[]>([]);
+
+    // Hàm chọn/bỏ chọn từng sản phẩm
+    const handleSelectItem = (productId: string) => {
+        setSelectedItems((prev) =>
+            prev.includes(productId)
+                ? prev.filter((id) => id !== productId)
+                : [...prev, productId]
+        );
+    };
+
+    // Hàm chọn/bỏ chọn tất cả
+    const handleSelectAll = () => {
+        if (selectedItems.length === cartItems.length) {
+            setSelectedItems([]);
+        } else {
+            setSelectedItems(cartItems.map((item) => item.product.product_id));
+        }
+    };
 
     const totalPrice = cartItems.reduce((total, item) => {
         return total + (item.product.price || 0) * item.quantity;
@@ -88,12 +108,16 @@ export default function CartPage() {
     const handleCheckout = async () => {
         try {
             const toastId = toast.loading("Đang tạo đơn hàng");
-            const response = await createOrderFromCartAPI();
+            // const response = await createOrderFromCartAPI();
+            const response = await createOrder(selectedItems.map((productId) => ({
+                product_id: productId,
+                quantity: cartItems.find(item => item.product.product_id === productId)?.quantity || 1
+            })));
             console.log(response);
             if (!response?.data) {
                 throw new Error("Có lỗi! Đơn hàng không được tạo!");
             }
-            sessionStorage.setItem("newOrder", JSON.stringify(response.data.createOrderFromCart.order));
+            sessionStorage.setItem("newOrder", JSON.stringify(response.data.createOrder.order));
             toast.dismiss(toastId);
             router.push("/checkout");
         } catch {
@@ -170,6 +194,14 @@ export default function CartPage() {
                         <TableCaption>Danh sách sản phẩm trong giỏ hàng của bạn.</TableCaption>
                         <TableHeader>
                             <TableRow>
+                                <TableHead className="w-10">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedItems.length === cartItems.length && cartItems.length > 0}
+                                        onChange={handleSelectAll}
+                                        aria-label="Chọn tất cả"
+                                    />
+                                </TableHead>
                                 <TableHead className="w-[300px]">Sản phẩm</TableHead>
                                 <TableHead>Giá</TableHead>
                                 <TableHead>Số lượng</TableHead>
@@ -180,6 +212,14 @@ export default function CartPage() {
                         <TableBody>
                             {cartItems.map((item) => (
                                 <TableRow key={item.id}>
+                                    <TableCell>
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedItems.includes(item.product.product_id)}
+                                            onChange={() => handleSelectItem(item.product.product_id)}
+                                            aria-label={`Chọn sản phẩm ${item.product.name}`}
+                                        />
+                                    </TableCell>
                                     <TableCell className="font-medium">
                                         <div className="flex items-center space-x-3">
                                             <div className="h-16 w-16 relative rounded overflow-hidden">
@@ -187,7 +227,6 @@ export default function CartPage() {
                                                     src={item.product.image || "/laptop.png"}
                                                     alt={item.product.name || "Sản phẩm"}
                                                     fill
-                                                // style={{ objectFit: "cover" }}
                                                 />
                                             </div>
                                             <div>
@@ -239,7 +278,7 @@ export default function CartPage() {
                         </TableBody>
                         <TableFooter>
                             <TableRow>
-                                <TableCell colSpan={3} className="text-right font-bold">Tổng cộng</TableCell>
+                                <TableCell colSpan={4} className="text-right font-bold">Tổng cộng</TableCell>
                                 <TableCell className="text-right font-bold">{formatCurrency(totalPrice)}</TableCell>
                                 <TableCell></TableCell>
                             </TableRow>

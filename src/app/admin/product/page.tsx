@@ -36,6 +36,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { motion, useMotionValue, AnimatePresence } from "framer-motion";
 import { Plus, X, Edit, Trash2, Search, RefreshCw, Package, DollarSign, TrendingUp, Archive } from "lucide-react";
+import ProductImagesManager from "./ProductImagesManager";
 
 import { provideGlobalGridOptions } from 'ag-grid-community';
 provideGlobalGridOptions({
@@ -715,11 +716,12 @@ function ProductFormDialog({
             description: values.description,
             images: images,
             keywords: keywords,
-            specifications: specifications
+            specifications: specifications.map(({ __typename, ...rest }) => rest)
         };
 
         try {
             if (product) {
+                console.log("Updating product:", product.id, details.specifications);
                 await toast.promise(
                     updateProduct(product.id, {
                         name: values.name,
@@ -936,7 +938,8 @@ function ProductFormDialog({
                         <div className="space-y-4">
                             <div>
                                 <FormLabel>Hình ảnh sản phẩm</FormLabel>
-                                <div className="flex space-x-2 mt-2">
+                                <ProductImagesManager images={images} setImages={setImages} productName={form.watch("name")}/>
+                                {/* <div className="flex space-x-2 mt-2">
                                     <Input
                                         placeholder="Nhập URL hình ảnh"
                                         value={imageUrl}
@@ -964,7 +967,7 @@ function ProductFormDialog({
                                             </button>
                                         </div>
                                     ))}
-                                </div>
+                                </div> */}
                                 {form.formState.errors.images && (
                                     <p className="text-sm font-medium text-destructive mt-1">
                                         {form.formState.errors.images.message}
