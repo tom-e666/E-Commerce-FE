@@ -38,12 +38,13 @@ const PaymentForm = React.memo(({ orderId, totalAmount, onBack, onComplete }: Pa
             switch (selectedMethod) {
                 case 'cod':
                     const response = await createCODPayment(orderId);
+                    console.log("COD response:", response);
                     if (response.code === 200) {
                         toast.success("Đặt hàng thành công!");
-                        onComplete('cod');
+                        // onComplete('cod');
 
                         setTimeout(() => {
-                            router.push(`/checkout/success?orderId=${orderId}&method=cod`);
+                            router.push(`/checkout/status?vnp_TxnRef=${response.transaction_id}`);
                         }, 1000);
                     } else {
                         toast.error(response.message || "Có lỗi xảy ra khi xử lý thanh toán COD");
