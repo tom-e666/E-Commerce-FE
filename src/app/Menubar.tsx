@@ -146,7 +146,7 @@ const Menubar = () => {
                         </Link>
                     </div>
                     <div className="h-full w-20 flex justify-center items-center">
-                        <Link href="/Order" passHref>
+                        <Link href="/order" passHref>
                             <Button variant={"outline"} className="bg-transparent border-0">
                                 Đơn hàng
                             </Button>
@@ -186,14 +186,11 @@ const Menubar = () => {
                                             Đơn hàng của tôi
                                         </DropdownMenuItem>
                                     </Link>
-                                    {/* Only show admin menu for admin and staff users */}
-                                    {(user.role === 'admin' || user.role === 'staff') && (
-                                        <Link href="/admin" passHref style={{ textDecoration: 'none' }}>
-                                            <DropdownMenuItem>
-                                                Quản trị viên
-                                            </DropdownMenuItem>
-                                        </Link>
-                                    )}
+                                    <Link href="/admin" passHref style={{ textDecoration: 'none' }}>
+                                        <DropdownMenuItem>
+                                            Quản trị viên
+                                        </DropdownMenuItem>
+                                    </Link>
 
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem onClick={handleLogout}>
