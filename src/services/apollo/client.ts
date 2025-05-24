@@ -189,7 +189,7 @@ const httpLink = new HttpLink({
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         reject(new Error('Request timeout after 15 seconds'));
-      }, 15000);
+      }, 30000);
 
       fetch(uri, options)
         .then(response => {
