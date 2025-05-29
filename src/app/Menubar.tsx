@@ -145,6 +145,7 @@ const Menubar = () => {
                             </Button>
                         </Link>
                     </div>
+                    {!user || user.role !== "admin" ? (
                     <div className="h-full w-20 flex justify-center items-center">
                         <Link href="/Order" passHref>
                             <Button variant={"outline"} className="bg-transparent border-0">
@@ -152,6 +153,7 @@ const Menubar = () => {
                             </Button>
                         </Link>
                     </div>
+                    ) : null}
 
                     <div className="h-full w-20 flex justify-center items-center">
                         <Link href="/cart" passHref>
@@ -172,7 +174,7 @@ const Menubar = () => {
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant={"outline"} className="bg-transparent border-0">
-                                        Xin chào, {user.full_name.split(" ").pop()}
+                                        Xin chào, {user.full_name?.split(" ").pop()}
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent>
@@ -314,7 +316,7 @@ const Menubar = () => {
                                 ) : (
                                     <>
                                         <div className="px-4 py-2 text-white font-medium">
-                                            Xin chào, {user.full_name.split(" ").pop()}
+                                            Xin chào, {user.full_name?.split(" ").pop()}
                                         </div>
                                         <Link href="/credential" passHref>
                                             <Button variant="ghost" className="w-full justify-start text-white">

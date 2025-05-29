@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { getCurrentUser, refreshTokenAPI } from '@/services/auth/endpoints';
 import { tokenEvents, AUTH_STATE_CHANGED, TOKEN_UPDATED, TOKEN_REMOVED } from '@/services/auth/tokenEvents';
+import { jwtDecode } from 'jwt-decode';
 
 interface User {
   id: string;
@@ -92,18 +93,38 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         }
       }
 
-      // Nếu có token (mới hoặc cũ chưa hết hạn), gọi API để lấy thông tin người dùng
-      const userData = await getCurrentUser();
-      if (userData.code === 200 && userData.user) {
-        console.log("User authenticated:", userData.user);
-        setUser(userData.user);
-        setIsAuthenticated(true);
-      } else {
-        console.log("Invalid user data:", userData);
+      try{
+        const token =localStorage.getItem('access_token');
+        if(token){
+          const decodeUser = jwtDecode<User>(token);
+          const userData: User = {
+            id: decodeUser.id,
+            full_name: decodeUser.full_name,
+            role: decodeUser.role
+          }
+          setUser(userData);
+          setIsAuthenticated(true);
+        }
+      } catch(error){
+        console.error("Error decoding token:", error);
         clearAuthStorage();
         setIsAuthenticated(false);
         setUser(null);
+        return;
       }
+
+      // Nếu có token (mới hoặc cũ chưa hết hạn), gọi API để lấy thông tin người dùng
+      // const userData = await getCurrentUser();
+      // if (userData.code === 200 && userData.user) {
+      //   console.log("User authenticated:", userData.user);
+      //   setUser(userData.user);
+      //   setIsAuthenticated(true);
+      // } else {
+      //   console.log("Invalid user data:", userData);
+      //   clearAuthStorage();
+      //   setIsAuthenticated(false);
+      //   setUser(null);
+      // }
     } catch (error) {
       console.error("Authentication error:", error);
       clearAuthStorage();
