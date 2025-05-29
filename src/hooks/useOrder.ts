@@ -337,25 +337,20 @@ export const useOrder = () => {
                 throw new Error("Không thể xác nhận đơn hàng");
             }
 
-            const { code, message } = response.data.confirmOrder;
+            const { code, message, order } = response.data.confirmOrder;
 
-            if (code === 200) {
+            if (code === 200 && order) {
+                // Update the current order if it matches
                 if (currentOrder && currentOrder.id === orderId) {
-                    setCurrentOrder({
-                        ...currentOrder,
-                        status: 'confirmed'
-                    });
+                    setCurrentOrder(order);
                 }
-
+                
+                // Update the order in the orders list
                 setOrders(prevOrders =>
-                    prevOrders.map(order =>
-                        order.id === orderId
-                            ? { ...order, status: 'confirmed' }
-                            : order
-                    )
+                    prevOrders.map(o => o.id === orderId ? order : o)
                 );
 
-                return "Đơn hàng đã được xác nhận";
+                return order;
             } else {
                 throw new Error(message || "Không thể xác nhận đơn hàng");
             }
@@ -375,25 +370,20 @@ export const useOrder = () => {
                 throw new Error("Không thể cập nhật trạng thái giao hàng");
             }
 
-            const { code, message } = response.data.shipOrder;
+            const { code, message, order } = response.data.shipOrder;
 
-            if (code === 200) {
+            if (code === 200 && order) {
+                // Update the current order if it matches
                 if (currentOrder && currentOrder.id === orderId) {
-                    setCurrentOrder({
-                        ...currentOrder,
-                        status: 'shipped'
-                    });
+                    setCurrentOrder(order);
                 }
-
+                
+                // Update the order in the orders list
                 setOrders(prevOrders =>
-                    prevOrders.map(order =>
-                        order.id === orderId
-                            ? { ...order, status: 'shipped' }
-                            : order
-                    )
+                    prevOrders.map(o => o.id === orderId ? order : o)
                 );
 
-                return "Đơn hàng đã được giao cho đơn vị vận chuyển";
+                return order;
             } else {
                 throw new Error(message || "Không thể cập nhật trạng thái giao hàng");
             }
@@ -413,25 +403,20 @@ export const useOrder = () => {
                 throw new Error("Không thể cập nhật trạng thái giao hàng");
             }
 
-            const { code, message } = response.data.deliverOrder;
+            const { code, message, order } = response.data.deliverOrder;
 
-            if (code === 200) {
+            if (code === 200 && order) {
+                // Update the current order if it matches
                 if (currentOrder && currentOrder.id === orderId) {
-                    setCurrentOrder({
-                        ...currentOrder,
-                        status: 'delivered'
-                    });
+                    setCurrentOrder(order);
                 }
-
+                
+                // Update the order in the orders list
                 setOrders(prevOrders =>
-                    prevOrders.map(order =>
-                        order.id === orderId
-                            ? { ...order, status: 'delivered' }
-                            : order
-                    )
+                    prevOrders.map(o => o.id === orderId ? order : o)
                 );
 
-                return "Đơn hàng đã được giao thành công";
+                return order;
             } else {
                 throw new Error(message || "Không thể cập nhật trạng thái giao hàng");
             }
