@@ -9,8 +9,12 @@ import {
     deleteOrderItemAPI,
     cancelOrderAPI,
     confirmOrderAPI,
+    processingOrderAPI,
     shipOrderAPI,
-    deliverOrderAPI,
+    completeDeliveryAPI,
+    updateOrderAPI,
+    deleteOrderAPI,
+    createOrderItemAPI,
     OrderItemInterface,
     OrderInterface
 } from '@/services/order/endpoints';
@@ -362,6 +366,39 @@ export const useOrder = () => {
         }
     };
 
+    const processingOrder = async (orderId: string) => {
+        setLoading(true);
+        try {
+            const response = await processingOrderAPI(orderId);
+            if (!response?.data) {
+                throw new Error("Không thể chuyển đơn hàng sang trạng thái xử lý");
+            }
+
+            const { code, message, order } = response.data.processingOrder;
+
+            if (code === 200 && order) {
+                // Update the current order if it matches
+                if (currentOrder && currentOrder.id === orderId) {
+                    setCurrentOrder(order);
+                }
+                
+                // Update the order in the orders list
+                setOrders(prevOrders =>
+                    prevOrders.map(o => o.id === orderId ? order : o)
+                );
+
+                return order;
+            } else {
+                throw new Error(message || "Không thể chuyển đơn hàng sang trạng thái xử lý");
+            }
+        } catch (error) {
+            console.error("Error processing order:", error);
+            throw error;
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const shipOrder = async (orderId: string) => {
         setLoading(true);
         try {
@@ -395,15 +432,15 @@ export const useOrder = () => {
         }
     };
 
-    const deliverOrder = async (orderId: string) => {
+    const completeDelivery = async (orderId: string) => {
         setLoading(true);
         try {
-            const response = await deliverOrderAPI(orderId);
+            const response = await completeDeliveryAPI(orderId);
             if (!response?.data) {
-                throw new Error("Không thể cập nhật trạng thái giao hàng");
+                throw new Error("Không thể hoàn thành giao hàng");
             }
 
-            const { code, message, order } = response.data.deliverOrder;
+            const { code, message, order } = response.data.completeDelivery;
 
             if (code === 200 && order) {
                 // Update the current order if it matches
@@ -418,33 +455,135 @@ export const useOrder = () => {
 
                 return order;
             } else {
-                throw new Error(message || "Không thể cập nhật trạng thái giao hàng");
+                throw new Error(message || "Không thể hoàn thành giao hàng");
             }
         } catch (error) {
-            console.error("Error delivering order:", error);
+            console.error("Error completing delivery:", error);
             throw error;
         } finally {
             setLoading(false);
         }
     };
 
+    const updateOrder = async (orderId: string, status?: string, totalPrice?: number) => {
+        setLoading(true);
+        try {
+            const response = await updateOrderAPI(orderId, status, totalPrice);
+            if (!response?.data) {
+                throw new Error("Không thể cập nhật đơn hàng");
+            }
+
+            const { code, message, order } = response.data.updateOrder;
+
+            if (code === 200 && order) {
+                // Update the current order if it matches
+                if (currentOrder && currentOrder.id === orderId) {
+                    setCurrentOrder(order);
+                }
+                
+                // Update the order in the orders list
+                setOrders(prevOrders =>
+                    prevOrders.map(o => o.id === orderId ? order : o)
+                );
+
+                return order;
+            } else {
+                throw new Error(message || "Không thể cập nhật đơn hàng");
+            }
+        } catch (error) {
+            console.error("Error updating order:", error);
+            throw error;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const deleteOrder = async (orderId: string, userId: string) => {
+        setLoading(true);
+        try {
+            const response = await deleteOrderAPI(orderId, userId);
+            if (!response?.data) {
+                throw new Error("Không thể xóa đơn hàng");
+            }
+
+            const { code, message } = response.data.deleteOrder;
+
+            if (code === 200) {
+                // Remove the order from the orders list
+                setOrders(prevOrders =>
+                    prevOrders.filter(o => o.id !== orderId)
+                );
+
+                // Clear current order if it matches
+                if (currentOrder && currentOrder.id === orderId) {
+                    setCurrentOrder(null);
+                }
+
+                return message || "Đơn hàng đã được xóa";
+            } else {
+                throw new Error(message || "Không thể xóa đơn hàng");
+            }
+        } catch (error) {
+            console.error("Error deleting order:", error);
+            throw error;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const createOrderItem = async (orderId: string, productId: string, quantity: number, price: number) => {
+        setLoading(true);
+        try {
+            const response = await createOrderItemAPI(orderId, productId, quantity, price);
+            if (!response?.data) {
+                throw new Error("Không thể thêm sản phẩm vào đơn hàng");
+            }
+
+            const { code, message } = response.data.createOrderItem;
+
+            if (code === 200) {
+                // Refresh the order to get updated items
+                await getOrder(orderId);
+                return message || "Đã thêm sản phẩm vào đơn hàng";
+            } else {
+                throw new Error(message || "Không thể thêm sản phẩm vào đơn hàng");
+            }
+        } catch (error) {
+            console.error("Error creating order item:", error);
+            throw error;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Deprecated function - keeping for backward compatibility
+    const deliverOrder = async (orderId: string) => {
+        console.warn('deliverOrder is deprecated. Use completeDelivery instead.');
+        return completeDelivery(orderId);
+    };
+
     return {
         loading,
         orders,
         currentOrder,
-        getUserOrders,
+        setCurrentOrder,
         getOrders,
         getOrder,
         getOrderByTransaction,
         createOrderFromCart,
         createOrder,
+        createOrderItem,
         updateOrderItem,
         deleteOrderItem,
         cancelOrder,
         confirmOrder,
+        processingOrder,
         shipOrder,
+        completeDelivery,
+        updateOrder,
+        deleteOrder,
+        // Deprecated
         deliverOrder,
-        setCurrentOrder,
     };
 };
 

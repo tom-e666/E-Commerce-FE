@@ -50,6 +50,15 @@ export const CREATE_ORDER = gql`
   }
 `;
 
+export const CREATE_ORDER_ITEM = gql`
+  mutation CreateOrderItem($order_id: ID!, $product_id: ID!, $quantity: Int!, $price: Float!) {
+    createOrderItem(order_id: $order_id, product_id: $product_id, quantity: $quantity, price: $price) {
+      code
+      message
+    }
+  }
+`;
+
 export const UPDATE_ORDER_ITEM = gql`
   mutation UpdateOrderItem($order_item_id: ID!, $quantity: Int!) {
     updateOrderItem(order_item_id: $order_item_id, quantity: $quantity) {
@@ -73,6 +82,21 @@ export const CANCEL_ORDER = gql`
     cancelOrder(order_id: $order_id) {
       code
       message
+      order {
+        id
+        user_id
+        status
+        created_at
+        total_price
+        items {
+          id
+          product_id
+          name
+          quantity
+          price
+          image
+        }
+      }
     }
   }
 `;
@@ -80,6 +104,30 @@ export const CANCEL_ORDER = gql`
 export const CONFIRM_ORDER = gql`
   mutation ConfirmOrder($order_id: ID!) {
     confirmOrder(order_id: $order_id) {
+      code
+      message
+      order {
+        id
+        user_id
+        status
+        created_at
+        total_price
+        items {
+          id
+          product_id
+          name
+          quantity
+          price
+          image
+        }
+      }
+    }
+  }
+`;
+
+export const PROCESSING_ORDER = gql`
+  mutation ProcessingOrder($order_id: ID!) {
+    processingOrder(order_id: $order_id) {
       code
       message
       order {
@@ -125,6 +173,64 @@ export const SHIP_ORDER = gql`
   }
 `;
 
+export const COMPLETE_DELIVERY = gql`
+  mutation CompleteDelivery($order_id: ID!) {
+    completeDelivery(order_id: $order_id) {
+      code
+      message
+      order {
+        id
+        user_id
+        status
+        created_at
+        total_price
+        items {
+          id
+          product_id
+          name
+          quantity
+          price
+          image
+        }
+      }
+    }
+  }
+`;
+
+export const UPDATE_ORDER = gql`
+  mutation UpdateOrder($order_id: ID!, $status: String, $total_price: Float) {
+    updateOrder(order_id: $order_id, status: $status, total_price: $total_price) {
+      code
+      message
+      order {
+        id
+        user_id
+        status
+        created_at
+        total_price
+        items {
+          id
+          product_id
+          name
+          quantity
+          price
+          image
+        }
+      }
+    }
+  }
+`;
+
+export const DELETE_ORDER = gql`
+  mutation DeleteOrder($order_id: ID!, $user_id: ID!) {
+    deleteOrder(order_id: $order_id, user_id: $user_id) {
+      code
+      message
+    }
+  }
+`;
+
+// Deprecated mutation - keeping for backward compatibility
 export const DELIVER_ORDER = gql`
   mutation DeliverOrder($order_id: ID!) {
     deliverOrder(order_id: $order_id) {
@@ -282,6 +388,27 @@ export const createOrder = async (items: {product_id: string, quantity: number}[
   }
 }
 
+export const createOrderItemAPI = async (orderId: string, productId: string, quantity: number, price: number) => {
+  try {
+    const response = await apolloClient.mutate({
+      mutation: CREATE_ORDER_ITEM,
+      variables: { 
+        order_id: orderId, 
+        product_id: productId, 
+        quantity, 
+        price 
+      },
+      context: {
+        requiresAuth: true
+      }
+    });
+    return response;
+  } catch (error) {
+    console.error('Error creating order item:', error);
+    throw error;
+  }
+};
+
 export const updateOrderItemAPI = async (orderItemId: string, quantity: number) => {
   try {
     const response = await apolloClient.mutate({
@@ -346,6 +473,22 @@ export const confirmOrderAPI = async (orderId: string) => {
   }
 };
 
+export const processingOrderAPI = async (orderId: string) => {
+  try {
+    const response = await apolloClient.mutate({
+      mutation: PROCESSING_ORDER,
+      variables: { order_id: orderId },
+      context: {
+        requiresAuth: true
+      }
+    });
+    return response;
+  } catch (error) {
+    console.error('Error processing order:', error);
+    throw error;
+  }
+};
+
 export const shipOrderAPI = async (orderId: string) => {
   try {
     const response = await apolloClient.mutate({
@@ -362,10 +505,10 @@ export const shipOrderAPI = async (orderId: string) => {
   }
 };
 
-export const deliverOrderAPI = async (orderId: string) => {
+export const completeDeliveryAPI = async (orderId: string) => {
   try {
     const response = await apolloClient.mutate({
-      mutation: DELIVER_ORDER,
+      mutation: COMPLETE_DELIVERY,
       variables: { order_id: orderId },
       context: {
         requiresAuth: true
@@ -373,9 +516,51 @@ export const deliverOrderAPI = async (orderId: string) => {
     });
     return response;
   } catch (error) {
-    console.error('Error delivering order:', error);
+    console.error('Error completing delivery:', error);
     throw error;
   }
+};
+
+export const updateOrderAPI = async (orderId: string, status?: string, totalPrice?: number) => {
+  try {
+    const response = await apolloClient.mutate({
+      mutation: UPDATE_ORDER,
+      variables: { 
+        order_id: orderId, 
+        status, 
+        total_price: totalPrice 
+      },
+      context: {
+        requiresAuth: true
+      }
+    });
+    return response;
+  } catch (error) {
+    console.error('Error updating order:', error);
+    throw error;
+  }
+};
+
+export const deleteOrderAPI = async (orderId: string, userId: string) => {
+  try {
+    const response = await apolloClient.mutate({
+      mutation: DELETE_ORDER,
+      variables: { order_id: orderId, user_id: userId },
+      context: {
+        requiresAuth: true
+      }
+    });
+    return response;
+  } catch (error) {
+    console.error('Error deleting order:', error);
+    throw error;
+  }
+};
+
+// Deprecated - keeping for backward compatibility
+export const deliverOrderAPI = async (orderId: string) => {
+  console.warn('deliverOrderAPI is deprecated. Use completeDeliveryAPI instead.');
+  return completeDeliveryAPI(orderId);
 };
 
 export const getOrderAPI = async (orderId: string) => {
