@@ -82,6 +82,21 @@ export const CONFIRM_ORDER = gql`
     confirmOrder(order_id: $order_id) {
       code
       message
+      order {
+        id
+        user_id
+        status
+        created_at
+        total_price
+        items {
+          id
+          product_id
+          name
+          quantity
+          price
+          image
+        }
+      }
     }
   }
 `;
@@ -91,6 +106,21 @@ export const SHIP_ORDER = gql`
     shipOrder(order_id: $order_id) {
       code
       message
+      order {
+        id
+        user_id
+        status
+        created_at
+        total_price
+        items {
+          id
+          product_id
+          name
+          quantity
+          price
+          image
+        }
+      }
     }
   }
 `;
@@ -100,6 +130,21 @@ export const DELIVER_ORDER = gql`
     deliverOrder(order_id: $order_id) {
       code
       message
+      order {
+        id
+        user_id
+        status
+        created_at
+        total_price
+        items {
+          id
+          product_id
+          name
+          quantity
+          price
+          image
+        }
+      }
     }
   }
 `;
