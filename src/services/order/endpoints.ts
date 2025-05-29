@@ -475,7 +475,7 @@ export interface OrderItemInterface {
 export interface OrderInterface {
   id: string;
   user_id: string;
-  status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
+  status: 'pending' | 'confirmed' | 'processing' | 'shipping' | 'completed' | 'cancelled' | 'failed';
   created_at: string;
   total_price: number;
   items: OrderItemInterface[];

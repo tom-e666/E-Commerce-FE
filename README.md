@@ -240,9 +240,8 @@ For support and questions:
 
 - Next.js team for the amazing framework
 - GraphQL community for excellent tooling
+- 
 - Open source contributors
 - UI/UX inspiration from modern e-commerce platforms
-
 ---
-
 **Note**: This project is part of the JTBR project series developed at Ho Chi Minh City University of Education.
