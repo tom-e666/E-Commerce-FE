@@ -143,7 +143,7 @@ export const logout = async (refreshToken: string) => {
         requiresAuth: true
       }
     });
-    return response.data.logout;
+    return response.data;
   } catch (error) {
     console.error('Error logging out:', error);
     throw error;

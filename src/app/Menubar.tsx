@@ -14,12 +14,19 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSearch } from "@/hooks/useSearch";
 import { toast } from "sonner";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useEffect, useState } from "react";
 
 const Menubar = () => {
     const { user } = useAuthContext();
     const router = useRouter();
     const { logout } = useAuth();
     const { query, setQuery, handleSubmit } = useSearch();
+
+    // Thêm state để kiểm tra đã mount
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const handleLogout = async () => {
         try {
@@ -62,147 +69,153 @@ const Menubar = () => {
             {/* Desktop & Tablet View */}
             <div className="w-full h-20 top-0 bg-gray-900 text-white font-semibold">
                 {/* Desktop Menu - Large screens */}
-                <div className="hidden lg:flex justify-center items-center gap-4 h-full px-4">
-                    <Link href="/">
-                        <Image
-                            src="/gaming.png"
-                            alt="logo"
-                            width={80}
-                            height={40}
-                            className="mr-2 cursor-pointer"
-                        />
-                    </Link>
+                <div className="hidden lg:flex items-center justify-between h-full px-6">
+                    {/* Left Section - Logo + Search */}
+                    <div className="flex items-center">
+                        {/* Logo */}
+                        <div className="flex-shrink-0">
+                            <Link href="/">
+                                <Image
+                                    src="/gaming.png"
+                                    alt="logo"
+                                    width={80}
+                                    height={40}
+                                    className="cursor-pointer"
+                                />
+                            </Link>
+                        </div>
 
-                    <Paper
-                        component="form"
-                        sx={{ p: '2px 4px', display: 'flex', alignItems: 'center', width: 400, height: 37 }}
-                        className="mr-3"
-                        onSubmit={handleSearchSubmit}
-                    >
-                        <IconButton sx={{ p: '10px' }} aria-label="menu">
-                            <MenuIcon />
-                        </IconButton>
-                        <InputBase
-                            sx={{ ml: 1, flex: 1 }}
-                            placeholder="tìm kiếm với Gemini AI"
-                            inputProps={{ 'aria-label': 'search products' }}
-                            value={query}
-                            onChange={(e) => setQuery(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                    e.preventDefault();
-                                    handleSearchSubmit();
-                                }
-                            }}
-                        />
-                        <IconButton
-                            type="submit"
-                            sx={{ p: '10px' }}
-                            aria-label="search"
-                        >
-                            <SearchIcon />
-                        </IconButton>
-                    </Paper>
-
-                    {/* Added Sản phẩm menu item */}
-                    <div className="h-full w-20 flex justify-center items-center">
-                        <Link href="/product" passHref>
-                            <Button variant={"outline"} className="bg-transparent border-0">
-                                Sản phẩm
-                            </Button>
-                        </Link>
+                        {/* Search Bar */}
+                        <div className="flex-shrink-0 mx-6">
+                            <Paper
+                                component="form"
+                                sx={{ p: '2px 4px', display: 'flex', alignItems: 'center', width: 400, height: 37 }}
+                                onSubmit={handleSearchSubmit}
+                            >
+                                <IconButton sx={{ p: '10px' }} aria-label="menu">
+                                    <MenuIcon />
+                                </IconButton>
+                                <InputBase
+                                    sx={{ ml: 1, flex: 1 }}
+                                    placeholder="tìm kiếm với Gemini AI"
+                                    inputProps={{ 'aria-label': 'search products' }}
+                                    value={query}
+                                    onChange={(e) => setQuery(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            handleSearchSubmit();
+                                        }
+                                    }}
+                                />
+                                <IconButton
+                                    type="submit"
+                                    sx={{ p: '10px' }}
+                                    aria-label="search"
+                                >
+                                    <SearchIcon />
+                                </IconButton>
+                            </Paper>
+                        </div>
                     </div>
 
-                    {/* Add Support menu item */}
-                    <div className="h-full w-20 flex justify-center items-center">
-                        <Link href="/support" passHref>
-                            <Button variant={"outline"} className="bg-transparent border-0">
-                                Hỗ trợ
-                            </Button>
-                        </Link>
-                    </div>
-
-                    <div className="h-full w-20 flex justify-center items-center">
-                        <Link href="/hotline" passHref>
-                            <Button variant={"outline"} className="bg-transparent border-0">
-                                Hotline
-                            </Button>
-                        </Link>
-                    </div>
-
-                    <div className="h-full w-20 flex justify-center items-center">
-                        <Link href="/news" passHref>
-                            <Button variant={"outline"} className="bg-transparent border-0">
-                                Bản tin
-                            </Button>
-                        </Link>
-                    </div>
-
-                    <div className="h-full w-20 flex justify-center items-center">
-                        <Link href="/showroom" passHref>
-                            <Button variant={"outline"} className="bg-transparent border-0">
-                                Showroom
-                            </Button>
-                        </Link>
-                    </div>
-                    {!user || user.role !== "admin" ? (
-                    <div className="h-full w-20 flex justify-center items-center">
-                        <Link href="/Order" passHref>
-                            <Button variant={"outline"} className="bg-transparent border-0">
-                                Đơn hàng
-                            </Button>
-                        </Link>
-                    </div>
-                    ) : null}
-
-                    <div className="h-full w-20 flex justify-center items-center">
-                        <Link href="/cart" passHref>
-                            <Button variant={"outline"} className="bg-transparent border-0">
-                                Giỏ hàng
-                            </Button>
-                        </Link>
-                    </div>
-
-                    <div className="h-full w-20 flex justify-center items-center">
-                        {!user ? (
-                            <Link href="/login" passHref>
-                                <Button variant={"outline"} className="bg-transparent border-0">
-                                    Đăng nhập
+                    {/* Center Section - Navigation Menu */}
+                    <nav className="flex items-center space-x-2 min-w-0 flex-1 justify-center">
+                        <div className="flex items-center space-x-2">
+                            <Link href="/product" passHref>
+                                <Button variant={"outline"} className="bg-transparent border-0 text-white hover:bg-white hover:text-black whitespace-nowrap">
+                                    Sản phẩm
                                 </Button>
                             </Link>
-                        ) : (
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant={"outline"} className="bg-transparent border-0">
-                                        Xin chào, {user.full_name?.split(" ").pop()}
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent>
-                                    <Link href="/profile" passHref style={{ textDecoration: 'none' }}>
-                                        <DropdownMenuItem>
-                                            Trang cá nhân
-                                        </DropdownMenuItem>
-                                    </Link>
-                                    <Link href="/Order" passHref style={{ textDecoration: 'none' }}>
-                                        <DropdownMenuItem>
-                                            Đơn hàng của tôi
-                                        </DropdownMenuItem>
-                                    </Link>
-                                    {!user || user.role === "admin" ? (
-                                    <Link href="/admin" passHref style={{ textDecoration: 'none' }}>
-                                        <DropdownMenuItem>
-                                            Quản trị viên
-                                        </DropdownMenuItem>
-                                    </Link>
-                                    ) : null}
 
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem onClick={handleLogout}>
-                                        Đăng xuất
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        )}
+                            <Link href="/support" passHref>
+                                <Button variant={"outline"} className="bg-transparent border-0 text-white hover:bg-white hover:text-black whitespace-nowrap">
+                                    Hỗ trợ
+                                </Button>
+                            </Link>
+
+                            <Link href="/hotline" passHref>
+                                <Button variant={"outline"} className="bg-transparent border-0 text-white hover:bg-white hover:text-black whitespace-nowrap">
+                                    Hotline
+                                </Button>
+                            </Link>
+
+                            <Link href="/news" passHref>
+                                <Button variant={"outline"} className="bg-transparent border-0 text-white hover:bg-white hover:text-black whitespace-nowrap">
+                                    Bản tin
+                                </Button>
+                            </Link>
+
+                            <Link href="/showroom" passHref>
+                                <Button variant={"outline"} className="bg-transparent border-0 text-white hover:bg-white hover:text-black whitespace-nowrap">
+                                    Showroom
+                                </Button>
+                            </Link>
+
+                            {/* Quản trị viên - placeholder để tránh nhảy */}
+                            <div className="min-w-[120px]">
+                                {mounted && user && user.role === "admin" && (
+                                    <Link href="/admin" passHref>
+                                        <Button variant={"outline"} className="bg-transparent border-0 text-white hover:bg-white hover:text-black whitespace-nowrap w-full">
+                                            Quản trị viên
+                                        </Button>
+                                    </Link>
+                                )}
+                            </div>
+                        </div>
+                    </nav>
+
+                    {/* Right Section - Cart + User Menu */}
+                    <div className="flex items-center space-x-2 min-w-[160px] justify-end">
+                        {/* Giỏ hàng - placeholder để tránh nhảy */}
+                        <div className="min-w-[80px]">
+                            {mounted && user && user.role === "user" && (
+                                <Link href="/cart" passHref>
+                                    <Button variant={"outline"} className="bg-transparent border-0 text-white hover:bg-white hover:text-black whitespace-nowrap w-full">
+                                        Giỏ hàng
+                                    </Button>
+                                </Link>
+                            )}
+                        </div>
+
+                        {/* User Menu - placeholder để tránh nhảy */}
+                        <div className="min-w-[100px]">
+                            {!mounted ? (
+                                <div className="w-20 h-8"></div> // Placeholder để tránh layout shift
+                            ) : !user ? (
+                                <Link href="/login" passHref>
+                                    <Button variant={"outline"} className="bg-transparent border-0 text-white hover:bg-white hover:text-black whitespace-nowrap w-full">
+                                        Đăng nhập
+                                    </Button>
+                                </Link>
+                            ) : (
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant={"outline"} className="bg-transparent border-0 text-white hover:bg-white hover:text-black whitespace-nowrap w-full">
+                                            {user && user.full_name ? (
+                                              <>Xin chào, {user.full_name.split(" ").pop()}</>
+                                            ) : "Tài khoản"}
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="w-56">
+                                        <Link href="/profile" passHref style={{ textDecoration: 'none' }}>
+                                            <DropdownMenuItem>
+                                                Trang cá nhân
+                                            </DropdownMenuItem>
+                                        </Link>
+                                        <Link href="/Order" passHref style={{ textDecoration: 'none' }}>
+                                            <DropdownMenuItem>
+                                                Đơn hàng của tôi
+                                            </DropdownMenuItem>
+                                        </Link>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem onClick={handleLogout}>
+                                            Đăng xuất
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -257,86 +270,92 @@ const Menubar = () => {
 
                     <Sheet>
                         <SheetTrigger asChild>
-                            <Button variant="outline" size="icon" className="bg-transparent border-0">
+                            <Button variant="outline" size="icon" className="bg-transparent border-0 text-white">
                                 <MenuIcon />
                             </Button>
                         </SheetTrigger>
                         <SheetContent side="right" className="bg-gray-900 text-white">
                             <div className="mt-8 flex flex-col gap-4">
-                                {/* Added Sản phẩm menu item to mobile menu */}
+                                {/* Các menu khác */}
                                 <Link href="/product" passHref>
-                                    <Button variant="ghost" className="w-full justify-start text-white">
+                                    <Button variant="ghost" className="w-full justify-start text-white hover:bg-white hover:text-black">
                                         Sản phẩm
                                     </Button>
                                 </Link>
-                                
-                                {/* Add Support menu item to mobile menu */}
                                 <Link href="/support" passHref>
-                                    <Button variant="ghost" className="w-full justify-start text-white">
+                                    <Button variant="ghost" className="w-full justify-start text-white hover:bg-white hover:text-black">
                                         Hỗ trợ
                                     </Button>
                                 </Link>
-                                
                                 <Link href="/hotline" passHref>
-                                    <Button variant="ghost" className="w-full justify-start text-white">
+                                    <Button variant="ghost" className="w-full justify-start text-white hover:bg-white hover:text-black">
                                         Hotline
                                     </Button>
                                 </Link>
-                                
                                 <Link href="/news" passHref>
-                                    <Button variant="ghost" className="w-full justify-start text-white">
+                                    <Button variant="ghost" className="w-full justify-start text-white hover:bg-white hover:text-black">
                                         Bản tin
                                     </Button>
                                 </Link>
-                                
                                 <Link href="/showroom" passHref>
-                                    <Button variant="ghost" className="w-full justify-start text-white">
+                                    <Button variant="ghost" className="w-full justify-start text-white hover:bg-white hover:text-black">
                                         Showroom
                                     </Button>
                                 </Link>
-                                
-                                <Link href="/Order" passHref>
-                                    <Button variant="ghost" className="w-full justify-start text-white">
-                                        Đơn hàng
-                                    </Button>
-                                </Link>
-                                
-                                <Link href="/cart" passHref>
-                                    <Button variant="ghost" className="w-full justify-start text-white">
-                                        Giỏ hàng
-                                    </Button>
-                                </Link>
-                                
-                                {!user ? (
-                                    <Link href="/login" passHref>
-                                        <Button variant="ghost" className="w-full justify-start text-white">
-                                            Đăng nhập
+
+                                {/* Quản trị viên - chỉ hiện khi là admin */}
+                                {mounted && user && user.role === "admin" && (
+                                    <Link href="/admin" passHref>
+                                        <Button variant="ghost" className="w-full justify-start text-white hover:bg-white hover:text-black">
+                                            Quản trị viên
                                         </Button>
                                     </Link>
-                                ) : (
-                                    <>
-                                        <div className="px-4 py-2 text-white font-medium">
-                                            Xin chào, {user.full_name?.split(" ").pop()}
-                                        </div>
-                                        <Link href="/credential" passHref>
-                                            <Button variant="ghost" className="w-full justify-start text-white">
-                                                Trang cá nhân
-                                            </Button>
-                                        </Link>
-                                        <Link href="/orders" passHref>
-                                            <Button variant="ghost" className="w-full justify-start text-white">
-                                                Đơn hàng của tôi
-                                            </Button>
-                                        </Link>
-                                        <Button
-                                            variant="ghost"
-                                            className="w-full justify-start text-white"
-                                            onClick={handleLogout}
-                                        >
-                                            Đăng xuất
-                                        </Button>
-                                    </>
                                 )}
+
+                                {/* Giỏ hàng - chỉ hiện khi là user */}
+                                {mounted && user && user.role === "user" && (
+                                    <Link href="/cart" passHref>
+                                        <Button variant="ghost" className="w-full justify-start text-white hover:bg-white hover:text-black">
+                                            Giỏ hàng
+                                        </Button>
+                                    </Link>
+                                )}
+
+                                <div className="border-t border-gray-600 pt-4 mt-4">
+                                    {/* Đăng nhập/User menu */}
+                                    {!mounted ? null : !user ? (
+                                        <Link href="/login" passHref>
+                                            <Button variant="ghost" className="w-full justify-start text-white hover:bg-white hover:text-black">
+                                                Đăng nhập
+                                            </Button>
+                                        </Link>
+                                    ) : (
+                                        <>
+                                            <div className="px-4 py-2 text-white font-medium border-b border-gray-600 mb-4">
+                                                {user && user.full_name ? (
+                                                    <>Xin chào, {user.full_name.split(" ").pop()}</>
+                                                ) : "Tài khoản"}
+                                            </div>
+                                            <Link href="/profile" passHref>
+                                                <Button variant="ghost" className="w-full justify-start text-white hover:bg-white hover:text-black">
+                                                    Trang cá nhân
+                                                </Button>
+                                            </Link>
+                                            <Link href="/Order" passHref>
+                                                <Button variant="ghost" className="w-full justify-start text-white hover:bg-white hover:text-black">
+                                                    Đơn hàng của tôi
+                                                </Button>
+                                            </Link>
+                                            <Button
+                                                variant="ghost"
+                                                className="w-full justify-start text-white hover:bg-white hover:text-black"
+                                                onClick={handleLogout}
+                                            >
+                                                Đăng xuất
+                                            </Button>
+                                        </>
+                                    )}
+                                </div>
                             </div>
                         </SheetContent>
                     </Sheet>
