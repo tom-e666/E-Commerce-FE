@@ -198,7 +198,7 @@ const Menubar = () => {
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end" className="w-56">
-                                        <Link href="/profile" passHref style={{ textDecoration: 'none' }}>
+                                        <Link href="/credential" passHref style={{ textDecoration: 'none' }}>
                                             <DropdownMenuItem>
                                                 Trang cá nhân
                                             </DropdownMenuItem>
@@ -336,7 +336,7 @@ const Menubar = () => {
                                                     <>Xin chào, {user.full_name.split(" ").pop()}</>
                                                 ) : "Tài khoản"}
                                             </div>
-                                            <Link href="/profile" passHref>
+                                            <Link href="/credential" passHref>
                                                 <Button variant="ghost" className="w-full justify-start text-white hover:bg-white hover:text-black">
                                                     Trang cá nhân
                                                 </Button>

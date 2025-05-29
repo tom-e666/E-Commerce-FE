@@ -21,7 +21,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 // Đã đăng nhập, kiểm tra quyền
                 if (!hasRole(['admin', 'staff'])) {
                     console.log("Redirecting non-admin user from admin area");
-                    router.push('/unauthorized');
+                    router.push('/not-found');
                 } else {
                     console.log("Admin user confirmed, staying on admin page");
                 }
