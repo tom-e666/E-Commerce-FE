@@ -23,19 +23,19 @@ import { Package, Clock, ShoppingCart, Search, CheckCircle, Truck, XCircle, Chev
 // Updated order status badge map to match backend states
 const getStatusBadge = (status: string) => {
   switch (status) {
-    case 'PENDING':
+    case 'pending':
       return <Badge variant="outline" className="bg-yellow-50 text-yellow-600 border-yellow-200"><Clock className="h-3 w-3 mr-1" />Chờ xác nhận</Badge>;
-    case 'CONFIRMED':
+    case 'confirmed':
       return <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200"><CheckCircle className="h-3 w-3 mr-1" />Đã xác nhận</Badge>;
-    case 'PROCESSING':
+    case 'processing':
       return <Badge variant="outline" className="bg-orange-50 text-orange-600 border-orange-200"><Loader2 className="h-3 w-3 mr-1" />Đang xử lý</Badge>;
-    case 'SHIPPING':
+    case 'shipping':
       return <Badge variant="outline" className="bg-purple-50 text-purple-600 border-purple-200"><Truck className="h-3 w-3 mr-1" />Đang giao hàng</Badge>;
-    case 'COMPLETED':
+    case 'completed':
       return <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200"><Package className="h-3 w-3 mr-1" />Hoàn thành</Badge>;
-    case 'CANCELLED':
+    case 'cancelled':
       return <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200"><XCircle className="h-3 w-3 mr-1" />Đã hủy</Badge>;
-    case 'FAILED':
+    case 'failed':
       return <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200"><AlertTriangle className="h-3 w-3 mr-1" />Thất bại</Badge>;
     default:
       return <Badge variant="outline">{status}</Badge>;

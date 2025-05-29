@@ -64,18 +64,21 @@ export default function OrderManagement() {
     const statusColors = new Map([
         ["pending", "bg-yellow-100 text-yellow-800"],
         ["confirmed", "bg-blue-100 text-blue-800"],
-        ["shipped", "bg-purple-100 text-purple-800"],
-        ["delivered", "bg-green-100 text-green-800"],
-        ["cancelled", "bg-red-100 text-red-800"]
-    ]
-    );
+        ["processing", "bg-orange-100 text-orange-800"],
+        ["shipping", "bg-purple-100 text-purple-800"],
+        ["completed", "bg-green-100 text-green-800"],
+        ["cancelled", "bg-red-100 text-red-800"],
+        ["failed", "bg-gray-100 text-gray-800"]
+    ]);
 
     const statusIcons = {
         pending: <Clock className="h-4 w-4 mr-1" />,
         confirmed: <Check className="h-4 w-4 mr-1" />,
-        shipped: <Truck className="h-4 w-4 mr-1" />,
-        delivered: <Package className="h-4 w-4 mr-1" />,
-        cancelled: <X className="h-4 w-4 mr-1" />
+        processing: <Loader2 className="h-4 w-4 mr-1" />,
+        shipping: <Truck className="h-4 w-4 mr-1" />,
+        completed: <Package className="h-4 w-4 mr-1" />,
+        cancelled: <X className="h-4 w-4 mr-1" />,
+        failed: <AlertCircle className="h-4 w-4 mr-1" />
     };
 
     const [colDefs] = useState([
@@ -121,9 +124,11 @@ export default function OrderManagement() {
                 switch(status) {
                     case 'pending': displayText = "Chờ xác nhận"; break;
                     case 'confirmed': displayText = "Đã xác nhận"; break;
-                    case 'shipped': displayText = "Đang giao"; break;
-                    case 'delivered': displayText = "Đã giao"; break;
+                    case 'processing': displayText = "Đang xử lý"; break;
+                    case 'shipping': displayText = "Đang giao hàng"; break;
+                    case 'completed': displayText = "Hoàn thành"; break;
                     case 'cancelled': displayText = "Đã hủy"; break;
+                    case 'failed': displayText = "Thất bại"; break;
                 }
 
                 return (
@@ -357,9 +362,11 @@ export default function OrderManagement() {
                                     <SelectItem value="all">Tất cả đơn hàng</SelectItem>
                                     <SelectItem value="pending">Chờ xác nhận</SelectItem>
                                     <SelectItem value="confirmed">Đã xác nhận</SelectItem>
-                                    <SelectItem value="shipped">Đang giao hàng</SelectItem>
-                                    <SelectItem value="delivered">Đã giao hàng</SelectItem>
+                                    <SelectItem value="processing">Đang xử lý</SelectItem>
+                                    <SelectItem value="shipping">Đang giao hàng</SelectItem>
+                                    <SelectItem value="completed">Hoàn thành</SelectItem>
                                     <SelectItem value="cancelled">Đã hủy</SelectItem>
+                                    <SelectItem value="failed">Thất bại</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -522,14 +529,14 @@ export default function OrderManagement() {
                     delay={1.1}
                 />
                 <StatCard 
-                    title="Đã giao hàng" 
-                    value={orders.filter(o => o.status === 'delivered').length} 
+                    title="Hoàn thành" 
+                    value={orders.filter(o => o.status === 'completed').length} 
                     icon={<Package className="w-5 h-5 text-green-500" />}
                     delay={1.2}
                 />
                 <StatCard 
                     title="Doanh thu" 
-                    value={`${(orders.filter(o => o.status === 'delivered').reduce((sum, o) => sum + o.total_price, 0) / 1000000).toFixed(1)}M`} 
+                    value={`${(orders.filter(o => o.status === 'completed').reduce((sum, o) => sum + o.total_price, 0) / 1000000).toFixed(1)}M`} 
                     icon={<DollarSign className="w-5 h-5 text-purple-500" />}
                     delay={1.3}
                 />
@@ -620,9 +627,11 @@ export default function OrderManagement() {
                                                         {statusIcons[selectedOrder.status]}
                                                         {selectedOrder.status === 'pending' ? 'Chờ xác nhận' :
                                                           selectedOrder.status === 'confirmed' ? 'Đã xác nhận' :
-                                                          selectedOrder.status === 'shipped' ? 'Đang giao hàng' :
-                                                          selectedOrder.status === 'delivered' ? 'Đã giao hàng' :
+                                                          selectedOrder.status === 'processing' ? 'Đang xử lý' :
+                                                          selectedOrder.status === 'shipping' ? 'Đang giao hàng' :
+                                                          selectedOrder.status === 'completed' ? 'Hoàn thành' :
                                                           selectedOrder.status === 'cancelled' ? 'Đã hủy' :
+                                                          selectedOrder.status === 'failed' ? 'Thất bại' :
                                                           selectedOrder.status.charAt(0).toUpperCase() + selectedOrder.status.slice(1)}
                                                     </Badge>
                                                 </div>
@@ -819,7 +828,7 @@ export default function OrderManagement() {
                                 </motion.div>
                             )}
 
-                            {selectedOrder && selectedOrder.status === 'shipped' && (
+                            {selectedOrder && selectedOrder.status === 'shipping' && (
                                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                                     <Button
                                         variant="default"
@@ -827,7 +836,7 @@ export default function OrderManagement() {
                                         className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white"
                                     >
                                         <Package className="mr-2 h-4 w-4" />
-                                        Đã giao hàng
+                                        Hoàn thành giao hàng
                                     </Button>
                                 </motion.div>
                             )}

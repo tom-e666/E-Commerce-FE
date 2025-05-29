@@ -36,7 +36,7 @@ export default function VNPayStatus() {
       try {
         const response = await getOrderByTransaction(vnpTxnRef);
         console.log("Response from getOrderByTransaction:", response);
-        if (response.code === 200 && response.order && response.order.status === "CONFIRMED") {
+        if (response.code === 200 && response.order && response.order.status === "confirmed") {
           setOrder(response.order);
           setStatusMessage("Thanh toán thành công!");
           setIsSuccess(true);
@@ -100,9 +100,21 @@ export default function VNPayStatus() {
                         ? 'bg-green-100 text-green-800' 
                         : order.status === 'pending'
                         ? 'bg-yellow-100 text-yellow-800'
+                        : order.status === 'confirmed'
+                        ? 'bg-blue-100 text-blue-800'
+                        : order.status === 'processing'
+                        ? 'bg-orange-100 text-orange-800'
+                        : order.status === 'shipping'
+                        ? 'bg-purple-100 text-purple-800'
                         : 'bg-red-100 text-red-800'
                     }`}>
-                      {order.status}
+                      {order.status === 'pending' ? 'Chờ xác nhận' :
+                       order.status === 'confirmed' ? 'Đã xác nhận' :
+                       order.status === 'processing' ? 'Đang xử lý' :
+                       order.status === 'shipping' ? 'Đang giao hàng' :
+                       order.status === 'completed' ? 'Hoàn thành' :
+                       order.status === 'cancelled' ? 'Đã hủy' :
+                       order.status === 'failed' ? 'Thất bại' : order.status}
                     </span>
                   </p>
                 </div>

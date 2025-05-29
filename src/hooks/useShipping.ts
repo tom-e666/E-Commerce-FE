@@ -162,7 +162,7 @@ export const useShipping = () => {
       if (response.code === 200) {
         // If we have current shipping data and it matches the ID, update its status to canceled
         if (shippingData && shippingData.id === shippingId) {
-          setShippingData(prev => prev ? { ...prev, status: 'CANCELED' } : null);
+          setShippingData(prev => prev ? { ...prev, status: 'cancelled' } : null);
         }
         
         return { code: response.code, message: response.message };

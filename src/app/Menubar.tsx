@@ -178,12 +178,12 @@ const Menubar = () => {
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent>
-                                    <Link href="/profile" passHref style={{ textDecoration: 'none' }}>
+                                    <Link href="/credential" passHref style={{ textDecoration: 'none' }}>
                                         <DropdownMenuItem>
                                             Trang cá nhân
                                         </DropdownMenuItem>
                                     </Link>
-                                    <Link href="/Order" passHref style={{ textDecoration: 'none' }}>
+                                    <Link href="/order" passHref style={{ textDecoration: 'none' }}>
                                         <DropdownMenuItem>
                                             Đơn hàng của tôi
                                         </DropdownMenuItem>
