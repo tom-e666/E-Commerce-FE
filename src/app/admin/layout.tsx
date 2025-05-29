@@ -2,11 +2,14 @@
 
 import { ReactNode, useEffect } from 'react';
 import ProtectedRoute from '@/components/Authorization/ProtectedRoute';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuthContext } from '@/contexts/AuthContext';
+import Link from 'next/link';
+import { ChevronLeft } from 'lucide-react';
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
     const router = useRouter();
+    const pathname = usePathname();
     const { isAuthenticated, hasRole, isLoading } = useAuthContext();
 
     // Thêm bảo vệ kép để đảm bảo chỉ admin/staff mới có thể truy cập
@@ -33,7 +36,17 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
     return (
         <ProtectedRoute allowedRoles={['admin', 'staff']}>
-            {children}
+            <div className="relative">
+                {pathname !== '/admin' && (
+                    <div className="mb-2 mt-2">
+                        <Link href="/admin" className="inline-flex items-center text-gray-600 hover:text-gray-900">
+                            <ChevronLeft className="h-6 w-6" />
+                            <span className="text-sm">Admin</span>
+                        </Link>
+                    </div>
+                )}
+                {children}
+            </div>
         </ProtectedRoute>
     );
 }
