@@ -4,8 +4,8 @@ import { refreshTokenAPI } from "../auth/endpoints";
 import { Observable } from "@apollo/client";
 import { toast } from "sonner";
 import { tokenEvents, TOKEN_UPDATED, TOKEN_REMOVED } from '../auth/tokenEvents';
-
 function getTokens(skipLogging = false) {
+  
   if (typeof window === 'undefined') return { accessToken: null, refreshToken: null };
 
   // Kiểm tra cả hai cách lưu token

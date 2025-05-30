@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
@@ -23,25 +23,49 @@ import { Package, Clock, ArrowLeft, CheckCircle, Truck, XCircle, ChevronRight, H
 const getStatusBadge = (status: string) => {
   switch (status) {
     case 'pending':
-      return <Badge variant="outline" className="bg-yellow-50 text-yellow-600 border-yellow-200"><Clock className="h-3 w-3 mr-1" />Chờ xác nhận</Badge>;
+      return <Badge variant="outline" className="bg-yellow-50 text-yellow-600 border-yellow-200">
+        <Clock className="mr-2 h-4 w-4" />
+        Chờ xác nhận
+      </Badge>;
     case 'confirmed':
-      return <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200"><CheckCircle className="h-3 w-3 mr-1" />Đã xác nhận</Badge>;
+      return <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200">
+        <CheckCircle className="mr-2 h-4 w-4" />
+        Đã xác nhận
+      </Badge>;
     case 'processing':
-      return <Badge variant="outline" className="bg-orange-50 text-orange-600 border-orange-200"><Loader2 className="h-3 w-3 mr-1" />Đang xử lý</Badge>;
+      return <Badge variant="outline" className="bg-orange-50 text-orange-600 border-orange-200">
+        <Loader2 className="mr-2 h-4 w-4" />
+        Đang xử lý
+      </Badge>;
     case 'shipping':
-      return <Badge variant="outline" className="bg-purple-50 text-purple-600 border-purple-200"><Truck className="h-3 w-3 mr-1" />Đang giao hàng</Badge>;
+      return <Badge variant="outline" className="bg-purple-50 text-purple-600 border-purple-200">
+        <Truck className="mr-2 h-4 w-4" />
+        Đang giao hàng
+      </Badge>;
     case 'completed':
-      return <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200"><Package className="h-3 w-3 mr-1" />Hoàn thành</Badge>;
+      return <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">
+        <Package className="mr-2 h-4 w-4" />
+        Hoàn thành
+      </Badge>;
     case 'cancelled':
-      return <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200"><XCircle className="h-3 w-3 mr-1" />Đã hủy</Badge>;
+      return <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200">
+        <XCircle className="mr-2 h-4 w-4" />
+        Đã hủy
+      </Badge>;
     case 'failed':
-      return <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200"><AlertTriangle className="h-3 w-3 mr-1" />Thất bại</Badge>;
+      return <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200">
+        <AlertTriangle className="mr-2 h-4 w-4" />
+        Thất bại
+      </Badge>;
     default:
-      return <Badge variant="outline">{status}</Badge>;
+      return <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200">
+        <AlertTriangle className="mr-2 h-4 w-4" />
+        Không xác định
+      </Badge>;
   }
 };
 
-export default function OrderDetailPage() {
+function OrderDetailContent() {
   const router = useRouter();
   const params = useParams();
   const orderId = params.id as string;
@@ -404,5 +428,54 @@ export default function OrderDetailPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function OrderDetailPage() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto py-8 px-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-6">
+            <div className="h-8 w-64 bg-gray-200 animate-pulse rounded" />
+          </div>
+          
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between">
+                <div>
+                  <div className="h-6 w-48 bg-gray-200 animate-pulse rounded mb-2" />
+                  <div className="h-4 w-32 bg-gray-200 animate-pulse rounded" />
+                </div>
+                <div className="h-6 w-24 bg-gray-200 animate-pulse rounded" />
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-gray-200 animate-pulse rounded-md" />
+                    <div className="flex-grow">
+                      <div className="h-5 w-full max-w-md bg-gray-200 animate-pulse rounded mb-1" />
+                      <div className="h-4 w-24 bg-gray-200 animate-pulse rounded" />
+                    </div>
+                    <div className="h-5 w-20 bg-gray-200 animate-pulse rounded" />
+                  </div>
+                ))}
+              </div>
+              
+              <Separator />
+              
+              <div className="flex justify-between items-center">
+                <div className="h-5 w-32 bg-gray-200 animate-pulse rounded" />
+                <div className="h-6 w-24 bg-gray-200 animate-pulse rounded" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    }>
+      <OrderDetailContent />
+    </Suspense>
   );
 }

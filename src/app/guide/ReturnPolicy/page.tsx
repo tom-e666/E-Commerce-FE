@@ -5,17 +5,17 @@ import {
   FaExchangeAlt,
   FaClipboardCheck,
   FaVideo,
-  FaShoppingBag,
+  // FaShoppingBag,
   FaCalendarAlt,
   FaTimesCircle,
-  FaCheckCircle,
+  // FaCheckCircle,
   FaExclamationTriangle,
   FaHandshake,
   FaBoxOpen
 } from 'react-icons/fa';
 import { MdOutlinePolicy, MdOutlineShoppingBag, MdSupportAgent } from 'react-icons/md';
 import { GiReturnArrow } from 'react-icons/gi';
-import { BsShieldCheck, BsArrowRight, BsPatchCheck } from 'react-icons/bs';
+import { BsShieldCheck, BsPatchCheck } from 'react-icons/bs';
 import { BiPackage } from 'react-icons/bi';
 
 const ReturnPolicy = () => {

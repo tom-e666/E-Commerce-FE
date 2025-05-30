@@ -12,7 +12,7 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbS
 import { Loader2, ArrowLeft, Clock, User, CheckCircle, XCircle } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import AddResponseForm from '@/components/support/AddResponseForm';
+import Addresponseform from '@/components/Support/addresponseform';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 export default function SupportTicketDetailPage() {
@@ -266,7 +266,7 @@ export default function SupportTicketDetailPage() {
         <div>
           <Separator className="my-6" />
           <h2 className="text-lg font-semibold mb-4">Thêm phản hồi</h2>
-          <AddResponseForm ticketId={ticketId} onResponseAdded={() => fetchTicketResponses(ticketId)} />
+          <Addresponseform ticketId={ticketId} onResponseAdded={() => fetchTicketResponses(ticketId)} />
         </div>
       ) : (
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center mt-8">

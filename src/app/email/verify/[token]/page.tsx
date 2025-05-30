@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useParams, useSearchParams, useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 // UI Components
@@ -10,17 +10,22 @@ import { Button } from '@/components/ui/button'
 import { Loader2, CheckCircle2, XCircle, AlertTriangle, MailOpen } from 'lucide-react'
 import { verifyEmail } from '@/services/auth/endpoints'
 
-export default function EmailVerification() {
+function EmailVerificationContent() {
   const router = useRouter()
   const params = useParams()
-  const searchParams = useSearchParams()
   const [verificationStatus, setVerificationStatus] = useState<'loading' | 'success' | 'error' | 'expired'>('loading')
   const [errorMessage, setErrorMessage] = useState<string>('')
 
   useEffect(() => {
     async function verifyUserEmail() {
       try {
-        const {token} = params
+        const token = Array.isArray(params.token) ? params.token[0] : params.token
+        if (!token) {
+          setVerificationStatus('error')
+          setErrorMessage('Token xác minh không hợp lệ.')
+          return
+        }
+
         const response = await verifyEmail(token)
         if (response.code === 200) {
           setVerificationStatus('success')
@@ -44,8 +49,10 @@ export default function EmailVerification() {
       }
     }
 
-    verifyUserEmail()
-  }, [params, searchParams, router])
+    if (params.token) {
+      verifyUserEmail()
+    }
+  }, [params.token, router])
 
   return (
     <div className="container mx-auto max-w-md py-12">
@@ -149,5 +156,22 @@ export default function EmailVerification() {
         </CardFooter>
       </Card>
     </div>
+  )
+}
+
+export default function EmailVerification() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto max-w-md py-12">
+        <Card className="w-full">
+          <CardContent className="p-6 text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+            <p>Đang tải...</p>
+          </CardContent>
+        </Card>
+      </div>
+    }>
+      <EmailVerificationContent />
+    </Suspense>
   )
 }

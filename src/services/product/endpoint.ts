@@ -324,7 +324,7 @@ export const getProduct = (() => {
       if (cachedData?.getProduct) {
         return cachedData.getProduct;
       }
-    } catch (e) {
+    } catch {
       // Cache miss, continue with network request
     }
     

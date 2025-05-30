@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
     createOrderFromCartAPI,
     getOrderAPI,
-    getUserOrdersAPI,
+    // getUserOrdersAPI,
     getAllOrdersAPI,
     getOrderByTransactionAPI,
     updateOrderItemAPI,
@@ -44,29 +44,29 @@ export const useOrder = () => {
     const [orders, setOrders] = useState<Order[]>([]);
     const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
 
-    const getUserOrders = async () => {
-        setLoading(true);
-        try {
-            const response = await getUserOrdersAPI();
-            if (!response?.data) {
-                throw new Error("Không thể lấy danh sách đơn hàng");
-            }
+    // const getUserOrders = async () => {
+    //     setLoading(true);
+    //     try {
+    //         const response = await getUserOrdersAPI();
+    //         if (!response?.data) {
+    //             throw new Error("Không thể lấy danh sách đơn hàng");
+    //         }
 
-            const { code, message, orders } = response.data.getUserOrders;
+    //         const { code, message, orders } = response.data.getUserOrders;
 
-            if (code === 200) {
-                setOrders(orders || []);
-                return orders;
-            } else {
-                throw new Error(message || "Không thể lấy danh sách đơn hàng");
-            }
-        } catch(error) {
-            console.error("Error fetching orders:", error);
-            throw error;
-        } finally {
-            setLoading(false);
-        }
-    };
+    //         if (code === 200) {
+    //             setOrders(orders || []);
+    //             return orders;
+    //         } else {
+    //             throw new Error(message || "Không thể lấy danh sách đơn hàng");
+    //         }
+    //     } catch(error) {
+    //         console.error("Error fetching orders:", error);
+    //         throw error;
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // };
 
     const getOrders = async (filters?: OrderFilter) => {
         setLoading(true);

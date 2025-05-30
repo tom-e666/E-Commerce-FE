@@ -1,5 +1,5 @@
 'use client'
-import React, { useEffect, useRef, Suspense } from "react";
+import React, { useEffect, useRef } from "react";
 import Image from "next/image";
 import { useAuth } from "@/hooks/useAuth";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -19,24 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-function LoginLoadingSkeleton() {
-  return (
-    <div className="w-full min-h-screen flex flex-col items-center justify-center relative">
-      <div className="w-full max-w-md">
-        <div className="border shadow-md rounded-lg p-6 bg-white">
-          <div className="flex flex-col items-center space-y-4">
-            <div className="w-20 h-20 bg-gray-200 rounded animate-pulse"></div>
-            <div className="h-6 w-32 bg-gray-200 rounded animate-pulse"></div>
-            <div className="h-4 w-48 bg-gray-200 rounded animate-pulse"></div>
-            <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-const Page = () => {
+export default function LoginContent() {
   const [username, setUsername] = React.useState<string>('');
   const [password, setPassword] = React.useState<string>('');
   const { login, loading } = useAuth();
@@ -47,6 +30,7 @@ const Page = () => {
   const redirectUrl = redirectParam.startsWith('/') ? redirectParam : '/';
   const loadingToastRef = useRef<string | number | null>(null);
 
+  // ...existing useEffect and handleSubmit code...
   // Kiểm tra nếu người dùng đã đăng nhập và chuyển hướng phù hợp
   useEffect(() => {
     if (isAuthenticated) {
@@ -203,13 +187,5 @@ const Page = () => {
       </div>
     </div>
     </>
-  );
-};
-
-export default function LoginPage() {
-  return (
-    <Suspense fallback={<LoginLoadingSkeleton />}>
-      <Page />
-    </Suspense>
   );
 }

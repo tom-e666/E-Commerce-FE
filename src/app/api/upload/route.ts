@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { v2 as cloudinary } from "cloudinary";
-import formidable, { File } from "formidable";
-import { readFile } from "fs/promises";
+import { File } from "formidable";
+// import { readFile } from "fs/promises";
 
 // Cloudinary config
 cloudinary.config({
@@ -17,8 +17,8 @@ export const config = {
 
 export async function POST(req: NextRequest) {
   // Parse form data
-  const form = formidable();
-  const buffers: Buffer[] = [];
+  // const form = formidable();
+  // const buffers: Buffer[] = [];
 
   // formidable không hỗ trợ Next.js app router trực tiếp, nên ta dùng workaround:
   const data = await req.formData();

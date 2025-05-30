@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { getCurrentUser, refreshTokenAPI } from '@/services/auth/endpoints';
+import { refreshTokenAPI } from '@/services/auth/endpoints';
 import { tokenEvents, AUTH_STATE_CHANGED, TOKEN_UPDATED, TOKEN_REMOVED } from '@/services/auth/tokenEvents';
 import { jwtDecode } from 'jwt-decode';
 

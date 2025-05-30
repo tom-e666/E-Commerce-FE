@@ -663,6 +663,9 @@ export interface OrderInterface {
   status: 'pending' | 'confirmed' | 'processing' | 'shipping' | 'completed' | 'cancelled' | 'failed';
   created_at: string;
   total_price: number;
+  recipient_name?: string;
+  recipient_phone?: string;
+  recipient_address?: string;
   items: OrderItemInterface[];
 }
 
