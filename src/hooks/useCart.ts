@@ -149,7 +149,7 @@ export const useCart = () => {
             success: (message) => message,
             error: (error) => error.message
         });
-    }, [getCart]);
+    }, []);
 
     const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
     
