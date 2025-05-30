@@ -98,7 +98,7 @@ export default function ProductManagement() {
     const { getProducts, products, createProduct, updateProduct, deleteProduct } = useProduct();
     const { getBrands, brands } = useBrand();
     const [forceUpdateKey, setForceUpdateKey] = useState(0);
-    const [gridData, setGridData] = useState<Product[]>([]);
+    // const [setGridData] = useState<Product[]>([]);
     const loadingToastRef = useRef<string | number | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
@@ -668,21 +668,21 @@ function ProductFormDialog({
         form.setValue('specifications', newSpecs);
     };
 
-    const addImage = () => {
-        if (imageUrl && !images.includes(imageUrl)) {
-            const newImages = [...images, imageUrl];
-            setImages(newImages);
-            form.setValue('images', newImages);
-            setImageUrl("");
-        }
-    };
+    // const addImage = () => {
+    //     if (imageUrl && !images.includes(imageUrl)) {
+    //         const newImages = [...images, imageUrl];
+    //         setImages(newImages);
+    //         form.setValue('images', newImages);
+    //         setImageUrl("");
+    //     }
+    // };
 
-    const removeImage = (index: number) => {
-        const newImages = [...images];
-        newImages.splice(index, 1);
-        setImages(newImages);
-        form.setValue('images', newImages);
-    };
+    // const removeImage = (index: number) => {
+    //     const newImages = [...images];
+    //     newImages.splice(index, 1);
+    //     setImages(newImages);
+    //     form.setValue('images', newImages);
+    // };
 
     const addKeyword = () => {
         if (keyword && !keywords.includes(keyword)) {

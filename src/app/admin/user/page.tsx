@@ -62,9 +62,9 @@ const userRoleSchema = z.object({
 export default function UserManagement() {
     const [openForm, setOpenForm] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
-    const { users, getUsers, updateUserRole, User } = useUser();
+    const { users, getUsers, updateUserRole } = useUser();
     const [forceUpdateKey, setForceUpdateKey] = useState(0);
-    const [gridData, setGridData] = useState<typeof User[]>([]);
+    // const [gridData, setGridData] = useState<typeof User[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [filteredUsers, setFilteredUsers] = useState<typeof User[]>([]);
@@ -89,10 +89,10 @@ export default function UserManagement() {
             // @ts-expect-error any
             cellRenderer: (params) => {
                 const role = params.value || "user";
-                const roleClass =
-                    role === "admin" ? "bg-blue-100 text-blue-800" :
-                        role === "staff" ? "bg-purple-100 text-purple-800" :
-                            "bg-gray-100 text-gray-800";
+                // const roleClass =
+                //     role === "admin" ? "bg-blue-100 text-blue-800" :
+                //         role === "staff" ? "bg-purple-100 text-purple-800" :
+                //             "bg-gray-100 text-gray-800";
 
                 const roleText =
                     role === "admin" ? "Quản trị viên" :
@@ -130,7 +130,7 @@ export default function UserManagement() {
     ]);
 
     useEffect(() => {
-        setGridData(users);
+        // setGridData(users);
         setFilteredUsers(users);
         forceUpdate();
     }, [users]);

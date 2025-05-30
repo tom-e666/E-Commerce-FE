@@ -43,14 +43,14 @@ provideGlobalGridOptions({
 
 export default function OrderManagement() {
     const [openDetail, setOpenDetail] = useState(false);
-    const [selectedOrder, setSelectedOrder] = useState(null);
+    const [selectedOrder, setSelectedOrder] = useState<any>(null);
     const [filter, setFilter] = useState("all");
-    const { orders, getOrder, getOrders, confirmOrder, processingOrder, shipOrder, completeDelivery, cancelOrder, updateOrder, deleteOrder } = useOrder();
+    const { orders, getOrder, getOrders, confirmOrder, processingOrder, shipOrder, completeDelivery, cancelOrder } = useOrder();
     const [forceUpdateKey, setForceUpdateKey] = useState(0);
     const [gridData, setGridData] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
-    const [filteredOrders, setFilteredOrders] = useState([]);
+    const [filteredOrders, setFilteredOrders] = useState<any[]>([]);
     const mouseX = useMotionValue(0);
     const mouseY = useMotionValue(0);
     const loadingToastRef = useRef<string | number | null>(null);
@@ -165,7 +165,7 @@ export default function OrderManagement() {
         const searchFiltered = filtered.filter(order =>
             order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
             order.user_id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            order.recipient_name?.toLowerCase().includes(searchQuery.toLowerCase())
+            order?.recipient_name?.toLowerCase().includes(searchQuery.toLowerCase())
         );
         
         // @ts-expect-error any
@@ -178,7 +178,6 @@ export default function OrderManagement() {
         setForceUpdateKey(prev => prev + 1);
     };
 
-    // Cleanup any loading toasts on unmount
     useEffect(() => {
         return () => {
             if (loadingToastRef.current) {

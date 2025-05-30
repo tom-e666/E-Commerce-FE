@@ -52,7 +52,7 @@ const PurchaseGuide = () => {
                     <svg className="h-5 w-5 mr-2 text-green-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                     </svg>
-                    <span>Truy cập vào trang sản phẩm thông qua menu "Sản phẩm" hoặc tìm kiếm trực tiếp</span>
+                    <span>Truy cập vào trang sản phẩm thông qua menu &rdquo;Sản phẩm&rdquo; hoặc tìm kiếm trực tiếp</span>
                   </p>
                   <p className="flex items-start">
                     <svg className="h-5 w-5 mr-2 text-green-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -95,7 +95,7 @@ const PurchaseGuide = () => {
                     <svg className="h-5 w-5 mr-2 text-green-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                     </svg>
-                    <span>Nhấn nút "Thêm vào giỏ hàng"</span>
+                    <span>Nhấn nút &rdquo;Thêm vào giỏ hàng&rdquo;</span>
                   </p>
                   <p className="flex items-start">
                     <svg className="h-5 w-5 mr-2 text-green-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">

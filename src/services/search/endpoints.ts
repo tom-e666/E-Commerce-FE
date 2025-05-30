@@ -1,4 +1,4 @@
-import { gql } from '@apollo/client';
+// import { gql } from '@apollo/client';
 import { apolloClient } from '@/services/apollo/client';
 import { SMART_SEARCH } from '@/services/product/endpoint';
 

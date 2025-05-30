@@ -15,6 +15,9 @@ const nextConfig: NextConfig = {
     unoptimized: process.env.NODE_ENV !== 'production',
     
   },
+  eslint: {
+    dirs: [],
+  },
 };
 
 export default nextConfig;

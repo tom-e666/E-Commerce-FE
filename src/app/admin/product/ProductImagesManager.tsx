@@ -2,7 +2,8 @@ import React, { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { X, UploadCloud, Image as ImageIcon, RefreshCw } from "lucide-react";
+import { X, UploadCloud, RefreshCw } from "lucide-react";
+import Image from "next/image";
 
 interface ProductImagesManagerProps {
   images: string[];
@@ -162,7 +163,7 @@ export default function ProductImagesManager({ images, setImages, productName }:
 
   const removeUploadedImage = (index: number) => {
     const newImages = [...images];
-    const removedImage = newImages.splice(index, 1)[0];
+    // const removedImage = newImages.splice(index, 1)[0];
     
     // Gọi API xóa ảnh trên server nếu cần
     // deleteImageFromServer(removedImage);
@@ -210,10 +211,12 @@ export default function ProductImagesManager({ images, setImages, productName }:
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
           {filesToUpload.map(({ preview, file }, index) => (
             <div key={`upload-${index}`} className="relative group h-32 rounded-md overflow-hidden border">
-              <img
+              <Image
                 src={preview}
                 alt={`Preview ${file.name}`}
-                className="w-full h-full object-cover"
+                fill
+                sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
+                className="object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2">
                 <p className="text-white text-xs truncate w-full">{file.name}</p>
@@ -221,7 +224,7 @@ export default function ProductImagesManager({ images, setImages, productName }:
               <button
                 type="button"
                 onClick={() => removeFileToUpload(index)}
-                className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors z-10"
                 title="Xóa ảnh này"
               >
                 <X className="h-3 w-3" />
@@ -238,23 +241,26 @@ export default function ProductImagesManager({ images, setImages, productName }:
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
             {images.map((img, index) => (
               <div key={`uploaded-${index}`} className="relative group h-32 rounded-md overflow-hidden border">
-                <img
+                <Image
                   src={img}
                   alt={`Product image ${index + 1}`}
-                  className="w-full h-full object-cover"
+                  fill
+                  sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
+                  className="object-cover"
                   onError={(e) => {
-                    e.currentTarget.src = "/placeholder-product.png";
+                    const target = e.target as HTMLImageElement;
+                    target.src = "/placeholder-product.png";
                   }}
                 />
                 <button
                   type="button"
                   onClick={() => removeUploadedImage(index)}
-                  className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10"
                   title="Xóa ảnh này"
                 >
                   <X className="h-3 w-3" />
                 </button>
-                <div className="absolute bottom-1 left-1 bg-black/50 text-white text-xs px-1 rounded">
+                <div className="absolute bottom-1 left-1 bg-black/50 text-white text-xs px-1 rounded z-10">
                   {index + 1}
                 </div>
               </div>

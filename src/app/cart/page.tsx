@@ -27,7 +27,7 @@ import {
 import { MinusIcon, PlusIcon, ShoppingCart, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "next/navigation";
-import { createOrderFromCartAPI, createOrder } from "@/services/order/endpoints";
+import {createOrder } from "@/services/order/endpoints";
 
 export default function CartPage() {
     const router = useRouter();
