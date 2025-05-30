@@ -28,62 +28,37 @@ const OrderStatusIndicator = React.memo(({ orderId, step, orderCompleted }: Orde
                             )}
                         </div>
                         <div>
-                            <span className={`${orderId ? 'font-medium' : 'text-muted-foreground'}`}>
+                            <p className={`font-medium ${orderId ? 'text-gray-900' : 'text-gray-400'}`}>
                                 Tạo đơn hàng
-                            </span>
-                            {orderId && (
-                                <p className="text-xs text-muted-foreground">Đơn hàng #{orderId.slice(-8)}</p>
+                            </p>
+                            <p className="text-sm text-gray-500">
+                                {orderId ? 'Đơn hàng đã được tạo thành công' : 'Chờ tạo đơn hàng'}
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Step 2: Payment */}
+                    <div className="flex items-center space-x-3">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 2 ? 'bg-primary' : 'bg-muted'}`}>
+                            {step >= 2 ? (
+                                <CheckCircle2 className="h-4 w-4 text-white" />
+                            ) : (
+                                <CreditCard className="h-4 w-4 text-white" />
                             )}
                         </div>
-                    </div>
-
-                    {/* Step 2: Shipping Information */}
-                    <div className="relative">
-                        <div className="absolute left-4 top-0 -ml-px h-full w-0.5 bg-muted"></div>
-                        <div className="flex items-center space-x-3">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 1 ? 'bg-primary' : 'bg-muted'} z-10`}>
-                                {step >= 1 ? (
-                                    <CheckCircle2 className="h-4 w-4 text-white" />
-                                ) : (
-                                    <Truck className="h-4 w-4 text-white" />
-                                )}
-                            </div>
-                            <div>
-                                <span className={`${step >= 1 ? 'font-medium' : 'text-muted-foreground'}`}>
-                                    Thông tin giao hàng
-                                </span>
-                                {step >= 1 && (
-                                    <p className="text-xs text-muted-foreground">Địa chỉ đã xác nhận</p>
-                                )}
-                            </div>
+                        <div>
+                            <p className={`font-medium ${step >= 2 ? 'text-gray-900' : 'text-gray-400'}`}>
+                                Thanh toán
+                            </p>
+                            <p className="text-sm text-gray-500">
+                                {step >= 2 ? 'Đang xử lý thanh toán' : 'Chờ thanh toán'}
+                            </p>
                         </div>
                     </div>
 
-                    {/* Step 3: Payment */}
-                    <div className="relative">
-                        <div className="absolute left-4 top-0 -ml-px h-full w-0.5 bg-muted"></div>
-                        <div className="flex items-center space-x-3">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 2 ? 'bg-primary' : 'bg-muted'} z-10`}>
-                                {step >= 2 ? (
-                                    <CheckCircle2 className="h-4 w-4 text-white" />
-                                ) : (
-                                    <CreditCard className="h-4 w-4 text-white" />
-                                )}
-                            </div>
-                            <div>
-                                <span className={`${step >= 2 ? 'font-medium' : 'text-muted-foreground'}`}>
-                                    Thanh toán
-                                </span>
-                                {step >= 2 && !orderCompleted && (
-                                    <p className="text-xs text-muted-foreground">Chọn phương thức thanh toán</p>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Step 4: Order Completed */}
+                    {/* Step 3: Order Complete */}
                     <div className="flex items-center space-x-3">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${orderCompleted ? 'bg-green-600' : 'bg-muted'}`}>
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${orderCompleted ? 'bg-primary' : 'bg-muted'}`}>
                             {orderCompleted ? (
                                 <CheckCircle2 className="h-4 w-4 text-white" />
                             ) : (
@@ -91,12 +66,12 @@ const OrderStatusIndicator = React.memo(({ orderId, step, orderCompleted }: Orde
                             )}
                         </div>
                         <div>
-                            <span className={`${orderCompleted ? 'font-medium text-green-600' : 'text-muted-foreground'}`}>
-                                Hoàn tất đơn hàng
-                            </span>
-                            {orderCompleted && (
-                                <p className="text-xs text-green-600">Đặt hàng thành công</p>
-                            )}
+                            <p className={`font-medium ${orderCompleted ? 'text-gray-900' : 'text-gray-400'}`}>
+                                Hoàn thành
+                            </p>
+                            <p className="text-sm text-gray-500">
+                                {orderCompleted ? 'Đơn hàng đã hoàn thành' : 'Chờ hoàn thành'}
+                            </p>
                         </div>
                     </div>
                 </div>

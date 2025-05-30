@@ -136,21 +136,20 @@ export const useCart = () => {
             
             setCartItems([]);
             return "Đã xóa toàn bộ giỏ hàng";
-        } catch{
-            throw new Error ("Không thể xóa toàn bộ giỏ hàng")
+        } catch (error) {
+            throw new Error ("Không thể xóa toàn bộ giỏ hàng");
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        
         toast.promise(getCart(), {
             loading: "Đang tải giỏ hàng...",
             success: (message) => message,
             error: (error) => error.message
         });
-    }, []);
+    }, [getCart]);
 
     const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
     

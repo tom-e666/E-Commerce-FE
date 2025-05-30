@@ -23,21 +23,19 @@ import { Package, Clock, ArrowLeft, CheckCircle, Truck, XCircle, ChevronRight, H
 const getStatusBadge = (status: string) => {
   switch (status) {
     case 'pending':
-      return <Badge variant="outline" className="bg-yellow-50 text-yellow-600 border-yellow-200"><Clock className="h-3 w-3 mr-1" />Chờ xác nhận</Badge>;
+      return <Badge className="bg-yellow-100 text-yellow-800"><Clock className="h-3 w-3 mr-1" />Chờ xác nhận</Badge>;
     case 'confirmed':
-      return <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200"><CheckCircle className="h-3 w-3 mr-1" />Đã xác nhận</Badge>;
+      return <Badge className="bg-blue-100 text-blue-800"><CheckCircle className="h-3 w-3 mr-1" />Đã xác nhận</Badge>;
     case 'processing':
-      return <Badge variant="outline" className="bg-orange-50 text-orange-600 border-orange-200"><Loader2 className="h-3 w-3 mr-1" />Đang xử lý</Badge>;
+      return <Badge className="bg-orange-100 text-orange-800"><Loader2 className="h-3 w-3 mr-1" />Đang xử lý</Badge>;
     case 'shipping':
-      return <Badge variant="outline" className="bg-purple-50 text-purple-600 border-purple-200"><Truck className="h-3 w-3 mr-1" />Đang giao hàng</Badge>;
+      return <Badge className="bg-purple-100 text-purple-800"><Truck className="h-3 w-3 mr-1" />Đang giao hàng</Badge>;
     case 'completed':
-      return <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200"><Package className="h-3 w-3 mr-1" />Hoàn thành</Badge>;
+      return <Badge className="bg-green-100 text-green-800"><Package className="h-3 w-3 mr-1" />Hoàn thành</Badge>;
     case 'cancelled':
-      return <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200"><XCircle className="h-3 w-3 mr-1" />Đã hủy</Badge>;
-    case 'failed':
-      return <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200"><AlertTriangle className="h-3 w-3 mr-1" />Thất bại</Badge>;
+      return <Badge className="bg-red-100 text-red-800"><XCircle className="h-3 w-3 mr-1" />Đã hủy</Badge>;
     default:
-      return <Badge variant="outline">{status}</Badge>;
+      return <Badge className="bg-gray-100 text-gray-800">Không xác định</Badge>;
   }
 };
 

@@ -39,7 +39,7 @@ export const useReview = () => {
             } else {
                 throw new Error("Không thể lấy đánh giá của bạn");
             }
-        } catch  {
+        } catch (error) {
             throw new Error("Không thể lấy đánh giá của bạn");
         } finally {
             setLoading(false);
@@ -63,7 +63,7 @@ export const useReview = () => {
             } else {
                 throw new Error("Không thể lấy đánh giá cho sản phẩm này");
             }
-        } catch  {
+        } catch (error) {
             throw new Error("Không thể lấy đánh giá cho sản phẩm này");
         } finally {
             setLoading(false);

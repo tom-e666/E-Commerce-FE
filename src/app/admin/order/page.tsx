@@ -1,6 +1,6 @@
 'use client'
 import { AgGridReact } from 'ag-grid-react';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 import { ClientSideRowModelModule } from 'ag-grid-community';
@@ -47,7 +47,7 @@ export default function OrderManagement() {
     const [filter, setFilter] = useState("all");
     const { orders, getOrder, getOrders, confirmOrder, processingOrder, shipOrder, completeDelivery, cancelOrder } = useOrder();
     const [forceUpdateKey, setForceUpdateKey] = useState(0);
-    const [gridData, setGridData] = useState([]);
+    const [gridData, setGridData] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [filteredOrders, setFilteredOrders] = useState<any[]>([]);
@@ -71,7 +71,7 @@ export default function OrderManagement() {
         ["failed", "bg-gray-100 text-gray-800"]
     ]);
 
-    const statusIcons = {
+    const statusIcons: Record<string, React.ReactNode> = {
         pending: <Clock className="h-4 w-4 mr-1" />,
         confirmed: <Check className="h-4 w-4 mr-1" />,
         processing: <Loader2 className="h-4 w-4 mr-1" />,
@@ -93,8 +93,7 @@ export default function OrderManagement() {
             headerName: "Ngày đặt",
             flex: 1.5,
             minWidth: 120,
-            // @ts-expect-error any
-            valueFormatter: (params) => {
+            valueFormatter: (params: any) => {
                 return new Date(params.value).toLocaleDateString('vi-VN');
             }
         },
@@ -103,8 +102,7 @@ export default function OrderManagement() {
             headerName: "Tổng tiền",
             flex: 1.5,
             minWidth: 120,
-            // @ts-expect-error any
-            valueFormatter: (params) => {
+            valueFormatter: (params: any) => {
                 return formatCurrency(params.value);
             }
         },
@@ -113,11 +111,9 @@ export default function OrderManagement() {
             headerName: "Trạng thái",
             flex: 1.5,
             minWidth: 130,
-            // @ts-expect-error any
-            cellRenderer: (params) => {
+            cellRenderer: (params: any) => {
                 const status = params?.value || "unknown";
                 const statusClass = statusColors.get(status) || "bg-gray-100 text-gray-800";
-                // @ts-expect-error object deref
                 const icon = statusIcons[status] || <AlertCircle className="h-4 w-4 mr-1" />;
                 let displayText = status.charAt(0).toUpperCase() + status.slice(1);
 
@@ -150,47 +146,17 @@ export default function OrderManagement() {
             headerName: "Số sản phẩm",
             flex: 1,
             minWidth: 100,
-            // @ts-expect-error any
-            valueFormatter: (params) => {
+            valueFormatter: (params: any) => {
                 return params.value ? params.value.length : 0;
             }
         }
     ]);
 
-    useEffect(() => {
-        const filtered = filter === "all"
-            ? orders
-            : orders.filter(order => order.status === filter);
-        
-        const searchFiltered = filtered.filter(order =>
-            order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            order.user_id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            order?.recipient_name?.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-        
-        // @ts-expect-error any
-        setGridData(searchFiltered);
-        setFilteredOrders(searchFiltered);
-        forceUpdate();
-    }, [orders, filter, searchQuery]);
-
-    const forceUpdate = () => {
+    const forceUpdate = useCallback(() => {
         setForceUpdateKey(prev => prev + 1);
-    };
-
-    useEffect(() => {
-        return () => {
-            if (loadingToastRef.current) {
-                toast.dismiss(loadingToastRef.current);
-            }
-        };
     }, []);
 
-    useEffect(() => {
-        loadOrders();
-    }, []);
-
-    const loadOrders = async () => {
+    const loadOrders = useCallback(async () => {
         try {
             setIsLoading(true);
             await toast.promise(
@@ -208,9 +174,37 @@ export default function OrderManagement() {
             setIsLoading(false);
             forceUpdate();
         }
-    };
-    // @ts-expect-error any
-    const handleRowClick = async (event) => {
+    }, [getOrders, forceUpdate]);
+
+    useEffect(() => {
+        const filtered = filter === "all"
+            ? orders
+            : orders.filter(order => order.status === filter);
+        
+        const searchFiltered = filtered.filter(order =>
+            order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            order.user_id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            order?.recipient_name?.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+        
+        setGridData(searchFiltered);
+        setFilteredOrders(searchFiltered);
+        forceUpdate();
+    }, [orders, filter, searchQuery, forceUpdate]);
+
+    useEffect(() => {
+        return () => {
+            if (loadingToastRef.current) {
+                toast.dismiss(loadingToastRef.current);
+            }
+        };
+    }, []);
+
+    useEffect(() => {
+        loadOrders();
+    }, [loadOrders]);
+
+    const handleRowClick = useCallback(async (event: any) => {
         try {
             const orderId = event.data.id;
             const order = await getOrder(orderId);
@@ -220,14 +214,14 @@ export default function OrderManagement() {
             toast.error("Không thể tải thông tin đơn hàng");
             console.error(error);
         }
-    };
+    }, [getOrder]);
 
-    const handleCloseDetail = () => {
+    const handleCloseDetail = useCallback(() => {
         setOpenDetail(false);
         setSelectedOrder(null);
-    };
-    // @ts-expect-error any
-    const handleStatusChange = async (action, orderId) => {
+    }, []);
+    
+    const handleStatusChange = useCallback(async (action: string, orderId: string) => {
         try {
             switch (action) {
                 case 'confirm':
@@ -294,11 +288,19 @@ export default function OrderManagement() {
         } catch (error) {
             console.error("Error updating order status:", error);
         }
-    };
-    // @ts-expect-error any
-    const handleFilterChange = (value) => {
+    }, [confirmOrder, processingOrder, shipOrder, completeDelivery, cancelOrder, selectedOrder, getOrder, loadOrders]);
+    
+    const handleFilterChange = useCallback((value: string) => {
         setFilter(value);
-    };
+    }, []);
+
+    const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchQuery(e.target.value);
+    }, []);
+
+    const clearSearch = useCallback(() => {
+        setSearchQuery("");
+    }, []);
 
     return (
         <motion.div 
@@ -410,13 +412,13 @@ export default function OrderManagement() {
                         type="text"
                         placeholder="Tìm kiếm đơn hàng..."
                         value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onChange={handleSearchChange}
                         className="pl-10 pr-4 py-2 rounded-full border-gray-200 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
                     />
                     {searchQuery && (
                         <motion.button
                             whileTap={{ scale: 0.9 }}
-                            onClick={() => setSearchQuery("")}
+                            onClick={clearSearch}
                             className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                         >
                             <X className="h-4 w-4" />
@@ -469,21 +471,18 @@ export default function OrderManagement() {
                         <AgGridReact
                             key={`orders-${forceUpdateKey}`}
                             rowData={gridData}
-                            // @ts-expect-error any
                             columnDefs={colDefs}
                             onRowClicked={handleRowClick}
                             pagination={false}
                             animateRows={true}
                             domLayout="normal"
-                            suppessCellClick={true}
+                            suppressCellFocus={true}
                             defaultColDef={{
                                 resizable: true,
                                 sortable: true
                             }}
                             rowHeight={56}
                             headerHeight={48}
-                            autoSizeColumns={true}
-                            suppressColumnVirtualisation={true}
                             overlayNoRowsTemplate={
                                 searchQuery || filter !== "all"
                                     ? "<div class='flex items-center justify-center h-full text-gray-500'>Không tìm thấy đơn hàng nào phù hợp</div>"
@@ -633,7 +632,7 @@ export default function OrderManagement() {
                                                 <div className="flex justify-between">
                                                     <span className="text-muted-foreground">Trạng thái:</span>
                                                     <Badge className={statusColors.get(selectedOrder.status)}>
-                                                        {statusIcons[selectedOrder.status]}
+                                                        {statusIcons[selectedOrder.status] || <AlertCircle className="h-4 w-4 mr-1" />}
                                                         {selectedOrder.status === 'pending' ? 'Chờ xác nhận' :
                                                           selectedOrder.status === 'confirmed' ? 'Đã xác nhận' :
                                                           selectedOrder.status === 'processing' ? 'Đang xử lý' :
@@ -748,8 +747,7 @@ export default function OrderManagement() {
 
                                 <TabsContent value="items">
                                     <div className="space-y-4">
-
-                                        {selectedOrder.items.map((item) => (
+                                        {selectedOrder.items.map((item: any) => (
                                             <div key={item.id} className="flex items-center p-3 border rounded-md">
                                                 <div className="h-16 w-16 relative rounded overflow-hidden flex-shrink-0 mr-4">
                                                     {item.image ? (
@@ -877,8 +875,15 @@ export default function OrderManagement() {
     );
 }
 
-// Stat Card Component (same as brand page)
-const StatCard = ({ title, value, icon, delay = 0 }) => {
+// Stat Card Component
+interface StatCardProps {
+    title: string;
+    value: string | number;
+    icon: React.ReactNode;
+    delay?: number;
+}
+
+const StatCard = ({ title, value, icon, delay = 0 }: StatCardProps) => {
     return (
         <motion.div 
             className="bg-white/70 backdrop-blur-sm rounded-xl shadow-md p-6 border border-white/30 relative overflow-hidden"

@@ -154,7 +154,6 @@ export default function ProductManagement() {
     ]);
 
     useEffect(() => {
-        setGridData(products);
         setFilteredProducts(products);
         forceUpdate();
     }, [products]);
@@ -668,21 +667,20 @@ function ProductFormDialog({
         form.setValue('specifications', newSpecs);
     };
 
-    // const addImage = () => {
-    //     if (imageUrl && !images.includes(imageUrl)) {
-    //         const newImages = [...images, imageUrl];
-    //         setImages(newImages);
-    //         form.setValue('images', newImages);
-    //         setImageUrl("");
-    //     }
-    // };
+    const addImage = (url: string) => {
+        if (url && !images.includes(url)) {
+            const newImages = [...images, url];
+            setImages(newImages);
+            form.setValue('images', newImages);
+        }
+    };
 
-    // const removeImage = (index: number) => {
-    //     const newImages = [...images];
-    //     newImages.splice(index, 1);
-    //     setImages(newImages);
-    //     form.setValue('images', newImages);
-    // };
+    const removeImage = (index: number) => {
+        const newImages = [...images];
+        newImages.splice(index, 1);
+        setImages(newImages);
+        form.setValue('images', newImages);
+    };
 
     const addKeyword = () => {
         if (keyword && !keywords.includes(keyword)) {
@@ -716,7 +714,10 @@ function ProductFormDialog({
             description: values.description,
             images: images,
             keywords: keywords,
-            specifications: specifications.map(({ __typename, ...rest }) => rest)
+            specifications: specifications.filter(spec => spec.name && spec.value).map(spec => ({
+                name: spec.name,
+                value: spec.value
+            }))
         };
 
         try {
@@ -938,36 +939,15 @@ function ProductFormDialog({
                         <div className="space-y-4">
                             <div>
                                 <FormLabel>Hình ảnh sản phẩm</FormLabel>
-                                <ProductImagesManager images={images} setImages={setImages} productName={form.watch("name")}/>
-                                {/* <div className="flex space-x-2 mt-2">
-                                    <Input
-                                        placeholder="Nhập URL hình ảnh"
-                                        value={imageUrl}
-                                        onChange={(e) => setImageUrl(e.target.value)}
-                                    />
-                                    <Button type="button" onClick={addImage}>Thêm</Button>
-                                </div>
-                                <div className="grid grid-cols-4 gap-2 mt-2">
-                                    {images.map((img, idx) => (
-                                        <div key={idx} className="relative group h-24 w-full">
-                                            <img
-                                                src={img}
-                                                alt={`Product image ${idx + 1}`}
-                                                className="w-full h-full object-cover rounded-md"
-                                                onError={(e) => {
-                                                    e.currentTarget.src = "/laptop.png";
-                                                }}
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => removeImage(idx)}
-                                                className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                            >
-                                                ✕
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div> */}
+                                <ProductImagesManager 
+                                    images={images} 
+                                    setImages={setImages} 
+                                    productName={form.watch("name")}
+                                    onImagesChange={(newImages) => {
+                                        setImages(newImages);
+                                        form.setValue('images', newImages);
+                                    }}
+                                />
                                 {form.formState.errors.images && (
                                     <p className="text-sm font-medium text-destructive mt-1">
                                         {form.formState.errors.images.message}

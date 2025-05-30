@@ -128,8 +128,8 @@ export default function ShowroomPage() {
                             transition={{ duration: 0.3, delay: index * 0.1 }}
                         >
                             <div className="mb-4 text-primary">{benefit.icon}</div>
-                            <h3 className="text-lg font-semibold mb-2">{benefit.title}</h3>
-                            <p className="text-muted-foreground">{benefit.description}</p>
+                            <h3 className="font-semibold mb-2">{benefit.title}</h3>
+                            <p className="text-muted-foreground text-sm">{benefit.description}</p>
                         </motion.div>
                     ))}
                 </div>

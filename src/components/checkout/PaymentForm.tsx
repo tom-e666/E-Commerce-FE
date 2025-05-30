@@ -62,67 +62,8 @@ const PaymentForm = React.memo(({ orderId, totalAmount, onBack, onComplete }: Pa
                     }, 5000);
                     break;
 
-                case 'atm':
-                    toast.info("Chức năng thanh toán qua thẻ ATM đang được phát triển");
-                    toast.success("Đang xử lý thanh toán demo...");
-
-                    onComplete('atm');
-
-                    setTimeout(() => {
-                        router.push(`/checkout/success?orderId=${orderId}&demo=true&method=atm`);
-                    }, 5000);
-                    break;
-
-                case 'mbanking':
-                    toast.info("Chức năng thanh toán qua Mobile Banking đang được phát triển");
-                    toast.success("Đang xử lý thanh toán demo...");
-
-                    onComplete('mbanking');
-
-                    setTimeout(() => {
-                        router.push(`/checkout/success?orderId=${orderId}&demo=true&method=mbanking`);
-                    }, 5000);
-                    break;
-
-                case 'vnpay':
-                  try {
-                    // Pass the required arguments to createVNPayPayment
-                    const vnpayResponse = await createVNPayPayment(
-                      orderId,
-                      totalAmount,            // amount
-                      'Thanh toán đơn hàng', // orderInfo
-                      'billpayment',         // orderType
-                      'VNBANK'                  // bankCode (bank code placeholder)
-                    );
-
-                    console.log("VNPAY response:", vnpayResponse);
-
-                    if (vnpayResponse.code === 200) {
-                      toast.success("Khởi tạo thanh toán VNPay thành công!");
-                        // Redirect to the payment URL
-                        // Uncomment the following line to redirect to the payment URL
-                        if (vnpayResponse.payment_url) {
-                          window.location.href = vnpayResponse.payment_url;
-                        } else {
-                          toast.error("Không tìm thấy đường dẫn thanh toán VNPay");
-                        }
-                    //   onComplete('vnpay');
-
-                      // Demo redirect to success page after 5s
-                    //   setTimeout(() => {
-                    //     router.push(`/checkout/success?orderId=${orderId}&demo=true&method=vnpay`);
-                    //   }, 5000);
-                    } else {
-                      toast.error(vnpayResponse.message || "Lỗi khi khởi tạo thanh toán VNPay");
-                    }
-                  } catch (error) {
-                    console.error("VNPay payment error:", error);
-                    toast.error("Có lỗi xảy ra khi xử lý thanh toán VNPay");
-                  }
-                  break;
-
                 default:
-                    toast.error("Phương thức thanh toán không được hỗ trợ");
+                    break;
             }
         } catch (error) {
             console.error("Payment error:", error);
