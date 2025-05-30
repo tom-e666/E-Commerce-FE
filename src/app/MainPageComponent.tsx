@@ -5,6 +5,7 @@ import { toast } from "@/lib/toast-config";
 import { HiOutlineArrowRight } from 'react-icons/hi2'
 import Link from 'next/link'
 import Image from 'next/image'
+import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 
 const urlImg = [
   {
@@ -74,12 +75,34 @@ const MainPageComponent = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [shuffleKey] = useState(0);
   
+  // Thêm ref cho carousel
+  const carouselRef = useRef<HTMLDivElement>(null);
+  
   // Memoize the shuffled products to prevent unnecessary re-shuffling
   const shuffledProducts = useMemo(() => {
       return shuffleArray(products);
   }, [products, shuffleKey]);
 
   const isMounted = useRef(true);
+
+  // Thêm functions cho scroll
+  const scrollLeft = () => {
+    if (carouselRef.current) {
+      carouselRef.current.scrollBy({
+        left: -516, // width của một item (510px) + gap (6px)
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  const scrollRight = () => {
+    if (carouselRef.current) {
+      carouselRef.current.scrollBy({
+        left: 516, // width của một item (510px) + gap (6px)
+        behavior: 'smooth'
+      });
+    }
+  };
 
   useEffect(() => {
       return () => {
@@ -109,6 +132,8 @@ const MainPageComponent = () => {
 
     return () => clearInterval(timer);
   }, []);
+
+  console.log("Shuffled products:", shuffledProducts);
 
   return (
     <div className='flex flex-col bg-gradient-to-b from-purple-700 to-blue-800'>
@@ -231,23 +256,65 @@ const MainPageComponent = () => {
           <p className='text-5xl font-semibold'>Sản phẩm nổi bật</p>
 
           {/* Horizontal Scrollable Carousel */}
-          <div className='mt-12 w-full overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]'>
-            <div className='flex min-w-max space-x-6 pb-4'>
-              {shuffledProducts.slice(0, 8).map((product) => (
-                <Link 
-                  href={`/product/${product.id}`} 
-                  key={product.id}
-                  className='h-64 w-64 flex-none cursor-pointer overflow-hidden rounded-lg shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 relative'
-                >
-                  <Image
-                    src={product.details.images[0]}
-                    alt={product.name}
-                    fill
-                    className='object-cover'
-                  />
-                </Link>
-              ))}
+          <div className='mt-12 w-full relative'>
+            <div 
+              ref={carouselRef}
+              className='w-full overflow-x-auto pb-6 scroll-smooth snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]'
+            >
+              <div className='flex min-w-max gap-6'>
+                {shuffledProducts.slice(0, 8).map((product) => (
+                  <Link 
+                    href={`/product/${product.id}`} 
+                    key={product.id}
+                    className='group h-[285px] w-[510px] flex-none cursor-pointer overflow-hidden rounded-lg shadow-lg transition-all duration-300 hover:shadow-xl relative snap-start'
+                  >
+                    {/* Main Image */}
+                    <Image
+                      src={product.details.images[1]}
+                      alt={product.name}
+                      fill
+                      className='object-cover transition-transform duration-300 group-hover:scale-110'
+                      sizes='510px'
+                    />
+                    
+                    {/* Hover Overlay with Full Image */}
+                    {/* <div className='absolute inset-0 bg-black/90 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 flex items-center justify-center'>
+                      <div className='relative w-full h-full p-4'>
+                        <Image
+                          src={product.details.images[1]}
+                          alt={product.name}
+                          fill
+                          className='object-contain'
+                          sizes='510px'
+                        />
+                      </div>
+                    </div> */}
+                    
+                    {/* Product name overlay */}
+                    <div className='absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 z-20'>
+                      <p className='text-lg font-medium text-white'>{product.name}</p>
+                      <p className='text-sm text-gray-300'>
+                        {product.details.specifications.find(spec => spec.name === 'CPU')?.value}
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
             </div>
+            
+            {/* Navigation arrows with functionality */}
+            <button 
+              onClick={scrollLeft}
+              className='absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 rounded-full p-2 z-30 hover:bg-black/80 transition-all'
+            >
+              <ChevronLeftIcon className='h-6 w-6 text-white' />
+            </button>
+            <button 
+              onClick={scrollRight}
+              className='absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 rounded-full p-2 z-30 hover:bg-black/80 transition-all'
+            >
+              <ChevronRightIcon className='h-6 w-6 text-white' />
+            </button>
           </div>
 
           <div className='flex w-full justify-center'>
@@ -256,21 +323,21 @@ const MainPageComponent = () => {
         </div>
       </div>
 
-      <div className='mt-5 mb-5 flex flex-col items-center justify-center'>
-        <div className='mb-4 flex w-full justify-between p-10 text-white'>
-          <p className='text-5xl font-semibold'>
-            Máy tính <br /> doanh nghiệp
+      ``<div className='mt-5 mb-5 flex flex-col items-center justify-center'>
+        <div className='mb-4 flex w-full flex-col justify-between gap-6 p-4 text-white md:flex-row md:p-10'>
+          <p className='text-3xl font-semibold md:text-5xl'>
+            Máy tính <br className='hidden md:block' /> doanh nghiệp
           </p>
-          <p className='p-4 text-xl italic'>
-            Hiệu suất vượt trội, bảo mật tối ưu <br /> Giải pháp hoàn hảo cho môi trường làm việc chuyên nghiệp
+          <p className='p-2 text-lg italic md:p-4 md:text-xl'>
+            Hiệu suất vượt trội, bảo mật tối ưu <br className='hidden md:block' /> Giải pháp hoàn hảo cho môi trường làm việc chuyên nghiệp
           </p>
         </div>
 
         {/* New Design Section */}
-        <div className='w-full px-10'>
-          <div className='grid grid-cols-2 gap-8'>
+        <div className='w-full px-4 md:px-10'>
+          <div className='grid grid-cols-1 gap-8 lg:grid-cols-2'>
             {/* Left Column - Featured Product */}
-            <div className='relative h-[600px] overflow-hidden rounded-2xl'>
+            <div className='relative h-[400px] overflow-hidden rounded-2xl md:h-[570px]'>
               <Link href="/product/6">
                 <div className='group relative h-full w-full'>
                   <Image
@@ -278,18 +345,21 @@ const MainPageComponent = () => {
                     alt="Office Computer"
                     fill
                     className='object-cover transition-transform duration-500 group-hover:scale-110'
+                    sizes='(max-width: 768px) 100vw, 50vw'
                   />
                   <div className='absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100'>
-                    <div className='absolute bottom-8 left-8 text-white'>
-                      <h3 className='mb-4 text-4xl font-bold'>Dell OptiPlex 7000</h3>
-                      <p className='mb-4 text-xl text-purple-200'>
+                    <div className='absolute bottom-4 left-4 text-white md:bottom-8 md:left-8'>
+                      <h3 className='mb-2 text-2xl font-bold md:mb-4 md:text-4xl'>
+                        {products.find(p => p.id === '6')?.name || 'Dell OptiPlex 7000'}
+                      </h3>
+                      <p className='mb-2 text-base text-purple-200 md:mb-4 md:text-xl'>
                         Hiệu suất mạnh mẽ - Thiết kế tinh tế
                       </p>
-                      <div className='flex items-center space-x-4'>
-                        <span className='rounded-full bg-purple-500/20 px-4 py-2 text-sm backdrop-blur-sm'>
+                      <div className='flex flex-wrap gap-2'>
+                        <span className='rounded-full bg-purple-500/20 px-3 py-1 text-xs backdrop-blur-sm md:px-4 md:py-2 md:text-sm'>
                           Doanh nghiệp
                         </span>
-                        <span className='rounded-full bg-purple-500/20 px-4 py-2 text-sm backdrop-blur-sm'>
+                        <span className='rounded-full bg-purple-500/20 px-3 py-1 text-xs backdrop-blur-sm md:px-4 md:py-2 md:text-sm'>
                           Cao cấp
                         </span>
                       </div>
@@ -299,61 +369,96 @@ const MainPageComponent = () => {
               </Link>
             </div>
 
-            {/* Right Column - Grid of Products */}
-            <div className='grid grid-cols-2 gap-8'>
-              {['7', '8', '9', '10'].map((id) => {
-                const product = products.find(p => p.id === id);
-                return (
-                  <Link href={`/product/${id}`} key={id}>
-                    <div className='group relative h-[280px] overflow-hidden rounded-2xl'>
-                      <Image
-                        src={product?.details.images[0] || 'https://res.cloudinary.com/dwbcqjupj/image/upload/v1748538492/asusrogstrixg16g614jv3_a5cbfh.jpg'}
-                        alt={product?.name || 'Office Computer'}
-                        fill
-                        className='object-cover transition-transform duration-500 group-hover:scale-110'
-                      />
-                      <div className='absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100'>
-                        <div className='absolute bottom-6 left-6 text-white'>
-                          <h3 className='mb-2 text-2xl font-bold'>{product?.name || 'Office Computer'}</h3>
-                          <p className='text-sm text-purple-200'>
-                            {product?.details.specifications.find(spec => spec.name === 'CPU')?.value || ''}, {' '}
-                            {product?.details.specifications.find(spec => spec.name === 'GPU')?.value || ''}
-                          </p>
+            {/* Right Column - Product Info */}
+            <div className='flex flex-col justify-between gap-6'>
+              {/* Product Specifications */}
+              <div className='rounded-2xl bg-gradient-to-br from-gray-800 to-gray-900 p-6 text-white md:p-8'>
+                <h3 className='mb-4 text-xl font-bold text-purple-300 md:mb-6 md:text-2xl'>Thông số nổi bật</h3>
+                <div className='space-y-3 md:space-y-4'>
+                  {(() => {
+                    const product = products.find(p => p.id === '6');
+                    const specs = product?.details.specifications?.slice(0, 6);
+                    
+                    if (specs && specs.length > 0) {
+                      return specs.map((spec, index) => (
+                        <div key={index} className='flex justify-between items-center border-b border-gray-600 pb-2'>
+                          <span className='text-sm text-gray-300 font-medium md:text-base'>{spec.name}:</span>
+                          <span className='text-sm text-white font-semibold text-right max-w-[150px] truncate md:text-base md:max-w-[200px]'>
+                            {spec.value}
+                          </span>
                         </div>
+                      ));
+                    }
+                    
+                    // Fallback specs
+                    const fallbackSpecs = [
+                      { name: 'CPU', value: product?.details.specifications.find(spec => spec.name === 'CPU')?.value || 'Intel Core i7-13700' },
+                      { name: 'RAM', value: product?.details.specifications.find(spec => spec.name === 'RAM')?.value || '16GB DDR4' },
+                      { name: 'Storage', value: product?.details.specifications.find(spec => spec.name === 'Storage')?.value || '512GB SSD' },
+                      { name: 'GPU', value: product?.details.specifications.find(spec => spec.name === 'GPU')?.value || 'Intel UHD Graphics' }
+                    ];
+                    
+                    return fallbackSpecs.map((spec, index) => (
+                      <div key={index} className='flex justify-between items-center border-b border-gray-600 pb-2'>
+                        <span className='text-sm text-gray-300 font-medium md:text-base'>{spec.name}:</span>
+                        <span className='text-sm text-white font-semibold md:text-base'>{spec.value}</span>
                       </div>
+                    ));
+                  })()}
+                </div>
+                
+                {/* Price and Features */}
+                <div className='mt-4 pt-4 border-t border-gray-600 md:mt-6 md:pt-6'>
+                  <div className='flex items-center justify-between mb-3 md:mb-4'>
+                    <span className='text-xl font-bold text-green-400 md:text-2xl'>
+                      {products.find(p => p.id === '6')?.price?.toLocaleString('vi-VN') || '25,990,000'}₫
+                    </span>
+                    <span className='bg-red-500 text-white px-2 py-1 rounded-full text-xs font-semibold md:px-3 md:text-sm'>
+                      -15%
+                    </span>
+                  </div>
+                  
+                  <div className='space-y-1 md:space-y-2'>
+                    <div className='flex items-center space-x-2'>
+                      <div className='w-1.5 h-1.5 bg-green-400 rounded-full md:w-2 md:h-2'></div>
+                      <span className='text-xs text-gray-300 md:text-sm'>Bảo hành 36 tháng</span>
                     </div>
-                  </Link>
-                );
-              })}
+                    <div className='flex items-center space-x-2'>
+                      <div className='w-1.5 h-1.5 bg-green-400 rounded-full md:w-2 md:h-2'></div>
+                      <span className='text-xs text-gray-300 md:text-sm'>Hỗ trợ trả góp 0%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Bottom Section - Call to Action */}
-          <div className='mt-8 flex items-center justify-between rounded-2xl bg-gradient-to-r from-purple-900 to-blue-900 p-8 text-white'>
+          <div className='mt-6 flex flex-col items-center justify-between gap-6 rounded-2xl bg-gradient-to-r from-purple-900 to-blue-900 p-6 text-white md:mt-8 md:flex-row md:p-8'>
             <div className='max-w-2xl'>
-              <h3 className='mb-4 text-3xl font-bold'>Khám phá bộ sưu tập máy tính cao cấp</h3>
-              <p className='mb-6 text-lg text-purple-200'>
+              <h3 className='mb-3 text-2xl font-bold md:mb-4 md:text-3xl'>Khám phá bộ sưu tập máy tính cao cấp</h3>
+              <p className='mb-4 text-base text-purple-200 md:mb-6 md:text-lg'>
                 Nâng tầm trải nghiệm công việc với công nghệ tiên tiến nhất
               </p>
               <Link 
                 href="/product"
-                className='inline-flex items-center space-x-2 rounded-full bg-white px-6 py-3 text-purple-900 transition-colors hover:bg-purple-100'
+                className='inline-flex items-center space-x-2 rounded-full bg-white px-4 py-2 text-sm text-purple-900 transition-colors hover:bg-purple-100 md:px-6 md:py-3 md:text-base'
               >
                 <span>Xem tất cả</span>
-                <HiOutlineArrowRight className='h-5 w-5' />
+                <HiOutlineArrowRight className='h-4 w-4 md:h-5 md:w-5' />
               </Link>
             </div>
-            <div className='hidden md:flex flex-col items-center justify-center space-y-4'>
+            <div className='flex flex-col items-center justify-center space-y-3 md:space-y-4'>
               <div className='text-center'>
-                <span className='block text-6xl font-bold text-yellow-400 drop-shadow-lg'>0%</span>
-                <span className='block text-2xl font-semibold text-white tracking-wider'>LÃI SUẤT</span>
+                <span className='block text-4xl font-bold text-yellow-400 drop-shadow-lg md:text-6xl'>0%</span>
+                <span className='block text-xl font-semibold text-white tracking-wider md:text-2xl'>LÃI SUẤT</span>
               </div>
               <div className='text-center'>
-                <p className='text-lg text-purple-200'>Hỗ trợ trả góp</p>
-                <p className='text-lg text-purple-200'>lên đến 24 tháng</p>
+                <p className='text-base text-purple-200 md:text-lg'>Hỗ trợ trả góp</p>
+                <p className='text-base text-purple-200 md:text-lg'>lên đến 24 tháng</p>
               </div>
-              <div className='mt-4 rounded-full bg-yellow-400/20 px-6 py-2 backdrop-blur-sm'>
-                <span className='text-sm font-medium text-yellow-400'>Duyệt nhanh 15 phút</span>
+              <div className='mt-2 rounded-full bg-yellow-400/20 px-4 py-1 backdrop-blur-sm md:mt-4 md:px-6 md:py-2'>
+                <span className='text-xs font-medium text-yellow-400 md:text-sm'>Duyệt nhanh 15 phút</span>
               </div>
             </div>
           </div>
