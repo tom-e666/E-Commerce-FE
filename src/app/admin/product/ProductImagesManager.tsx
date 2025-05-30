@@ -1,14 +1,16 @@
+"use client";
+
 import React, { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { X, UploadCloud, RefreshCw } from "lucide-react";
+import { X, UploadCloud, RefreshCw, Plus } from "lucide-react";
 import Image from "next/image";
 
 interface ProductImagesManagerProps {
   images: string[];
   setImages: (imgs: string[]) => void;
-  productName: string
+  productName: string;
 }
 
 interface FileWithPreview {
@@ -17,10 +19,15 @@ interface FileWithPreview {
   publicId?: string;
 }
 
-export default function ProductImagesManager({ images, setImages, productName }: ProductImagesManagerProps) {
+export default function ProductImagesManager({
+  images,
+  setImages,
+  productName,
+}: ProductImagesManagerProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [filesToUpload, setFilesToUpload] = useState<FileWithPreview[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [imageUrl, setImageUrl] = useState("");
 
   // Cleanup preview URLs khi component unmount
   useEffect(() => {
@@ -40,7 +47,8 @@ export default function ProductImagesManager({ images, setImages, productName }:
 
   const checkImageDimensions = (file: File, width: number, height: number): Promise<boolean> => {
     return new Promise((resolve) => {
-      const img = new Image();
+      // Use HTMLImageElement constructor explicitly
+      const img = document.createElement('img') as HTMLImageElement;
       img.onload = () => {
         const isValid = img.width === width && img.height === height;
         URL.revokeObjectURL(img.src);
@@ -142,7 +150,7 @@ export default function ProductImagesManager({ images, setImages, productName }:
 
       // Cập nhật danh sách ảnh sau khi upload thành công
       if (uploadedUrls.length > 0) {
-        setImages(prev => [...prev, ...uploadedUrls]);
+        setImages((prev:any) => [...prev, ...uploadedUrls]);
         // Xóa các file đã upload thành công
         setFilesToUpload([]);
       }
@@ -163,13 +171,28 @@ export default function ProductImagesManager({ images, setImages, productName }:
 
   const removeUploadedImage = (index: number) => {
     const newImages = [...images];
-    // const removedImage = newImages.splice(index, 1)[0];
+    newImages.splice(index, 1);
     
     // Gọi API xóa ảnh trên server nếu cần
     // deleteImageFromServer(removedImage);
     
     setImages(newImages);
     toast.success("Đã xóa ảnh");
+  };
+
+  const addImage = () => {
+    if (imageUrl && !images.includes(imageUrl)) {
+      const newImages = [...images, imageUrl];
+      setImages(newImages);
+      setImageUrl("");
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addImage();
+    }
   };
 
   return (
@@ -268,6 +291,25 @@ export default function ProductImagesManager({ images, setImages, productName }:
           </div>
         </div>
       )}
+
+      {/* Thêm ảnh từ URL */}
+      <div className="flex items-center gap-2">
+        <Input
+          placeholder="Nhập URL hình ảnh"
+          value={imageUrl}
+          onChange={(e) => setImageUrl(e.target.value)}
+          onKeyPress={handleKeyPress}
+          className="flex-1"
+        />
+        <Button
+          type="button"
+          onClick={addImage}
+          className="flex items-center gap-1"
+        >
+          <Plus className="h-4 w-4" />
+          Thêm ảnh
+        </Button>
+      </div>
     </div>
   );
 }

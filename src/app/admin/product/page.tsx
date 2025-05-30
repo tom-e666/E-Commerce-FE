@@ -31,13 +31,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { motion, useMotionValue, AnimatePresence } from "framer-motion";
 import { Plus, X, Edit, Trash2, Search, RefreshCw, Package, DollarSign, TrendingUp, Archive } from "lucide-react";
 import ProductImagesManager from "./ProductImagesManager";
-
+import {Loader2} from "lucide-react";
 import { provideGlobalGridOptions } from 'ag-grid-community';
 provideGlobalGridOptions({
     theme: "legacy",
@@ -53,15 +54,15 @@ const productFormSchema = z.object({
     stock: z.coerce.number().int().min(0, {
         message: "Số lượng tồn kho phải là số nguyên không âm.",
     }),
-    status: z.boolean().default(true),
+    status: z.boolean(),
     brand_id: z.string().min(1, {
         message: "Vui lòng chọn thương hiệu.",
     }),
     description: z.string().min(10, {
         message: "Mô tả sản phẩm phải có ít nhất 10 ký tự.",
     }),
-    images: z.array(z.string()).default([]),
-    keywords: z.array(z.string()).default([]),
+    images: z.array(z.string()),
+    keywords: z.array(z.string()),
     specifications: z.array(
         z.object({
             name: z.string().min(1, {
@@ -71,7 +72,7 @@ const productFormSchema = z.object({
                 message: "Giá trị thông số không được để trống.",
             })
         })
-    ).default([]),
+    ),
 });
 
 interface Product {
@@ -528,7 +529,7 @@ export default function ProductManagement() {
 }
 
 // Stat Card Component
-const StatCard = ({ title, value, icon, delay = 0 }) => {
+const StatCard = ({ title, value, icon, delay = 0 }:{title:any, value:any, icon:any, delay?:number}) => {
     return (
         <motion.div 
             className="bg-white/70 backdrop-blur-sm rounded-xl shadow-md p-6 border border-white/30 relative overflow-hidden"
@@ -600,7 +601,6 @@ function ProductFormDialog({
     const [isProcessing, setIsProcessing] = useState(false);
 
     const form = useForm<z.infer<typeof productFormSchema>>({
-        // @ts-expect-error any
         resolver: zodResolver(productFormSchema),
         defaultValues: {
             name: "",
@@ -941,12 +941,11 @@ function ProductFormDialog({
                                 <FormLabel>Hình ảnh sản phẩm</FormLabel>
                                 <ProductImagesManager 
                                     images={images} 
-                                    setImages={setImages} 
-                                    productName={form.watch("name")}
-                                    onImagesChange={(newImages) => {
+                                    setImages={(newImages) => {
                                         setImages(newImages);
                                         form.setValue('images', newImages);
                                     }}
+                                    productName={form.watch("name")}
                                 />
                                 {form.formState.errors.images && (
                                     <p className="text-sm font-medium text-destructive mt-1">
@@ -967,16 +966,18 @@ function ProductFormDialog({
                                 </div>
                                 <div className="flex flex-wrap gap-2 mt-2">
                                     {keywords.map((kw, idx) => (
-                                        <div key={idx} className="bg-gray-100 px-3 py-1 rounded-full flex items-center space-x-1">
-                                            <span>{kw}</span>
-                                            <button
+                                        <Badge key={idx} variant="outline" className="flex items-center gap-1">
+                                            {kw}
+                                            <Button
                                                 type="button"
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-4 w-4 p-0 hover:bg-red-100"
                                                 onClick={() => removeKeyword(idx)}
-                                                className="text-gray-500 hover:text-red-500"
                                             >
-                                                ✕
-                                            </button>
-                                        </div>
+                                                <X className="h-3 w-3" />
+                                            </Button>
+                                        </Badge>
                                     ))}
                                 </div>
                             </div>
@@ -1000,23 +1001,22 @@ function ProductFormDialog({
                                 </Button>
                                 <div className="mt-2 border rounded-md divide-y">
                                     {specifications.map((spec, idx) => (
-                                        <div key={idx} className="flex justify-between items-center p-2">
+                                        <div key={idx} className="flex items-center justify-between p-2">
                                             <div>
-                                                <span className="font-medium">{spec.name}: </span>
-                                                <span>{spec.value}</span>
+                                                <span className="font-medium">{spec.name}:</span>
+                                                <span className="ml-2">{spec.value}</span>
                                             </div>
-                                            <button
+                                            <Button
                                                 type="button"
+                                                variant="ghost"
+                                                size="sm"
                                                 onClick={() => removeSpecification(idx)}
-                                                className="text-red-500"
+                                                className="h-8 w-8 p-0 hover:bg-red-100"
                                             >
-                                                Xóa
-                                            </button>
+                                                <X className="h-4 w-4" />
+                                            </Button>
                                         </div>
                                     ))}
-                                    {specifications.length === 0 && (
-                                        <p className="p-2 text-gray-500 italic">Chưa có thông số nào</p>
-                                    )}
                                 </div>
                             </div>
                         </div>
@@ -1033,7 +1033,7 @@ function ProductFormDialog({
                                             className="flex items-center gap-1"
                                         >
                                             {isProcessing ? (
-                                                <RefreshCw className="h-4 w-4 animate-spin" />
+                                                <Loader2 className="h-4 w-4 animate-spin" />
                                             ) : (
                                                 <Trash2 className="h-4 w-4" />
                                             )}
@@ -1060,7 +1060,7 @@ function ProductFormDialog({
                                     className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white"
                                 >
                                     {isProcessing ? (
-                                        <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+                                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
                                     ) : (
                                         product ? <Edit className="h-4 w-4 mr-2" /> : <Plus className="h-4 w-4 mr-2" />
                                     )}

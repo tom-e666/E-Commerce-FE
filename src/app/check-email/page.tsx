@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Loader2, MailOpen, ArrowLeft, Mail, Info, CheckCircle } from 'lucide-react'
 
-export default function CheckEmailPage() {
+function CheckEmailContent() {
   const searchParams = useSearchParams()
   const email = searchParams.get('email')
   const [isSending, setIsSending] = useState(false)
@@ -53,8 +53,9 @@ export default function CheckEmailPage() {
       setIsSending(false)
     }
   }
+
   return (
-    <div className="container mx-auto max-w-md py-12 mb-8"> {/* Added margin bottom */}
+    <div className="container mx-auto max-w-md py-12 mb-8">
       <Card className="w-full"> 
         <CardHeader className="text-center">
           <Mail className="h-12 w-12 mx-auto mb-4 text-primary" />
@@ -130,5 +131,22 @@ export default function CheckEmailPage() {
         </CardFooter>
       </Card>
     </div>
+  )
+}
+
+export default function CheckEmailPage() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto max-w-md py-12 mb-8">
+        <Card className="w-full">
+          <CardContent className="p-6 text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+            <p>Đang tải...</p>
+          </CardContent>
+        </Card>
+      </div>
+    }>
+      <CheckEmailContent />
+    </Suspense>
   )
 }

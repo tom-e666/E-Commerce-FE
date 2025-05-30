@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { CheckCircle2, XCircle, Loader2, ArrowLeft, Package } from "lucide-react";
@@ -8,16 +8,17 @@ import { Button } from "@/components/ui/button";
 import {
     Card,
     CardContent,
+    CardDescription,
     CardFooter,
     CardHeader,
     CardTitle,
-    CardDescription,
 } from "@/components/ui/card";
 import { useOrder } from "@/hooks/useOrder";
+import { Order } from "@/types/order";
 
-export default function CheckoutStatusPage() {
-    const router = useRouter();
+function CheckoutStatusContent() {
     const searchParams = useSearchParams();
+    const router = useRouter();
     const { getOrderByTransaction } = useOrder();
     const vnpTxnRef = searchParams.get("vnp_TxnRef");
     const vnpResponseCode = searchParams.get("vnp_ResponseCode");
@@ -127,5 +128,22 @@ export default function CheckoutStatusPage() {
                 </CardFooter>
             </Card>
         </div>
+    );
+}
+
+export default function CheckoutStatusPage() {
+    return (
+        <Suspense fallback={
+            <div className="container mx-auto py-12 px-4">
+                <Card className="max-w-md mx-auto">
+                    <CardContent className="p-6 text-center">
+                        <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+                        <p>Đang tải...</p>
+                    </CardContent>
+                </Card>
+            </div>
+        }>
+            <CheckoutStatusContent />
+        </Suspense>
     );
 }

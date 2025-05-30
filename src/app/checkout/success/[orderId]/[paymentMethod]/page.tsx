@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { CheckCircle2, Loader2, Package, ArrowLeft } from 'lucide-react';
@@ -19,34 +19,25 @@ import {
 import { Separator } from "@/components/ui/separator";
 import OrderItem from "@/components/checkout/OrderItem";
 
-export default function CheckoutSuccessPage() {
+function CheckoutSuccessContent() {
     const router = useRouter();
-    const params = useParams<{ orderId: string, paymentMethod: string }>();
+    const params = useParams();
     const [orderId, setOrderId] = useState<string | null>(null);
     const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
     const { getOrder, loading: orderLoading, currentOrder } = useOrder();
     const { handleFetchShippingByOrderId, shippingData, loading: shippingLoading } = useShipping();
     const [loading, setLoading] = useState(true);
 
-    // First, resolve the params which is now a Promise in Next.js 15
+    // Extract params
     useEffect(() => {
-        async function resolveParams() {
-            try {
-                // In Next.js 15, params is a Promise that needs to be resolved
-                const resolvedParams = await params;
-
-                if (resolvedParams) {
-                    setOrderId(resolvedParams.orderId);
-                    setPaymentMethod(resolvedParams.paymentMethod);
-                }
-            } catch (error) {
-                console.error("Error resolving params:", error);
-                router.push('/');
-            }
+        if (params) {
+            const orderIdParam = Array.isArray(params.orderId) ? params.orderId[0] : params.orderId;
+            const paymentMethodParam = Array.isArray(params.paymentMethod) ? params.paymentMethod[0] : params.paymentMethod;
+            
+            setOrderId(orderIdParam);
+            setPaymentMethod(paymentMethodParam);
         }
-
-        resolveParams();
-    }, [params, router]);
+    }, [params]);
 
     // Then, load the order data once we have the orderId
     useEffect(() => {
@@ -100,6 +91,7 @@ export default function CheckoutSuccessPage() {
             </div>
         );
     }
+
     const paymentMethodText =
         paymentMethod === 'cod' ? 'Thanh toán khi nhận hàng (COD)' :
             paymentMethod === 'cc' ? 'Thẻ quốc tế (Visa/Mastercard/JCB)' :
@@ -209,5 +201,20 @@ export default function CheckoutSuccessPage() {
                 </CardFooter>
             </Card>
         </div>
+    );
+}
+
+export default function CheckoutSuccessPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="flex flex-col items-center space-y-4">
+                    <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                    <p className="text-lg">Đang tải...</p>
+                </div>
+            </div>
+        }>
+            <CheckoutSuccessContent />
+        </Suspense>
     );
 }

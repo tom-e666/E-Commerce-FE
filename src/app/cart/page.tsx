@@ -1,7 +1,9 @@
 'use client'
-import { useCart } from "@/hooks/useCart";
-import { useState } from "react";
-import { toast } from "sonner";
+import { useEffect, useState } from 'react';
+import { useCart } from '@/hooks/useCart';
+import { useRouter } from 'next/navigation';
+import { useAuthContext } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 import Image from "next/image";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
@@ -26,41 +28,12 @@ import {
 } from "@/components/ui/table";
 import { MinusIcon, PlusIcon, ShoppingCart, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useRouter } from "next/navigation";
-import {createOrder } from "@/services/order/endpoints";
 
 export default function CartPage() {
-    const router = useRouter();
-    const {
-        cartItems,
-        cartCount,
-        loading,
-        removeFromCart,
-        updateQuantity,
-        clearCart
-    } = useCart();
-
+    const { cartItems, loading, updateQuantity, removeFromCart, clearCart } = useCart();
     const [isUpdating, setIsUpdating] = useState<string | null>(null);
-    // Thêm state để lưu các sản phẩm được chọn
-    const [selectedItems, setSelectedItems] = useState<string[]>([]);
-
-    // Hàm chọn/bỏ chọn từng sản phẩm
-    const handleSelectItem = (productId: string) => {
-        setSelectedItems((prev) =>
-            prev.includes(productId)
-                ? prev.filter((id) => id !== productId)
-                : [...prev, productId]
-        );
-    };
-
-    // Hàm chọn/bỏ chọn tất cả
-    const handleSelectAll = () => {
-        if (selectedItems.length === cartItems.length) {
-            setSelectedItems([]);
-        } else {
-            setSelectedItems(cartItems.map((item) => item.product.product_id));
-        }
-    };
+    const router = useRouter();
+    const { user } = useAuthContext();
 
     const totalPrice = cartItems.reduce((total, item) => {
         return total + (item.product.price || 0) * item.quantity;
@@ -71,17 +44,16 @@ export default function CartPage() {
 
         setIsUpdating(productId);
         try {
-            const response = await updateQuantity(productId, newQuantity)
+            const response = await updateQuantity(productId, newQuantity);
             toast.success(response);
         } catch (error) {
             // @ts-expect-error catch error
             toast.error(error.message);
-        }
-        finally {
-
+        } finally {
             setIsUpdating(null);
         }
     };
+
     const handleRemoveItem = async (productId: string) => {
         setIsUpdating(productId);
         try {
@@ -98,32 +70,18 @@ export default function CartPage() {
 
     const handleClearCart = async () => {
         try {
+            setIsUpdating('clearing');
             const response = await clearCart();
             toast.success(response);
         } catch (error) {
+            console.error('Error clearing cart:', error);
             // @ts-expect-error catch error
             toast.error(error.message);
+        } finally {
+            setIsUpdating(null);
         }
     };
-    const handleCheckout = async () => {
-        try {
-            const toastId = toast.loading("Đang tạo đơn hàng");
-            // const response = await createOrderFromCartAPI();
-            const response = await createOrder(selectedItems.map((productId) => ({
-                product_id: productId,
-                quantity: cartItems.find(item => item.product.product_id === productId)?.quantity || 1
-            })));
-            console.log(response);
-            if (!response?.data) {
-                throw new Error("Có lỗi! Đơn hàng không được tạo!");
-            }
-            sessionStorage.setItem("newOrder", JSON.stringify(response.data.createOrder.order));
-            toast.dismiss(toastId);
-            router.push("/checkout");
-        } catch {
-            toast.error("Có lỗi! Đơn hàng không được tạo!");
-        }
-    };
+
     if (loading) {
         return (
             <div className="container mx-auto py-10">
@@ -178,7 +136,7 @@ export default function CartPage() {
                 <CardHeader className="flex flex-row items-center justify-between">
                     <div>
                         <CardTitle className="text-2xl">Giỏ hàng của bạn</CardTitle>
-                        <CardDescription>{cartCount} sản phẩm trong giỏ hàng</CardDescription>
+                        <CardDescription>{cartItems.length} sản phẩm trong giỏ hàng</CardDescription>
                     </div>
                     <Button
                         variant="outline"
@@ -197,8 +155,8 @@ export default function CartPage() {
                                 <TableHead className="w-10">
                                     <input
                                         type="checkbox"
-                                        checked={selectedItems.length === cartItems.length && cartItems.length > 0}
-                                        onChange={handleSelectAll}
+                                        checked={cartItems.length > 0}
+                                        onChange={handleClearCart}
                                         aria-label="Chọn tất cả"
                                     />
                                 </TableHead>
@@ -215,8 +173,8 @@ export default function CartPage() {
                                     <TableCell>
                                         <input
                                             type="checkbox"
-                                            checked={selectedItems.includes(item.product.product_id)}
-                                            onChange={() => handleSelectItem(item.product.product_id)}
+                                            checked={true}
+                                            onChange={() => { }}
                                             aria-label={`Chọn sản phẩm ${item.product.name}`}
                                         />
                                     </TableCell>
@@ -291,7 +249,7 @@ export default function CartPage() {
                             Tiếp tục mua sắm
                         </Link>
                     </Button>
-                    <Button onClick={handleCheckout} disabled={cartItems.length === 0}>
+                    <Button onClick={() => { }} disabled={cartItems.length === 0}>
                         Thanh toán
                     </Button>
                 </CardFooter>
