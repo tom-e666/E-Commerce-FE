@@ -24,19 +24,36 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  // Add headers to handle mixed content
+  
+  // Loại bỏ CSP header để cho phép HTTP requests
   async headers() {
     return [
       {
         source: '/(.*)',
         headers: [
           {
-            key: 'Content-Security-Policy',
-            value: process.env.NODE_ENV === 'development' 
-              ? "upgrade-insecure-requests; connect-src 'self' http://20.11.66.22:8000 https://*.ngrok-free.app ws://localhost:* wss://localhost:*;"
-              : "upgrade-insecure-requests;",
+            key: 'Access-Control-Allow-Origin',
+            value: '*',
+          },
+          {
+            key: 'Access-Control-Allow-Methods',
+            value: 'GET, POST, PUT, DELETE, OPTIONS',
+          },
+          {
+            key: 'Access-Control-Allow-Headers',
+            value: 'Content-Type, Authorization',
           },
         ],
+      },
+    ];
+  },
+
+  // Thêm proxy để tránh mixed content
+  async rewrites() {
+    return [
+      {
+        source: '/api/graphql',
+        destination: 'http://20.11.66.22:8000/graphql',
       },
     ];
   },
