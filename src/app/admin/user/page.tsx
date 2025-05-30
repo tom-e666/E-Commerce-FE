@@ -64,7 +64,7 @@ export default function UserManagement() {
     const [selectedUser, setSelectedUser] = useState(null);
     const { users, getUsers, updateUserRole, User } = useUser();
     const [forceUpdateKey, setForceUpdateKey] = useState(0);
-    const [gridData, setGridData] = useState<typeof User[]>([]);
+    // const [gridData, setGridData] = useState<typeof User[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [filteredUsers, setFilteredUsers] = useState<typeof User[]>([]);
@@ -130,7 +130,7 @@ export default function UserManagement() {
     ]);
 
     useEffect(() => {
-        setGridData(users);
+        // setGridData(users);
         setFilteredUsers(users);
         forceUpdate();
     }, [users]);

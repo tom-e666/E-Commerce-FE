@@ -98,7 +98,7 @@ export default function ProductDetailPage() {
           products.length === 0 ? getProducts() : Promise.resolve()
         ]);
         return true;
-      } catch (error) {
+      } catch {
         return false;
       }
     };

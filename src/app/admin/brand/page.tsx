@@ -51,7 +51,7 @@ export default function BrandManagement() {
     const [selectedBrand, setSelectedBrand] = useState<Brand | null>(null);
     const { getBrands, brands, createBrand, updateBrand, deleteBrand } = useBrand();
     const [forceUpdateKey, setForceUpdateKey] = useState(0);
-    const [gridData, setGridData] = useState<Brand[]>([]);
+    // const [gridData, setGridData] = useState<Brand[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [filteredBrands, setFilteredBrands] = useState<Brand[]>([]);
@@ -82,7 +82,7 @@ export default function BrandManagement() {
     ]);
 
     useEffect(() => { 
-        setGridData(brands); 
+        // setGridData(brands); 
         setFilteredBrands(brands);
         forceUpdate(); 
     }, [brands]);
@@ -435,7 +435,14 @@ export default function BrandManagement() {
 }
 
 // Stat Card Component
-const StatCard = ({ title, value, icon, delay = 0 }) => {
+interface StatCardProps {
+    title: string;
+    value: number;
+    icon: React.ReactNode;
+    delay?: number;
+}
+
+const StatCard = ({ title, value, icon, delay = 0 }: StatCardProps) => {
     return (
         <motion.div 
             className="bg-white/70 backdrop-blur-sm rounded-xl shadow-md p-6 border border-white/30 relative overflow-hidden"

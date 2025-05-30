@@ -13,12 +13,12 @@ function getTokens(skipLogging = false) {
   const refreshToken = localStorage.getItem('refreshToken') || localStorage.getItem('refresh_token');
 
   // Chỉ log khi không yêu cầu bỏ qua logging
-  // if (!skipLogging) {
-  //   console.log('Getting tokens for Apollo client:',
+  if (!skipLogging) {
+    console.log('Getting tokens for Apollo client:',
   //     accessToken ? 'Access token found' : 'No access token',
   //     refreshToken ? 'Refresh token found' : 'No refresh token'
-  //   );
-  // }
+    );
+  }
 
   return { accessToken, refreshToken };
 }

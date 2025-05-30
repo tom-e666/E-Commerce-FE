@@ -2,12 +2,12 @@ import React, { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { X, UploadCloud, Image as ImageIcon, RefreshCw } from "lucide-react";
+import { X, UploadCloud, Image as RefreshCw } from "lucide-react";
 
 interface ProductImagesManagerProps {
   images: string[];
-  setImages: (imgs: string[]) => void;
-  productName: string
+  setImages: React.Dispatch<React.SetStateAction<string[]>>; // This allows function updates
+  productName: string;
 }
 
 interface FileWithPreview {
@@ -141,7 +141,7 @@ export default function ProductImagesManager({ images, setImages, productName }:
 
       // Cập nhật danh sách ảnh sau khi upload thành công
       if (uploadedUrls.length > 0) {
-        setImages(prev => [...prev, ...uploadedUrls]);
+        setImages((prev: string[]) => [...prev, ...uploadedUrls]);
         // Xóa các file đã upload thành công
         setFilesToUpload([]);
       }
@@ -160,9 +160,10 @@ export default function ProductImagesManager({ images, setImages, productName }:
     setFilesToUpload(newFiles);
   };
 
-  const removeUploadedImage = (index: number) => {
+  const removeUploadedImage = () => {
+  // const removeUploadedImage = (index: number) => {
     const newImages = [...images];
-    const removedImage = newImages.splice(index, 1)[0];
+    // const removedImage = newImages.splice(index, 1)[0];
     
     // Gọi API xóa ảnh trên server nếu cần
     // deleteImageFromServer(removedImage);
@@ -248,7 +249,8 @@ export default function ProductImagesManager({ images, setImages, productName }:
                 />
                 <button
                   type="button"
-                  onClick={() => removeUploadedImage(index)}
+                  onClick={() => removeUploadedImage()}
+                  // onClick={() => removeUploadedImage(index)}
                   className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                   title="Xóa ảnh này"
                 >

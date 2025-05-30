@@ -98,7 +98,7 @@ export default function ProductManagement() {
     const { getProducts, products, createProduct, updateProduct, deleteProduct } = useProduct();
     const { getBrands, brands } = useBrand();
     const [forceUpdateKey, setForceUpdateKey] = useState(0);
-    const [gridData, setGridData] = useState<Product[]>([]);
+    // const [gridData, setGridData] = useState<Product[]>([]);
     const loadingToastRef = useRef<string | number | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
@@ -154,7 +154,7 @@ export default function ProductManagement() {
     ]);
 
     useEffect(() => {
-        setGridData(products);
+        // setGridData(products);
         setFilteredProducts(products);
         forceUpdate();
     }, [products]);
@@ -569,14 +569,40 @@ const StatCard = ({ title, value, icon, delay = 0 }) => {
     );
 };
 
+interface ProductDetails {
+    description: string;
+    images: string[];
+    keywords: string[];
+    specifications: {
+        name: string;
+        value: string;
+    }[];
+}
+
+interface ProductUpdateData {
+    name: string;
+    price: number;
+    stock: number;
+    status: boolean;
+    brand_id: string;
+    details: ProductDetails;
+}
+
 interface ProductFormProps {
     open: boolean;
     onClose: () => void;
     product: Product | null;
     onSubmit: () => void;
-    createProduct: (name: string, price: number, stock: number, status: boolean, brand_id: string, details: any) => Promise<any>;
-    updateProduct: (id: string, data: any) => Promise<any>;
-    deleteProduct: (id: string) => Promise<any>;
+    createProduct: (
+        name: string,
+        price: number,
+        stock: number,
+        status: boolean,
+        brand_id: string,
+        details: ProductDetails
+    ) => Promise<Product>;
+    updateProduct: (id: string, data: ProductUpdateData) => Promise<Product>;
+    deleteProduct: (id: string) => Promise<void>;
     brands: { id: string; name: string }[];
 }
 
@@ -668,21 +694,21 @@ function ProductFormDialog({
         form.setValue('specifications', newSpecs);
     };
 
-    const addImage = () => {
-        if (imageUrl && !images.includes(imageUrl)) {
-            const newImages = [...images, imageUrl];
-            setImages(newImages);
-            form.setValue('images', newImages);
-            setImageUrl("");
-        }
-    };
+    // const addImage = () => {
+    //     if (imageUrl && !images.includes(imageUrl)) {
+    //         const newImages = [...images, imageUrl];
+    //         setImages(newImages);
+    //         form.setValue('images', newImages);
+    //         setImageUrl("");
+    //     }
+    // };
 
-    const removeImage = (index: number) => {
-        const newImages = [...images];
-        newImages.splice(index, 1);
-        setImages(newImages);
-        form.setValue('images', newImages);
-    };
+    // const removeImage = (index: number) => {
+    //     const newImages = [...images];
+    //     newImages.splice(index, 1);
+    //     setImages(newImages);
+    //     form.setValue('images', newImages);
+    // };
 
     const addKeyword = () => {
         if (keyword && !keywords.includes(keyword)) {

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, CreditCard, WalletCards, Smartphone, Loader2, BanknoteIcon } from 'lucide-react';
+import { ArrowLeft, CreditCard, Loader2, BanknoteIcon } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';

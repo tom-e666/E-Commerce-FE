@@ -203,11 +203,13 @@ const Menubar = () => {
                                                 Trang cá nhân
                                             </DropdownMenuItem>
                                         </Link>
+                                        {mounted && user && user.role === "user" && (
                                         <Link href="/Order" passHref style={{ textDecoration: 'none' }}>
                                             <DropdownMenuItem>
                                                 Đơn hàng của tôi
                                             </DropdownMenuItem>
                                         </Link>
+                                        )}
                                         <DropdownMenuSeparator />
                                         <DropdownMenuItem onClick={handleLogout}>
                                             Đăng xuất
@@ -341,11 +343,13 @@ const Menubar = () => {
                                                     Trang cá nhân
                                                 </Button>
                                             </Link>
+                                            {mounted && user && user.role === "user" && (
                                             <Link href="/Order" passHref>
                                                 <Button variant="ghost" className="w-full justify-start text-white hover:bg-white hover:text-black">
                                                     Đơn hàng của tôi
                                                 </Button>
                                             </Link>
+                                            )}
                                             <Button
                                                 variant="ghost"
                                                 className="w-full justify-start text-white hover:bg-white hover:text-black"

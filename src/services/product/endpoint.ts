@@ -324,7 +324,7 @@ export const getProduct = (() => {
       if (cachedData?.getProduct) {
         return cachedData.getProduct;
       }
-    } catch (e) {
+    } catch {
       // Cache miss, continue with network request
     }
     
@@ -352,7 +352,7 @@ export const getProduct = (() => {
           message: isNetworkError
             ? 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng và thử lại.'
             : 'Có lỗi xảy ra khi tải thông tin sản phẩm',
-          product: null as any
+          product: null as Product | null
         };
       } finally {
         // Remove from the request cache after a short delay to allow for batched requests

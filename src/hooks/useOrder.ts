@@ -567,6 +567,7 @@ export const useOrder = () => {
         orders,
         currentOrder,
         setCurrentOrder,
+        getUserOrders,
         getOrders,
         getOrder,
         getOrderByTransaction,

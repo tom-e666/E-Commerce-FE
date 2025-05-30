@@ -45,7 +45,7 @@ export default function OrderManagement() {
     const [openDetail, setOpenDetail] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [filter, setFilter] = useState("all");
-    const { orders, getOrder, getOrders, confirmOrder, processingOrder, shipOrder, completeDelivery, cancelOrder, updateOrder, deleteOrder } = useOrder();
+    const { orders, getOrder, getOrders, confirmOrder, processingOrder, shipOrder, completeDelivery, cancelOrder } = useOrder();
     const [forceUpdateKey, setForceUpdateKey] = useState(0);
     const [gridData, setGridData] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
