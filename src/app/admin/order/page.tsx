@@ -51,7 +51,6 @@ export default function OrderManagement() {
     const [isLoading, setIsLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [filteredOrders, setFilteredOrders] = useState([]);
-    const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
     const mouseX = useMotionValue(0);
     const mouseY = useMotionValue(0);
     const loadingToastRef = useRef<string | number | null>(null);
@@ -60,12 +59,6 @@ export default function OrderManagement() {
         const { left, top } = e.currentTarget.getBoundingClientRect();
         mouseX.set(e.clientX - left);
         mouseY.set(e.clientY - top);
-    };
-
-    // Add status normalization function
-    const normalizeStatus = (status: string) => {
-        if (!status) return 'pending';
-        return status.toLowerCase();
     };
 
     const statusColors = new Map([
@@ -86,45 +79,6 @@ export default function OrderManagement() {
         completed: <Package className="h-4 w-4 mr-1" />,
         cancelled: <X className="h-4 w-4 mr-1" />,
         failed: <AlertCircle className="h-4 w-4 mr-1" />
-    };
-
-    const getStatusDisplayText = (status: string) => {
-        switch(status) {
-            case 'pending': return "Chờ xác nhận";
-            case 'confirmed': return "Đã xác nhận";
-            case 'processing': return "Đang xử lý";
-            case 'shipping': return "Đang giao hàng";
-            case 'completed': return "Hoàn thành";
-            case 'cancelled': return "Đã hủy";
-            case 'failed': return "Thất bại";
-            default: return status.charAt(0).toUpperCase() + status.slice(1);
-        }
-    };
-
-    const getAvailableActions = (status: string) => {
-        switch(status) {
-            case 'pending':
-                return [
-                    { action: 'confirm', label: 'Xác nhận đơn hàng', icon: <Check className="mr-2 h-4 w-4" />, variant: 'default' },
-                    { action: 'cancel', label: 'Hủy đơn hàng', icon: <X className="mr-2 h-4 w-4" />, variant: 'destructive' }
-                ];
-            case 'confirmed':
-                return [
-                    { action: 'process', label: 'Bắt đầu xử lý', icon: <Loader2 className="mr-2 h-4 w-4" />, variant: 'default' },
-                    { action: 'cancel', label: 'Hủy đơn hàng', icon: <X className="mr-2 h-4 w-4" />, variant: 'destructive' }
-                ];
-            case 'processing':
-                return [
-                    { action: 'ship', label: 'Giao hàng', icon: <Truck className="mr-2 h-4 w-4" />, variant: 'default' },
-                    { action: 'cancel', label: 'Hủy đơn hàng', icon: <X className="mr-2 h-4 w-4" />, variant: 'destructive' }
-                ];
-            case 'shipping':
-                return [
-                    { action: 'complete', label: 'Hoàn thành giao hàng', icon: <Package className="mr-2 h-4 w-4" />, variant: 'default' }
-                ];
-            default:
-                return [];
-        }
     };
 
     const [colDefs] = useState([
@@ -161,11 +115,21 @@ export default function OrderManagement() {
             minWidth: 130,
             // @ts-expect-error any
             cellRenderer: (params) => {
-                const status = normalizeStatus(params?.value || "unknown");
+                const status = params?.value || "unknown";
                 const statusClass = statusColors.get(status) || "bg-gray-100 text-gray-800";
                 // @ts-expect-error object deref
                 const icon = statusIcons[status] || <AlertCircle className="h-4 w-4 mr-1" />;
-                const displayText = getStatusDisplayText(status);
+                let displayText = status.charAt(0).toUpperCase() + status.slice(1);
+
+                switch(status) {
+                    case 'pending': displayText = "Chờ xác nhận"; break;
+                    case 'confirmed': displayText = "Đã xác nhận"; break;
+                    case 'processing': displayText = "Đang xử lý"; break;
+                    case 'shipping': displayText = "Đang giao hàng"; break;
+                    case 'completed': displayText = "Hoàn thành"; break;
+                    case 'cancelled': displayText = "Đã hủy"; break;
+                    case 'failed': displayText = "Thất bại"; break;
+                }
 
                 return (
                     <div className={`flex items-center justify-center px-2 py-1 rounded-full ${statusClass}`}>
@@ -196,7 +160,7 @@ export default function OrderManagement() {
     useEffect(() => {
         const filtered = filter === "all"
             ? orders
-            : orders.filter(order => normalizeStatus(order.status) === filter);
+            : orders.filter(order => order.status === filter);
         
         const searchFiltered = filtered.filter(order =>
             order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -265,7 +229,6 @@ export default function OrderManagement() {
     };
     // @ts-expect-error any
     const handleStatusChange = async (action, orderId) => {
-        setIsUpdatingStatus(true);
         try {
             switch (action) {
                 case 'confirm':
@@ -331,8 +294,6 @@ export default function OrderManagement() {
 
         } catch (error) {
             console.error("Error updating order status:", error);
-        } finally {
-            setIsUpdatingStatus(false);
         }
     };
     // @ts-expect-error any
@@ -567,25 +528,25 @@ export default function OrderManagement() {
             >
                 <StatCard 
                     title="Tổng đơn hàng" 
-                    value={orders?.length || 0} 
+                    value={orders.length} 
                     icon={<ShoppingCart className="w-5 h-5 text-blue-500" />}
                     delay={1.0}
                 />
                 <StatCard 
                     title="Chờ xác nhận" 
-                    value={orders?.filter(o => normalizeStatus(o.status) === 'pending')?.length || 0} 
+                    value={orders.filter(o => o.status === 'pending').length} 
                     icon={<Clock className="w-5 h-5 text-yellow-500" />}
                     delay={1.1}
                 />
                 <StatCard 
                     title="Hoàn thành" 
-                    value={orders?.filter(o => normalizeStatus(o.status) === 'completed')?.length || 0} 
+                    value={orders.filter(o => o.status === 'completed').length} 
                     icon={<Package className="w-5 h-5 text-green-500" />}
                     delay={1.2}
                 />
                 <StatCard 
                     title="Doanh thu" 
-                    value={`${((orders?.filter(o => normalizeStatus(o.status) === 'completed')?.reduce((sum, o) => sum + (o.total_price || 0), 0) || 0) / 1000000).toFixed(1)}M`} 
+                    value={`${(orders.filter(o => o.status === 'completed').reduce((sum, o) => sum + o.total_price, 0) / 1000000).toFixed(1)}M`} 
                     icon={<DollarSign className="w-5 h-5 text-purple-500" />}
                     delay={1.3}
                 />
@@ -642,7 +603,7 @@ export default function OrderManagement() {
             `}</style>
 
             <Dialog open={openDetail} onOpenChange={setOpenDetail}>
-                <DialogContent className="max-w-5xl border border-indigo-100 bg-white/95 backdrop-blur-sm shadow-xl">
+                <DialogContent className="max-w-4xl border border-indigo-100 bg-white/95 backdrop-blur-sm shadow-xl">
                     <DialogHeader>
                         <DialogTitle className="text-xl font-bold text-indigo-900 flex items-center gap-2">
                             <ShoppingCart className="h-5 w-5 text-indigo-600" />
@@ -655,132 +616,143 @@ export default function OrderManagement() {
 
                     {selectedOrder && (
                         <div className="space-y-6">
-                            {/* Status Update Section */}
-                            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-lg border border-indigo-200">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center space-x-3">
-                                        <Badge className={`${statusColors.get(normalizeStatus(selectedOrder.status))} text-sm px-3 py-1`}>
-                                            {statusIcons[normalizeStatus(selectedOrder.status)]}
-                                            {getStatusDisplayText(normalizeStatus(selectedOrder.status))}
-                                        </Badge>
-                                        <span className="text-sm text-gray-600">
-                                            Cập nhật lúc: {new Date(selectedOrder.created_at).toLocaleString('vi-VN')}
-                                        </span>
-                                    </div>
-                                    
-                                    <div className="flex space-x-2">
-                                        {getAvailableActions(normalizeStatus(selectedOrder.status)).map((actionItem) => (
-                                            <motion.div key={actionItem.action} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                                                <Button
-                                                    // @ts-expect-error variant
-                                                    variant={actionItem.variant}
-                                                    size="sm"
-                                                    onClick={() => handleStatusChange(actionItem.action, selectedOrder.id)}
-                                                    disabled={isUpdatingStatus}
-                                                    className={actionItem.variant === 'default' ? 
-                                                        "bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700" : 
-                                                        ""
-                                                    }
-                                                >
-                                                    {isUpdatingStatus ? (
-                                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                    ) : (
-                                                        actionItem.icon
-                                                    )}
-                                                    {actionItem.label}
-                                                </Button>
-                                            </motion.div>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Status Timeline */}
-                                <div className="mt-4 pt-4 border-t border-indigo-200">
-                                    <h4 className="text-sm font-medium text-gray-700 mb-3">Tiến trình đơn hàng</h4>
-                                    <div className="flex items-center space-x-2">
-                                        {{
-                                            pending: "Chờ xác nhận",
-                                            confirmed: "Đã xác nhận",
-                                            processing: "Đang xử lý",
-                                            shipping: "Đang giao hàng",
-                                            completed: "Hoàn thành"
-                                        }[selectedOrder.status]}
-                                    </div>
-                                </div>
-                            </div>
-
                             <Tabs defaultValue="details">
-                                <TabsList className="grid w-full grid-cols-3">
+                                <TabsList className="grid w-full grid-cols-2">
                                     <TabsTrigger value="details">Thông tin đơn hàng</TabsTrigger>
                                     <TabsTrigger value="items">Sản phẩm ({selectedOrder.items.length})</TabsTrigger>
-                                    <TabsTrigger value="history">Lịch sử</TabsTrigger>
                                 </TabsList>
 
                                 <TabsContent value="details" className="space-y-4">
-                                    <div className="grid grid-cols-2 gap-6">
-                                        <div className="space-y-4">
-                                            <div className="bg-gray-50 p-4 rounded-lg">
-                                                <h3 className="font-medium text-gray-900 mb-3">Thông tin chung</h3>
-                                                <div className="space-y-3">
-                                                    <div className="flex justify-between items-center">
-                                                        <span className="text-sm text-gray-600">Mã đơn hàng:</span>
-                                                        <span className="font-mono text-sm">{selectedOrder.id}</span>
-                                                    </div>
-                                                    <div className="flex justify-between items-center">
-                                                        <span className="text-sm text-gray-600">Ngày đặt hàng:</span>
-                                                        <span className="text-sm">{new Date(selectedOrder.created_at).toLocaleDateString('vi-VN')}</span>
-                                                    </div>
-                                                    <div className="flex justify-between items-center">
-                                                        <span className="text-sm text-gray-600">Mã khách hàng:</span>
-                                                        <span className="text-sm">{selectedOrder.user_id || "N/A"}</span>
-                                                    </div>
-                                                    <div className="flex justify-between items-center">
-                                                        <span className="text-sm text-gray-600">Tổng tiền:</span>
-                                                        <span className="font-medium text-lg text-indigo-600">{formatCurrency(selectedOrder.total_price)}</span>
-                                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <h3 className="font-medium">Thông tin chung</h3>
+                                            <div className="space-y-2 mt-2">
+                                                <div className="flex justify-between">
+                                                    <span className="text-muted-foreground">Ngày đặt hàng:</span>
+                                                    <span>{new Date(selectedOrder.created_at).toLocaleDateString('vi-VN')}</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span className="text-muted-foreground">Trạng thái:</span>
+                                                    <Badge className={statusColors.get(selectedOrder.status)}>
+                                                        {statusIcons[selectedOrder.status]}
+                                                        {selectedOrder.status === 'pending' ? 'Chờ xác nhận' :
+                                                          selectedOrder.status === 'confirmed' ? 'Đã xác nhận' :
+                                                          selectedOrder.status === 'processing' ? 'Đang xử lý' :
+                                                          selectedOrder.status === 'shipping' ? 'Đang giao hàng' :
+                                                          selectedOrder.status === 'completed' ? 'Hoàn thành' :
+                                                          selectedOrder.status === 'cancelled' ? 'Đã hủy' :
+                                                          selectedOrder.status === 'failed' ? 'Thất bại' :
+                                                          selectedOrder.status.charAt(0).toUpperCase() + selectedOrder.status.slice(1)}
+                                                    </Badge>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span className="text-muted-foreground">Mã khách hàng:</span>
+                                                    <span>{selectedOrder.user_id || "N/A"}</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span className="text-muted-foreground">Tổng tiền:</span>
+                                                    <span className="font-medium">{formatCurrency(selectedOrder.total_price)}</span>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className="space-y-4">
-                                            <div className="bg-gray-50 p-4 rounded-lg">
-                                                <h3 className="font-medium text-gray-900 mb-3">Thông tin giao hàng</h3>
-                                                <div className="space-y-3">
-                                                    <div className="flex justify-between items-center">
-                                                        <span className="text-sm text-gray-600">Người nhận:</span>
-                                                        <span className="text-sm">{selectedOrder.recipient_name || "N/A"}</span>
-                                                    </div>
-                                                    <div className="flex justify-between items-center">
-                                                        <span className="text-sm text-gray-600">Số điện thoại:</span>
-                                                        <span className="text-sm">{selectedOrder.recipient_phone || "N/A"}</span>
-                                                    </div>
-                                                    <div className="space-y-1">
-                                                        <span className="text-sm text-gray-600">Địa chỉ:</span>
-                                                        <p className="text-sm bg-white p-2 rounded border">{selectedOrder.shipping_address || "N/A"}</p>
-                                                    </div>
-                                                    {selectedOrder.notes && (
-                                                        <div className="space-y-1">
-                                                            <span className="text-sm text-gray-600">Ghi chú:</span>
-                                                            <p className="text-sm bg-white p-2 rounded border">{selectedOrder.notes}</p>
-                                                        </div>
-                                                    )}
+                                        <div>
+                                            <h3 className="font-medium">Thông tin giao hàng</h3>
+                                            <div className="space-y-2 mt-2">
+                                                <div className="flex justify-between">
+                                                    <span className="text-muted-foreground">Người nhận:</span>
+                                                    <span>{selectedOrder.recipient_name || "N/A"}</span>
                                                 </div>
+                                                <div className="flex justify-between">
+                                                    <span className="text-muted-foreground">Số điện thoại:</span>
+                                                    <span>{selectedOrder.recipient_phone || "N/A"}</span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-muted-foreground">Địa chỉ:</span>
+                                                    <p className="mt-1">{selectedOrder.shipping_address || "N/A"}</p>
+                                                </div>
+                                                {selectedOrder.notes && (
+                                                    <div>
+                                                        <span className="text-muted-foreground">Ghi chú:</span>
+                                                        <p className="mt-1">{selectedOrder.notes}</p>
+                                                    </div>
+                                                )}
                                             </div>
+                                        </div>
+                                    </div>
+
+                                    <Separator />
+
+                                    <div>
+                                        <h3 className="font-medium mb-2">Lịch sử đơn hàng</h3>
+                                        <div className="space-y-2">
+                                            <div className="flex items-center space-x-2">
+                                                <Badge className="bg-blue-100 text-blue-800">
+                                                    <Clock className="h-4 w-4 mr-1" />
+                                                    Đơn hàng được tạo
+                                                </Badge>
+                                                <span className="text-sm text-muted-foreground">
+                                                    {new Date(selectedOrder.created_at).toLocaleString('vi-VN')}
+                                                </span>
+                                            </div>
+
+                                            {selectedOrder.status !== 'pending' && selectedOrder.status !== 'cancelled' && (
+                                                <div className="flex items-center space-x-2">
+                                                    <Badge className="bg-green-100 text-green-800">
+                                                        <Check className="h-4 w-4 mr-1" />
+                                                        Đơn hàng đã xác nhận
+                                                    </Badge>
+                                                    <span className="text-sm text-muted-foreground">
+                                                        {/* This would typically come from the API */}
+                                                    </span>
+                                                </div>
+                                            )}
+
+                                            {(selectedOrder.status === 'shipped' || selectedOrder.status === 'delivered') && (
+                                                <div className="flex items-center space-x-2">
+                                                    <Badge className="bg-purple-100 text-purple-800">
+                                                        <Truck className="h-4 w-4 mr-1" />
+                                                        Đang giao hàng
+                                                    </Badge>
+                                                    <span className="text-sm text-muted-foreground">
+
+                                                    </span>
+                                                </div>
+                                            )}
+
+                                            {selectedOrder.status === 'delivered' && (
+                                                <div className="flex items-center space-x-2">
+                                                    <Badge className="bg-green-100 text-green-800">
+                                                        <Package className="h-4 w-4 mr-1" />
+                                                        Đã giao hàng
+                                                    </Badge>
+                                                    <span className="text-sm text-muted-foreground">
+                                                        {/* This would typically come from the API */}
+                                                    </span>
+                                                </div>
+                                            )}
+
+                                            {selectedOrder.status === 'cancelled' && (
+                                                <div className="flex items-center space-x-2">
+                                                    <Badge className="bg-red-100 text-red-800">
+                                                        <X className="h-4 w-4 mr-1" />
+                                                        Đã hủy
+                                                    </Badge>
+                                                    <span className="text-sm text-muted-foreground">
+                                                        {/* This would typically come from the API */}
+                                                    </span>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </TabsContent>
 
                                 <TabsContent value="items">
                                     <div className="space-y-4">
+
                                         {selectedOrder.items.map((item) => (
-                                            <motion.div 
-                                                key={item.id} 
-                                                className="flex items-center p-4 border rounded-lg hover:shadow-md transition-shadow"
-                                                initial={{ opacity: 0, y: 10 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                transition={{ duration: 0.3 }}
-                                            >
-                                                <div className="h-16 w-16 relative rounded overflow-hidden flex-shrink-0 mr-4 bg-gray-100">
+                                            <div key={item.id} className="flex items-center p-3 border rounded-md">
+                                                <div className="h-16 w-16 relative rounded overflow-hidden flex-shrink-0 mr-4">
                                                     {item.image ? (
                                                         <Image
                                                             src={item.image}
@@ -789,171 +761,36 @@ export default function OrderManagement() {
                                                             className="object-contain"
                                                         />
                                                     ) : (
-                                                        <div className="h-full w-full flex items-center justify-center">
+                                                        <div className="h-full w-full bg-gray-100 flex items-center justify-center">
                                                             <Package className="h-8 w-8 text-gray-400" />
                                                         </div>
                                                     )}
                                                 </div>
                                                 <div className="flex-1">
-                                                    <div className="flex justify-between items-start">
-                                                        <h4 className="font-medium text-gray-900">{item.name}</h4>
-                                                        <span className="text-lg font-semibold text-indigo-600">{formatCurrency(item.price)}</span>
+                                                    <div className="flex justify-between">
+                                                        <h4 className="font-medium">{item.name}</h4>
+                                                        <span>{formatCurrency(item.price)}</span>
                                                     </div>
-                                                    <div className="flex justify-between items-center mt-2">
-                                                        <div className="flex items-center space-x-4">
-                                                            <span className="text-sm text-gray-600">Số lượng: <span className="font-medium">{item.quantity}</span></span>
-                                                            <span className="text-sm text-gray-600">Mã SP: <span className="font-mono text-xs">{item.product_id}</span></span>
-                                                        </div>
-                                                        <span className="text-lg font-bold text-gray-900">
-                                                            {formatCurrency(item.price * item.quantity)}
-                                                        </span>
+                                                    <div className="flex justify-between mt-1 text-sm text-muted-foreground">
+                                                        <span>SL: {item.quantity}</span>
+                                                        <span>Thành tiền: {formatCurrency(item.price * item.quantity)}</span>
                                                     </div>
                                                 </div>
-                                            </motion.div>
+                                            </div>
                                         ))}
 
-                                        <div className="mt-6 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border border-indigo-200">
-                                            <div className="space-y-2">
-                                                <div className="flex justify-between text-sm">
-                                                    <span>Tạm tính:</span>
-                                                    <span>{formatCurrency(selectedOrder.total_price)}</span>
-                                                </div>
-                                                <div className="flex justify-between text-sm text-green-600">
-                                                    <span>Phí vận chuyển:</span>
-                                                    <span>Miễn phí</span>
-                                                </div>
-                                                <Separator />
-                                                <div className="flex justify-between text-lg font-bold text-indigo-900">
-                                                    <span>Tổng cộng:</span>
-                                                    <span>{formatCurrency(selectedOrder.total_price)}</span>
-                                                </div>
+                                        <div className="pt-4 border-t">
+                                            <div className="flex justify-between">
+                                                <span>Tạm tính:</span>
+                                                <span>{formatCurrency(selectedOrder.total_price)}</span>
                                             </div>
-                                        </div>
-                                    </div>
-                                </TabsContent>
-
-                                <TabsContent value="history">
-                                    <div className="space-y-4">
-                                        <div className="bg-gray-50 p-4 rounded-lg">
-                                            <h3 className="font-medium text-gray-900 mb-3">Lịch sử trạng thái</h3>
-                                            <div className="space-y-3">
-                                                {/* Always show order creation */}
-                                                <div className="flex items-center space-x-3 p-3 bg-white rounded border-l-4 border-blue-400">
-                                                    <Clock className="h-5 w-5 text-blue-500" />
-                                                    <div className="flex-1">
-                                                        <div className="flex justify-between items-center">
-                                                            <span className="font-medium">Đơn hàng được tạo</span>
-                                                            <span className="text-sm text-gray-500">
-                                                                {new Date(selectedOrder.created_at).toLocaleString('vi-VN')}
-                                                            </span>
-                                                        </div>
-                                                        <p className="text-sm text-gray-600">Đơn hàng đã được tạo trong hệ thống</p>
-                                                    </div>
-                                                </div>
-
-                                                {/* Show confirmed status if not pending or cancelled */}
-                                                {!['pending', 'cancelled', 'failed'].includes(normalizeStatus(selectedOrder.status)) && (
-                                                    <div className="flex items-center space-x-3 p-3 bg-white rounded border-l-4 border-green-400">
-                                                        <Check className="h-5 w-5 text-green-500" />
-                                                        <div className="flex-1">
-                                                            <div className="flex justify-between items-center">
-                                                                <span className="font-medium">Đơn hàng đã xác nhận</span>
-                                                                <span className="text-sm text-gray-500">
-                                                                    {/* Thời gian xác nhận sẽ có từ API sau */}
-                                                                </span>
-                                                            </div>
-                                                            <p className="text-sm text-gray-600">Đơn hàng đã được xác nhận và chuyển sang xử lý</p>
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                {/* Show processing status */}
-                                                {['processing', 'shipping', 'completed'].includes(normalizeStatus(selectedOrder.status)) && (
-                                                    <div className="flex items-center space-x-3 p-3 bg-white rounded border-l-4 border-orange-400">
-                                                        <Loader2 className="h-5 w-5 text-orange-500" />
-                                                        <div className="flex-1">
-                                                            <div className="flex justify-between items-center">
-                                                                <span className="font-medium">Đang xử lý đơn hàng</span>
-                                                                <span className="text-sm text-gray-500">
-                                                                    {/* Thời gian bắt đầu xử lý sẽ có từ API sau */}
-                                                                </span>
-                                                            </div>
-                                                            <p className="text-sm text-gray-600">Đơn hàng đang được chuẩn bị và đóng gói</p>
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                {/* Show shipping status */}
-                                                {['shipping', 'completed'].includes(normalizeStatus(selectedOrder.status)) && (
-                                                    <div className="flex items-center space-x-3 p-3 bg-white rounded border-l-4 border-purple-400">
-                                                        <Truck className="h-5 w-5 text-purple-500" />
-                                                        <div className="flex-1">
-                                                            <div className="flex justify-between items-center">
-                                                                <span className="font-medium">Đang giao hàng</span>
-                                                                <span className="text-sm text-gray-500">
-                                                                    {/* Thời gian bắt đầu giao hàng sẽ có từ API sau */}
-                                                                </span>
-                                                            </div>
-                                                            <p className="text-sm text-gray-600">Đơn hàng đang được vận chuyển đến địa chỉ giao hàng</p>
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                {/* Show completed status */}
-                                                {normalizeStatus(selectedOrder.status) === 'completed' && (
-                                                    <div className="flex items-center space-x-3 p-3 bg-white rounded border-l-4 border-green-500">
-                                                        <Package className="h-5 w-5 text-green-600" />
-                                                        <div className="flex-1">
-                                                            <div className="flex justify-between items-center">
-                                                                <span className="font-medium">Giao hàng thành công</span>
-                                                                <span className="text-sm text-gray-500">
-                                                                    {/* Thời gian hoàn thành sẽ có từ API sau */}
-                                                                </span>
-                                                            </div>
-                                                            <p className="text-sm text-gray-600">Đơn hàng đã được giao thành công đến khách hàng</p>
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                {/* Show cancelled status */}
-                                                {normalizeStatus(selectedOrder.status) === 'cancelled' && (
-                                                    <div className="flex items-center space-x-3 p-3 bg-white rounded border-l-4 border-red-400">
-                                                        <X className="h-5 w-5 text-red-500" />
-                                                        <div className="flex-1">
-                                                            <div className="flex justify-between items-center">
-                                                                <span className="font-medium">Đơn hàng đã bị hủy</span>
-                                                                <span className="text-sm text-gray-500">
-                                                                    {/* Thời gian hủy sẽ có từ API sau */}
-                                                                </span>
-                                                            </div>
-                                                            <p className="text-sm text-gray-600">Đơn hàng đã được hủy theo yêu cầu</p>
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                {/* Show failed status */}
-                                                {normalizeStatus(selectedOrder.status) === 'failed' && (
-                                                    <div className="flex items-center space-x-3 p-3 bg-white rounded border-l-4 border-gray-400">
-                                                        <AlertCircle className="h-5 w-5 text-gray-500" />
-                                                        <div className="flex-1">
-                                                            <div className="flex justify-between items-center">
-                                                                <span className="font-medium">Đơn hàng thất bại</span>
-                                                                <span className="text-sm text-gray-500">
-                                                                    {/* Thời gian thất bại sẽ có từ API sau */}
-                                                                </span>
-                                                            </div>
-                                                            <p className="text-sm text-gray-600">Đơn hàng không thể hoàn thành do lỗi xử lý</p>
-                                                        </div>
-                                                    </div>
-                                                )}
+                                            <div className="flex justify-between mt-1">
+                                                <span>Phí vận chuyển:</span>
+                                                <span>Miễn phí</span>
                                             </div>
-                                        </div>
-
-                                        {/* Action logs would go here in the future */}
-                                        <div className="bg-gray-50 p-4 rounded-lg">
-                                            <h3 className="font-medium text-gray-900 mb-3">Nhật ký thao tác</h3>
-                                            <div className="text-sm text-gray-500 text-center py-4">
-                                                Nhật ký chi tiết sẽ được cập nhật trong phiên bản tương lai
+                                            <div className="flex justify-between mt-2 font-bold">
+                                                <span>Tổng cộng:</span>
+                                                <span>{formatCurrency(selectedOrder.total_price)}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -962,7 +799,72 @@ export default function OrderManagement() {
                         </div>
                     )}
 
-                    <DialogFooter className="flex justify-end">
+                    <DialogFooter className="flex justify-between">
+                        <div className="flex space-x-2">
+                            {selectedOrder && selectedOrder.status === 'pending' && (
+                                <>
+                                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                        <Button
+                                            variant="destructive"
+                                            onClick={() => handleStatusChange('cancel', selectedOrder.id)}
+                                        >
+                                            <X className="mr-2 h-4 w-4" />
+                                            Hủy đơn hàng
+                                        </Button>
+                                    </motion.div>
+                                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                        <Button
+                                            variant="default"
+                                            onClick={() => handleStatusChange('confirm', selectedOrder.id)}
+                                            className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white"
+                                        >
+                                            <Check className="mr-2 h-4 w-4" />
+                                            Xác nhận
+                                        </Button>
+                                    </motion.div>
+                                </>
+                            )}
+
+                            {selectedOrder && selectedOrder.status === 'confirmed' && (
+                                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                    <Button
+                                        variant="default"
+                                        onClick={() => handleStatusChange('process', selectedOrder.id)}
+                                        className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white"
+                                    >
+                                        <Loader2 className="mr-2 h-4 w-4" />
+                                        Bắt đầu xử lý
+                                    </Button>
+                                </motion.div>
+                            )}
+
+                            {selectedOrder && selectedOrder.status === 'processing' && (
+                                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                    <Button
+                                        variant="default"
+                                        onClick={() => handleStatusChange('ship', selectedOrder.id)}
+                                        className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white"
+                                    >
+                                        <Truck className="mr-2 h-4 w-4" />
+                                        Giao hàng
+                                    </Button>
+                                </motion.div>
+                            )}
+
+                            {selectedOrder && selectedOrder.status === 'shipping' && (
+                                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                    <Button
+                                        variant="default"
+                                        onClick={() => handleStatusChange('complete', selectedOrder.id)}
+                                        className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white"
+                                    >
+                                        <Package className="mr-2 h-4 w-4" />
+                                        Hoàn thành giao hàng
+                                    </Button>
+                                </motion.div>
+                            )}
+                        </div>
+
                         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                             <Button variant="outline" onClick={handleCloseDetail} className="border-gray-200">
                                 <X className="h-4 w-4 mr-2" />

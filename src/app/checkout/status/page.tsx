@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useOrder } from "@/hooks/useOrder";
 import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import Image from "next/image";
 
 interface OrderItem {
   product_id: string;
@@ -30,13 +31,19 @@ export default function VNPayStatus() {
   const [order, setOrder] = useState<Order | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
 
+  // Add status normalization function similar to order management
+  const normalizeStatus = (status: string) => {
+    if (!status) return 'pending';
+    return status.toLowerCase();
+  };
+
   useEffect(() => {
     const fetchOrder = async () => {
       if (!vnpTxnRef) return;
       try {
         const response = await getOrderByTransaction(vnpTxnRef);
         console.log("Response from getOrderByTransaction:", response);
-        if (response.code === 200 && response.order && response.order.status === "confirmed") {
+        if (response.code === 200 && response.order && normalizeStatus(response.order.status) === "confirmed") {
           setOrder(response.order);
           setStatusMessage("Thanh toán thành công!");
           setIsSuccess(true);
@@ -52,7 +59,7 @@ export default function VNPayStatus() {
       }
     };
     fetchOrder();
-  }, [vnpTxnRef]);
+  }, [vnpTxnRef, getOrderByTransaction]);
 
   if (loading) {
     return (
@@ -92,29 +99,29 @@ export default function VNPayStatus() {
                   <h3 className="text-sm font-medium text-gray-500">Mã đơn hàng</h3>
                   <p className="mt-1 font-medium">{order.id}</p>
                 </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="bg-gray-50 p-4 rounded-lg">``
                   <h3 className="text-sm font-medium text-gray-500">Trạng thái</h3>
                   <p className="mt-1 font-medium capitalize">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      order.status === 'completed' 
+                      normalizeStatus(order.status) === 'completed' 
                         ? 'bg-green-100 text-green-800' 
-                        : order.status === 'pending'
+                        : normalizeStatus(order.status) === 'pending'
                         ? 'bg-yellow-100 text-yellow-800'
-                        : order.status === 'confirmed'
+                        : normalizeStatus(order.status) === 'confirmed'
                         ? 'bg-blue-100 text-blue-800'
-                        : order.status === 'processing'
+                        : normalizeStatus(order.status) === 'processing'
                         ? 'bg-orange-100 text-orange-800'
-                        : order.status === 'shipping'
+                        : normalizeStatus(order.status) === 'shipping'
                         ? 'bg-purple-100 text-purple-800'
                         : 'bg-red-100 text-red-800'
                     }`}>
-                      {order.status === 'pending' ? 'Chờ xác nhận' :
-                       order.status === 'confirmed' ? 'Đã xác nhận' :
-                       order.status === 'processing' ? 'Đang xử lý' :
-                       order.status === 'shipping' ? 'Đang giao hàng' :
-                       order.status === 'completed' ? 'Hoàn thành' :
-                       order.status === 'cancelled' ? 'Đã hủy' :
-                       order.status === 'failed' ? 'Thất bại' : order.status}
+                      {normalizeStatus(order.status) === 'pending' ? 'Chờ xác nhận' :
+                       normalizeStatus(order.status) === 'confirmed' ? 'Đã xác nhận' :
+                       normalizeStatus(order.status) === 'processing' ? 'Đang xử lý' :
+                       normalizeStatus(order.status) === 'shipping' ? 'Đang giao hàng' :
+                       normalizeStatus(order.status) === 'completed' ? 'Hoàn thành' :
+                       normalizeStatus(order.status) === 'cancelled' ? 'Đã hủy' :
+                       normalizeStatus(order.status) === 'failed' ? 'Thất bại' : order.status}
                     </span>
                   </p>
                 </div>
@@ -127,7 +134,13 @@ export default function VNPayStatus() {
                     <div key={item.product_id} className="flex items-start border-b pb-4 last:border-0 last:pb-0">
                       <div className="flex-shrink-0 h-16 w-16 rounded-md bg-gray-200 overflow-hidden">
                         {item.image ? (
-                          <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
+                          <Image 
+                            src={item.image} 
+                            alt={item.name} 
+                            width={64}
+                            height={64}
+                            className="h-full w-full object-cover" 
+                          />
                         ) : (
                           <div className="h-full w-full flex items-center justify-center text-gray-400">
                             <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
