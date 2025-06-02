@@ -1,6 +1,6 @@
 'use client'
 import { AgGridReact } from 'ag-grid-react';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 import { ClientSideRowModelModule } from 'ag-grid-community';
@@ -10,74 +10,22 @@ import { useBrand } from "@/hooks/useBrand";
 import { useProduct } from "@/hooks/useProduct";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
-import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-    FormDescription,
-} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { motion, useMotionValue, AnimatePresence } from "framer-motion";
-import { Plus, X, Edit, Trash2, Search, RefreshCw, Package, DollarSign, TrendingUp, Archive } from "lucide-react";
-import ProductImagesManager from "./ProductImagesManager";
+import { motion, useMotionValue, useTransform } from "framer-motion";
+import { Plus, Search, RefreshCw, Package, DollarSign, TrendingUp, Archive } from "lucide-react";
+import ProductFormDialog from "./ProductFormDialog";
 
 import { provideGlobalGridOptions } from 'ag-grid-community';
 provideGlobalGridOptions({
     theme: "legacy",
 });
 
-const productFormSchema = z.object({
-    name: z.string().min(2, {
-        message: "Tên sản phẩm phải có ít nhất 2 ký tự.",
-    }),
-    price: z.coerce.number().min(0, {
-        message: "Giá sản phẩm phải lớn hơn hoặc bằng 0.",
-    }),
-    stock: z.coerce.number().int().min(0, {
-        message: "Số lượng tồn kho phải là số nguyên không âm.",
-    }),
-    status: z.boolean().default(true),
-    brand_id: z.string().min(1, {
-        message: "Vui lòng chọn thương hiệu.",
-    }),
-    description: z.string().min(10, {
-        message: "Mô tả sản phẩm phải có ít nhất 10 ký tự.",
-    }),
-    images: z.array(z.string()).default([]),
-    keywords: z.array(z.string()).default([]),
-    specifications: z.array(
-        z.object({
-            name: z.string().min(1, {
-                message: "Tên thông số không được để trống.",
-            }),
-            value: z.string().min(1, {
-                message: "Giá trị thông số không được để trống.",
-            })
-        })
-    ).default([]),
-});
-
 interface Product {
     id: string;
     name: string;
     price: number;
+    default_price: number;
     stock: number;
     status: boolean;
     brand_id: string;
@@ -93,26 +41,93 @@ interface Product {
 }
 
 export default function ProductManagement() {
-    const [openForm, setOpenForm] = useState(false);
-    const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-    const { getProducts, products, createProduct, updateProduct, deleteProduct } = useProduct();
-    const { getBrands, brands } = useBrand();
-    const [forceUpdateKey, setForceUpdateKey] = useState(0);
-    // const [gridData, setGridData] = useState<Product[]>([]);
-    const loadingToastRef = useRef<string | number | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
-    const [searchQuery, setSearchQuery] = useState("");
-    const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+    // Mouse tracking
     const mouseX = useMotionValue(0);
     const mouseY = useMotionValue(0);
+    
+    // Transform mouse position to background gradient
+    const background = useTransform(
+        [mouseX, mouseY],
+        ([x, y]) => `radial-gradient(
+            circle at ${x}px ${y}px,
+            rgba(79, 70, 229, 0.15) 0%,
+            rgba(79, 70, 229, 0.05) 40%,
+            transparent 60%
+        )`
+    );
 
-    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-        const { left, top } = e.currentTarget.getBoundingClientRect();
-        mouseX.set(e.clientX - left);
-        mouseY.set(e.clientY - top);
+    const [openForm, setOpenForm] = useState(false);
+    const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+    const { 
+        getProducts,
+        // products,
+        resetAndLoadProducts,
+        loadMoreProducts,
+        paginatedProducts, 
+        pagination,
+        loading,
+        isLoadingMore,
+        canLoadMore,
+        createProduct, 
+        updateProduct, 
+        deleteProduct 
+    } = useProduct();
+    const { getBrands, brands } = useBrand();
+    
+    const [forceUpdateKey, setForceUpdateKey] = useState(0);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [statusFilter, setStatusFilter] = useState<string>("all");
+    const [sortField, setSortField] = useState<string>("name");
+    const [sortDirection, setSortDirection] = useState<string>("asc");
+    const [isInitialized, setIsInitialized] = useState(false);
+
+    // Current filters
+    const currentFilters = useMemo(() => ({
+        search: searchQuery || undefined,
+        status: statusFilter !== "all" ? statusFilter : undefined,
+        sort_field: sortField,
+        sort_direction: sortDirection
+    }), [searchQuery, statusFilter, sortField, sortDirection]);
+
+    // Load initial data chỉ một lần
+    useEffect(() => {
+        const loadInitialData = async () => {
+            try {
+                await Promise.all([
+                    getBrands(),
+                    getProducts(),
+                ]);
+                await resetAndLoadProducts({}, 20);
+                setIsInitialized(true);
+            } catch (error) {
+                toast.error("Không thể tải danh sách sản phẩm");
+                console.error("Error loading initial data:", error);
+            }
+        };
+
+        loadInitialData();
+    }, []);
+
+    // Reload when filters change - chỉ sau khi đã initialized
+    useEffect(() => {
+        if (!isInitialized) return;
+
+        const timeoutId = setTimeout(() => {
+            resetAndLoadProducts(currentFilters, 20);
+        }, 500);
+
+        return () => clearTimeout(timeoutId);
+    }, [currentFilters, isInitialized]);
+
+    const handleLoadMore = async () => {
+        try {
+            await loadMoreProducts();
+        } catch (error) {
+            toast.error("Không thể tải thêm sản phẩm");
+        }
     };
 
-    const [colDefs] = useState([
+    const colDefs = useMemo(() => [
         { field: "id", headerName: "ID", width: 100, suppressCellFlash: true, cellClass: 'no-click' },
         { field: "name", headerName: "Tên sản phẩm", flex: 1, suppressCellFlash: true, cellClass: 'no-click' },
         {
@@ -135,8 +150,7 @@ export default function ProductManagement() {
             cellClass: 'no-click',
             // @ts-expect-error any
             cellRenderer: (params) => {
-                return params.value ?
-                    'Đang bán' : 'Ngừng bán';
+                return params.value ? 'Đang bán' : 'Ngừng bán';
             }
         },
         {
@@ -151,58 +165,15 @@ export default function ProductManagement() {
                 return brand ? brand.name : params.value;
             }
         }
-    ]);
-
-    useEffect(() => {
-        // setGridData(products);
-        setFilteredProducts(products);
-        forceUpdate();
-    }, [products]);
-
-    useEffect(() => {
-        const filtered = products.filter(product => 
-            product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            brands.find(b => b.id === product.brand_id)?.name.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-        setFilteredProducts(filtered);
-    }, [searchQuery, products, brands]);
+    ], [brands]);
 
     const forceUpdate = () => {
         setForceUpdateKey(prev => prev + 1);
     };
 
-    const loadProducts = async () => {
-        try {
-            setIsLoading(true);
-            await getProducts();
-        } catch (error) {
-            toast.error("Không thể tải danh sách sản phẩm");
-            console.error("Error loading products:", error);
-        } finally {
-            setIsLoading(false);
-            forceUpdate();
-        }
-    };
-
-    useEffect(() => {
-        loadProducts();
-        getBrands();
-    }, []);
-
-    // Cleanup any loading toasts on unmount
-    useEffect(() => {
-        return () => {
-            if (loadingToastRef.current) {
-                toast.dismiss(loadingToastRef.current);
-            }
-        };
-    }, []);
-
     // @ts-expect-error any
     const handleRowClick = (event) => {
-        // Check that this is a row click event, not a cell click
         if (event.event && event.event.target) {
-            // Only process if this is an actual row click, not on a cell
             setSelectedProduct(event.data);
             setOpenForm(true);
         }
@@ -218,31 +189,38 @@ export default function ProductManagement() {
         setSelectedProduct(null);
     };
 
+    const handleMouseMove = (event: React.MouseEvent) => {
+        const rect = event.currentTarget.getBoundingClientRect();
+        mouseX.set(event.clientX - rect.left);
+        mouseY.set(event.clientY - rect.top);
+    };
+
+    // Function to reload data after create/update/delete
+    const handleFormSubmit = async () => {
+        try {
+            await Promise.all([
+                getProducts(),
+                resetAndLoadProducts(currentFilters, 20)
+            ]);
+            forceUpdate();
+        } catch (error) {
+            toast.error("Không thể làm mới danh sách sản phẩm");
+        }
+    };
+
     return (
-        <motion.div 
-            className="w-full min-h-screen p-8 bg-gradient-to-br from-blue-50 to-indigo-50"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
-            onMouseMove={handleMouseMove}
-        >
-            {/* Glossy header */}
+        <motion.div className="w-full min-h-screen p-8 bg-gradient-to-br from-blue-50 to-indigo-50">
+            {/* Header */}
             <motion.div 
                 className="relative p-6 mb-8 rounded-xl bg-white/40 backdrop-blur-sm border border-white/30 shadow-xl overflow-hidden"
                 initial={{ y: -20 }}
                 animate={{ y: 0 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
+                onMouseMove={handleMouseMove}
             >
                 <motion.div 
-                    className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10 pointer-events-none"
-                    style={{
-                        background: `radial-gradient(
-                            circle at ${mouseX}px ${mouseY}px,
-                            rgba(79, 70, 229, 0.15) 0%,
-                            rgba(79, 70, 229, 0.05) 40%,
-                            transparent 60%
-                        )`
-                    }}
+                    className="absolute inset-0 pointer-events-none"
+                    style={{ background }}
                 />
                 
                 <div className="relative z-10 flex justify-between items-center">
@@ -282,7 +260,7 @@ export default function ProductManagement() {
                         >
                             <Button 
                                 variant="outline" 
-                                onClick={loadProducts}
+                                onClick={handleFormSubmit}
                                 className="flex items-center gap-2 text-indigo-700 border-indigo-200 hover:bg-indigo-100"
                             >
                                 <RefreshCw className="w-4 h-4" />
@@ -306,129 +284,109 @@ export default function ProductManagement() {
                 </div>
             </motion.div>
             
-            {/* Search bar */}
-            <motion.div 
-                className="mb-6 relative"
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.6 }}
-            >
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                    <Input
-                        type="text"
-                        placeholder="Tìm kiếm sản phẩm..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-10 pr-4 py-2 rounded-full border-gray-200 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                    />
-                    {searchQuery && (
-                        <motion.button
-                            whileTap={{ scale: 0.9 }}
-                            onClick={() => setSearchQuery("")}
-                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                        >
-                            <X className="h-4 w-4" />
-                        </motion.button>
-                    )}
+            {/* Search and Filters */}
+            <motion.div className="mb-6 space-y-4">
+                <div className="flex gap-4">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                        <Input
+                            type="text"
+                            placeholder="Tìm kiếm sản phẩm..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="pl-10"
+                        />
+                    </div>
+                    
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <SelectTrigger className="w-48">
+                            <SelectValue placeholder="Trạng thái" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Tất cả</SelectItem>
+                            <SelectItem value="true">Đang bán</SelectItem>
+                            <SelectItem value="false">Ngừng bán</SelectItem>
+                        </SelectContent>
+                    </Select>
+
+                    <Select value={`${sortField}_${sortDirection}`} onValueChange={(value) => {
+                        const [field, direction] = value.split('_');
+                        setSortField(field);
+                        setSortDirection(direction);
+                    }}>
+                        <SelectTrigger className="w-48">
+                            <SelectValue placeholder="Sắp xếp" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="name_asc">Tên A-Z</SelectItem>
+                            <SelectItem value="name_desc">Tên Z-A</SelectItem>
+                            <SelectItem value="price_asc">Giá thấp-cao</SelectItem>
+                            <SelectItem value="price_desc">Giá cao-thấp</SelectItem>
+                            <SelectItem value="stock_desc">Tồn kho nhiều</SelectItem>
+                        </SelectContent>
+                    </Select>
                 </div>
             </motion.div>
 
-            {/* Loading overlay */}
-            <AnimatePresence>
-                {isLoading && (
-                    <motion.div 
-                        className="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center z-50"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                    >
-                        <motion.div
-                            animate={{ rotate: 360 }}
-                            transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-                        >
-                            <RefreshCw className="h-8 w-8 text-indigo-600" />
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            {/* Data grid with glossy effect */}
-            <motion.div 
-                className="relative overflow-hidden rounded-xl shadow-xl bg-white/80 backdrop-blur-md"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.7 }}
-            >
-                <motion.div 
-                    className="absolute inset-0 bg-gradient-to-tr from-indigo-100/30 via-transparent to-purple-100/30 pointer-events-none"
-                    style={{
-                        background: `radial-gradient(
-                            circle at ${mouseX}px ${mouseY}px,
-                            rgba(99, 102, 241, 0.1) 0%,
-                            rgba(168, 85, 247, 0.05) 25%,
-                            transparent 50%
-                        )`
-                    }}
-                />
-                
+            {/* Data grid */}
+            <motion.div className="relative overflow-hidden rounded-xl shadow-xl bg-white/80 backdrop-blur-md">
                 <div className="relative z-10 p-0.5">
                     <div className="ag-theme-alpine w-full h-[500px] rounded-lg overflow-hidden">
                         <AgGridReact
                             key={`products-${forceUpdateKey}`}
-                            rowData={filteredProducts}
+                            rowData={paginatedProducts}
                             // @ts-expect-error any
                             columnDefs={colDefs}
                             onRowClicked={handleRowClick}
                             pagination={false}
-                            animateRows={true}
+                            animateRows={false}
                             domLayout="normal"
+                            loading={loading}
                             suppressCellFocus={true}
                             suppressRowClickSelection={false}
                             rowSelection="single"
                             rowHeight={56}
                             headerHeight={48}
+                            suppressScrollOnNewData={true}
+                            suppressRowDeselection={true}
                             defaultColDef={{
-                                sortable: true,
+                                sortable: false,
                                 resizable: true
                             }}
-                            overlayNoRowsTemplate={
-                                searchQuery 
-                                    ? "<div class='flex items-center justify-center h-full text-gray-500'>Không tìm thấy sản phẩm nào phù hợp</div>"
-                                    : "<div class='flex items-center justify-center h-full text-gray-500'>Chưa có sản phẩm nào</div>"
-                            }
                         />
                     </div>
                 </div>
                 
-                {filteredProducts.length > 0 && (
-                    <motion.div 
-                        className="p-3 flex items-center justify-between border-t border-indigo-100/50 bg-white/50 backdrop-blur-sm"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.9 }}
-                    >
-                        <span className="text-sm text-gray-500">
-                            Hiển thị {filteredProducts.length} sản phẩm
-                        </span>
-                        
-                        <div className="flex items-center space-x-1">
-                            <Button 
-                                variant="ghost" 
-                                size="sm"
-                                className="text-xs h-8 px-3 text-indigo-600"
-                                disabled
-                            >
-                                Xem tất cả
-                            </Button>
-                        </div>
-                    </motion.div>
-                )}
+                {/* Pagination Info and Load More */}
+                <motion.div className="p-3 flex items-center justify-between border-t border-indigo-100/50 bg-white/50 backdrop-blur-sm">
+                    <span className="text-sm text-gray-500">
+                        Hiển thị {paginatedProducts.length} / {pagination?.total || 0} sản phẩm
+                        {pagination && ` (Trang ${pagination.current_page}/${pagination.last_page})`}
+                    </span>
+                    
+                    {canLoadMore && (
+                        <Button 
+                            variant="outline"
+                            size="sm"
+                            onClick={handleLoadMore}
+                            disabled={isLoadingMore}
+                            className="text-indigo-600"
+                        >
+                            {isLoadingMore ? (
+                                <>
+                                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                                    Đang tải...
+                                </>
+                            ) : (
+                                <>Tải thêm ({pagination?.total! - paginatedProducts.length})</>
+                            )}
+                        </Button>
+                    )}
+                </motion.div>
             </motion.div>
             
             {/* Statistics cards */}
-            <motion.div 
+            {/* <motion.div 
                 className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-8"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -458,7 +416,7 @@ export default function ProductManagement() {
                     icon={<DollarSign className="w-5 h-5 text-purple-500" />}
                     delay={1.3}
                 />
-            </motion.div>
+            </motion.div> */}
             
             <style jsx global>{`
                 .ag-theme-alpine {
@@ -492,7 +450,6 @@ export default function ProductManagement() {
                     z-index: 2;
                 }
                 
-                /* Custom scrollbar for modern browsers */
                 .ag-theme-alpine ::-webkit-scrollbar {
                     width: 8px;
                     height: 8px;
@@ -514,11 +471,12 @@ export default function ProductManagement() {
                 }
             `}</style>
             
+            {/* Sử dụng component ProductFormDialog đã tách */}
             <ProductFormDialog
                 open={openForm}
                 onClose={handleCloseForm}
                 product={selectedProduct}
-                onSubmit={() => { loadProducts() }}
+                onSubmit={handleFormSubmit}
                 createProduct={createProduct}
                 updateProduct={updateProduct}
                 deleteProduct={deleteProduct}
@@ -568,555 +526,3 @@ const StatCard = ({ title, value, icon, delay = 0 }) => {
         </motion.div>
     );
 };
-
-interface ProductDetails {
-    description: string;
-    images: string[];
-    keywords: string[];
-    specifications: {
-        name: string;
-        value: string;
-    }[];
-}
-
-interface ProductUpdateData {
-    name: string;
-    price: number;
-    stock: number;
-    status: boolean;
-    brand_id: string;
-    details: ProductDetails;
-}
-
-interface ProductFormProps {
-    open: boolean;
-    onClose: () => void;
-    product: Product | null;
-    onSubmit: () => void;
-    createProduct: (
-        name: string,
-        price: number,
-        stock: number,
-        status: boolean,
-        brand_id: string,
-        details: ProductDetails
-    ) => Promise<Product>;
-    updateProduct: (id: string, data: ProductUpdateData) => Promise<Product>;
-    deleteProduct: (id: string) => Promise<void>;
-    brands: { id: string; name: string }[];
-}
-
-function ProductFormDialog({
-    open,
-    onClose,
-    product,
-    onSubmit,
-    createProduct,
-    updateProduct,
-    deleteProduct,
-    brands
-}: ProductFormProps) {
-    const [specifications, setSpecifications] = useState<{ name: string, value: string }[]>([]);
-    const [newSpecName, setNewSpecName] = useState("");
-    const [newSpecValue, setNewSpecValue] = useState("");
-    const [images, setImages] = useState<string[]>([]);
-    const [imageUrl, setImageUrl] = useState("");
-    const [keywords, setKeywords] = useState<string[]>([]);
-    const [keyword, setKeyword] = useState("");
-    const loadingToastRef = useRef<string | number | null>(null);
-    const [isProcessing, setIsProcessing] = useState(false);
-
-    const form = useForm<z.infer<typeof productFormSchema>>({
-        // @ts-expect-error any
-        resolver: zodResolver(productFormSchema),
-        defaultValues: {
-            name: "",
-            price: 0,
-            stock: 0,
-            status: true,
-            brand_id: "",
-            description: "",
-            images: [],
-            keywords: [],
-            specifications: [],
-        },
-    });
-
-    useEffect(() => {
-        if (product) {
-            form.reset({
-                name: product.name,
-                price: product.price,
-                stock: product.stock,
-                status: product.status,
-                brand_id: product.brand_id,
-                description: product.details.description,
-                images: product.details.images,
-                keywords: product.details.keywords,
-                specifications: product.details.specifications,
-            });
-            setSpecifications(product.details.specifications);
-            setImages(product.details.images);
-            setKeywords(product.details.keywords);
-        } else {
-            form.reset({
-                name: "",
-                price: 0,
-                stock: 0,
-                status: true,
-                brand_id: "",
-                description: "",
-                images: [],
-                keywords: [],
-                specifications: [],
-            });
-            setSpecifications([]);
-            setImages([]);
-            setKeywords([]);
-        }
-    }, [product, form]);
-
-    const addSpecification = () => {
-        if (newSpecName && newSpecValue) {
-            const newSpec = { name: newSpecName, value: newSpecValue };
-            const newSpecs = [...specifications, newSpec];
-            setSpecifications(newSpecs);
-            form.setValue('specifications', newSpecs);
-            setNewSpecName("");
-            setNewSpecValue("");
-        }
-    };
-
-    const removeSpecification = (index: number) => {
-        const newSpecs = [...specifications];
-        newSpecs.splice(index, 1);
-        setSpecifications(newSpecs);
-        form.setValue('specifications', newSpecs);
-    };
-
-    // const addImage = () => {
-    //     if (imageUrl && !images.includes(imageUrl)) {
-    //         const newImages = [...images, imageUrl];
-    //         setImages(newImages);
-    //         form.setValue('images', newImages);
-    //         setImageUrl("");
-    //     }
-    // };
-
-    // const removeImage = (index: number) => {
-    //     const newImages = [...images];
-    //     newImages.splice(index, 1);
-    //     setImages(newImages);
-    //     form.setValue('images', newImages);
-    // };
-
-    const addKeyword = () => {
-        if (keyword && !keywords.includes(keyword)) {
-            const newKeywords = [...keywords, keyword];
-            setKeywords(newKeywords);
-            form.setValue('keywords', newKeywords);
-            setKeyword("");
-        }
-    };
-
-    const removeKeyword = (index: number) => {
-        const newKeywords = [...keywords];
-        newKeywords.splice(index, 1);
-        setKeywords(newKeywords);
-        // Cập nhật giá trị trong form
-        form.setValue('keywords', newKeywords);
-    };
-
-    // Cleanup loading toast on unmount
-    useEffect(() => {
-        return () => {
-            if (loadingToastRef.current) {
-                toast.dismiss(loadingToastRef.current);
-            }
-        };
-    }, []);
-
-    const handleSubmit = async (values: z.infer<typeof productFormSchema>) => {
-        setIsProcessing(true);
-        const details = {
-            description: values.description,
-            images: images,
-            keywords: keywords,
-            specifications: specifications.map(({ __typename, ...rest }) => rest)
-        };
-
-        try {
-            if (product) {
-                console.log("Updating product:", product.id, details.specifications);
-                await toast.promise(
-                    updateProduct(product.id, {
-                        name: values.name,
-                        price: values.price,
-                        stock: values.stock,
-                        status: values.status,
-                        brand_id: values.brand_id,
-                        details: details
-                    }),
-                    {
-                        loading: "Đang cập nhật sản phẩm...",
-                        success: "Cập nhật sản phẩm thành công",
-                        error: "Cập nhật sản phẩm thất bại"
-                    }
-                );
-            } else {
-                await toast.promise(
-                    createProduct(
-                        values.name,
-                        values.price,
-                        values.stock,
-                        values.status,
-                        values.brand_id,
-                        details
-                    ),
-                    {
-                        loading: "Đang tạo sản phẩm mới...",
-                        success: "Tạo sản phẩm thành công",
-                        error: "Tạo sản phẩm thất bại"
-                    }
-                );
-            }
-
-            onClose();
-            onSubmit();
-        } catch (error) {
-            console.error("Error submitting product:", error);
-        } finally {
-            setIsProcessing(false);
-        }
-    };
-
-    const handleDelete = async () => {
-        if (!product) return;
-
-        setIsProcessing(true);
-        try {
-            await toast.promise(
-                deleteProduct(product.id),
-                {
-                    loading: "Đang xóa sản phẩm...",
-                    success: "Xóa sản phẩm thành công",
-                    error: "Xóa sản phẩm thất bại"
-                }
-            );
-            
-            onClose();
-            onSubmit();
-        } catch (error) {
-            console.error("Error deleting product:", error);
-        } finally {
-            setIsProcessing(false);
-        }
-    };
-
-    return (
-        <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto border border-indigo-100 bg-white/95 backdrop-blur-sm shadow-xl">
-                <DialogHeader>
-                    <DialogTitle className="text-xl font-bold text-indigo-900 flex items-center gap-2">
-                        {product ? (
-                            <>
-                                <Edit className="h-5 w-5 text-indigo-600" />
-                                Chỉnh sửa sản phẩm
-                            </>
-                        ) : (
-                            <>
-                                <Plus className="h-5 w-5 text-indigo-600" />
-                                Thêm sản phẩm mới
-                            </>
-                        )}
-                    </DialogTitle>
-                    <DialogDescription className="text-gray-500">
-                        {product
-                            ? "Chỉnh sửa thông tin sản phẩm hiện có."
-                            : "Thêm một sản phẩm mới vào hệ thống."}
-                    </DialogDescription>
-                </DialogHeader>
-
-                <Form {...form}>
-                    <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                            <FormField
-                                control={form.control}
-                                name="name"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Tên sản phẩm</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="Nhập tên sản phẩm" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
-                                control={form.control}
-                                name="brand_id"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Thương hiệu</FormLabel>
-                                        <Select
-                                            onValueChange={field.onChange}
-                                            defaultValue={field.value}
-                                            value={field.value}
-                                        >
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Chọn thương hiệu" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                {brands.map((brand) => (
-                                                    <SelectItem key={brand.id} value={brand.id}>
-                                                        {brand.name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
-                                control={form.control}
-                                name="price"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Giá (VNĐ)</FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                type="number"
-                                                placeholder="Nhập giá sản phẩm"
-                                                {...field}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
-                                control={form.control}
-                                name="stock"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Số lượng tồn kho</FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                type="number"
-                                                placeholder="Nhập số lượng tồn kho"
-                                                {...field}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
-                                control={form.control}
-                                name="status"
-                                render={({ field }) => (
-                                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                                        <FormControl>
-                                            <Checkbox
-                                                checked={field.value}
-                                                onCheckedChange={field.onChange}
-                                            />
-                                        </FormControl>
-                                        <div className="space-y-1 leading-none">
-                                            <FormLabel>
-                                                Đang bán
-                                            </FormLabel>
-                                            <FormDescription>
-                                                Sản phẩm sẽ được hiển thị trên trang web nếu được đánh dấu.
-                                            </FormDescription>
-                                        </div>
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-
-                        <FormField
-                            control={form.control}
-                            name="description"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Mô tả sản phẩm</FormLabel>
-                                    <FormControl>
-                                        <Textarea
-                                            placeholder="Nhập mô tả chi tiết về sản phẩm"
-                                            className="min-h-[120px]"
-                                            {...field}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        <div className="space-y-4">
-                            <div>
-                                <FormLabel>Hình ảnh sản phẩm</FormLabel>
-                                <ProductImagesManager images={images} setImages={setImages} productName={form.watch("name")}/>
-                                {/* <div className="flex space-x-2 mt-2">
-                                    <Input
-                                        placeholder="Nhập URL hình ảnh"
-                                        value={imageUrl}
-                                        onChange={(e) => setImageUrl(e.target.value)}
-                                    />
-                                    <Button type="button" onClick={addImage}>Thêm</Button>
-                                </div>
-                                <div className="grid grid-cols-4 gap-2 mt-2">
-                                    {images.map((img, idx) => (
-                                        <div key={idx} className="relative group h-24 w-full">
-                                            <img
-                                                src={img}
-                                                alt={`Product image ${idx + 1}`}
-                                                className="w-full h-full object-cover rounded-md"
-                                                onError={(e) => {
-                                                    e.currentTarget.src = "/laptop.png";
-                                                }}
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => removeImage(idx)}
-                                                className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                            >
-                                                ✕
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div> */}
-                                {form.formState.errors.images && (
-                                    <p className="text-sm font-medium text-destructive mt-1">
-                                        {form.formState.errors.images.message}
-                                    </p>
-                                )}
-                            </div>
-
-                            <div>
-                                <FormLabel>Từ khóa tìm kiếm</FormLabel>
-                                <div className="flex space-x-2 mt-2">
-                                    <Input
-                                        placeholder="Nhập từ khóa"
-                                        value={keyword}
-                                        onChange={(e) => setKeyword(e.target.value)}
-                                    />
-                                    <Button type="button" onClick={addKeyword}>Thêm</Button>
-                                </div>
-                                <div className="flex flex-wrap gap-2 mt-2">
-                                    {keywords.map((kw, idx) => (
-                                        <div key={idx} className="bg-gray-100 px-3 py-1 rounded-full flex items-center space-x-1">
-                                            <span>{kw}</span>
-                                            <button
-                                                type="button"
-                                                onClick={() => removeKeyword(idx)}
-                                                className="text-gray-500 hover:text-red-500"
-                                            >
-                                                ✕
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <div>
-                                <FormLabel>Thông số kỹ thuật</FormLabel>
-                                <div className="grid grid-cols-2 gap-2 mt-2">
-                                    <Input
-                                        placeholder="Tên thông số"
-                                        value={newSpecName}
-                                        onChange={(e) => setNewSpecName(e.target.value)}
-                                    />
-                                    <Input
-                                        placeholder="Giá trị"
-                                        value={newSpecValue}
-                                        onChange={(e) => setNewSpecValue(e.target.value)}
-                                    />
-                                </div>
-                                <Button type="button" onClick={addSpecification} className="mt-2">
-                                    Thêm thông số
-                                </Button>
-                                <div className="mt-2 border rounded-md divide-y">
-                                    {specifications.map((spec, idx) => (
-                                        <div key={idx} className="flex justify-between items-center p-2">
-                                            <div>
-                                                <span className="font-medium">{spec.name}: </span>
-                                                <span>{spec.value}</span>
-                                            </div>
-                                            <button
-                                                type="button"
-                                                onClick={() => removeSpecification(idx)}
-                                                className="text-red-500"
-                                            >
-                                                Xóa
-                                            </button>
-                                        </div>
-                                    ))}
-                                    {specifications.length === 0 && (
-                                        <p className="p-2 text-gray-500 italic">Chưa có thông số nào</p>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        <DialogFooter className="flex items-center justify-between w-full pt-4">
-                            <div className="flex gap-2">
-                                {product && (
-                                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                                        <Button
-                                            variant="destructive"
-                                            type="button"
-                                            onClick={handleDelete}
-                                            disabled={isProcessing}
-                                            className="flex items-center gap-1"
-                                        >
-                                            {isProcessing ? (
-                                                <RefreshCw className="h-4 w-4 animate-spin" />
-                                            ) : (
-                                                <Trash2 className="h-4 w-4" />
-                                            )}
-                                            Xóa
-                                        </Button>
-                                    </motion.div>
-                                )}
-                                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                                    <Button 
-                                        variant="outline" 
-                                        type="button" 
-                                        onClick={onClose}
-                                        className="border-gray-200"
-                                    >
-                                        <X className="h-4 w-4 mr-2" />
-                                        Hủy
-                                    </Button>
-                                </motion.div>
-                            </div>
-                            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                                <Button 
-                                    type="submit" 
-                                    disabled={isProcessing}
-                                    className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white"
-                                >
-                                    {isProcessing ? (
-                                        <RefreshCw className="h-4 w-4 animate-spin mr-2" />
-                                    ) : (
-                                        product ? <Edit className="h-4 w-4 mr-2" /> : <Plus className="h-4 w-4 mr-2" />
-                                    )}
-                                    {product ? "Cập nhật" : "Tạo mới"}
-                                </Button>
-                            </motion.div>
-                        </DialogFooter>
-                    </form>
-                </Form>
-            </DialogContent>
-        </Dialog>
-    );
-}

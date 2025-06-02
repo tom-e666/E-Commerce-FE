@@ -410,12 +410,39 @@ const MainPageComponent = () => {
                 {/* Price and Features */}
                 <div className='mt-4 pt-4 border-t border-gray-600 md:mt-6 md:pt-6'>
                   <div className='flex items-center justify-between mb-3 md:mb-4'>
-                    <span className='text-xl font-bold text-green-400 md:text-2xl'>
-                      {products.find(p => p.id === '6')?.price?.toLocaleString('vi-VN') || '25,990,000'}₫
-                    </span>
-                    <span className='bg-red-500 text-white px-2 py-1 rounded-full text-xs font-semibold md:px-3 md:text-sm'>
-                      -15%
-                    </span>
+                    {(() => {
+                      const product = products.find(p => p.id === '6');
+                      const currentPrice = product?.price || 25990000;
+                      const defaultPrice = product?.default_price;
+                      
+                      return (
+                        <div className='flex flex-col space-y-1'>
+                          {/* Sale price display */}
+                          <div className='flex items-center space-x-2'>
+                            <span className='text-xl font-bold text-green-400 md:text-2xl'>
+                              {currentPrice.toLocaleString('vi-VN')}₫
+                            </span>
+                            {defaultPrice && defaultPrice > currentPrice && (
+                              <span className='bg-red-500 text-white px-2 py-1 rounded-full text-xs font-semibold md:px-3 md:text-sm'>
+                                -{Math.round(((defaultPrice - currentPrice) / defaultPrice) * 100)}%
+                              </span>
+                            )}
+                          </div>
+                          
+                          {/* Original price and savings */}
+                          {defaultPrice && defaultPrice > currentPrice && (
+                            <div className='flex items-center space-x-3'>
+                              <span className='text-sm text-gray-400 line-through md:text-base'>
+                                {defaultPrice.toLocaleString('vi-VN')}₫
+                              </span>
+                              <span className='text-xs text-green-300 font-medium md:text-sm'>
+                                Tiết kiệm: {(defaultPrice - currentPrice).toLocaleString('vi-VN')}₫
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                   
                   <div className='space-y-1 md:space-y-2'>

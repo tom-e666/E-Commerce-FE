@@ -128,11 +128,13 @@ const Menubar = () => {
                                 </Button>
                             </Link>
 
+                            {mounted && user && user.role === "user" && (
                             <Link href="/support" passHref>
                                 <Button variant={"outline"} className="bg-transparent border-0 text-white hover:bg-white hover:text-black whitespace-nowrap">
                                     Hỗ trợ
                                 </Button>
                             </Link>
+                            )}
 
                             <Link href="/hotline" passHref>
                                 <Button variant={"outline"} className="bg-transparent border-0 text-white hover:bg-white hover:text-black whitespace-nowrap">

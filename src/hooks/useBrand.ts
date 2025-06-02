@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { getBrands, createBrand, updateBrand, deleteBrand } from "@/services/brand/endpoints";
 
 export interface Brand {

@@ -18,6 +18,7 @@ export interface Product {
   id: string;
   name: string;
   price: number;
+  default_price: number;
   stock: number;
   status: boolean;
   brand_id: string;
@@ -63,6 +64,7 @@ export const GET_PRODUCT = gql`
         id
         name
         price
+        default_price
         stock
         status
         brand_id
@@ -130,6 +132,7 @@ const GET_PRODUCTS = gql`
         id
         name
         price
+        default_price
         stock
         status
         brand_id
@@ -179,6 +182,7 @@ const GET_PAGINATED_PRODUCTS = gql`
         id
         name
         price
+        default_price
         stock
         status
         brand_id
@@ -210,6 +214,7 @@ const CREATE_PRODUCT = gql`
   mutation CreateProduct(
     $name: String!
     $price: Float!
+    $defaultPrice: Float
     $stock: Int!
     $status: Boolean!
     $brand_id: ID!
@@ -219,6 +224,7 @@ const CREATE_PRODUCT = gql`
     createProduct(
       name: $name
       price: $price
+      default_price: $defaultPrice
       stock: $stock
       status: $status
       brand_id: $brand_id
@@ -231,6 +237,7 @@ const CREATE_PRODUCT = gql`
         id
         name
         price
+        default_price
         stock
         status
         brand_id
@@ -254,6 +261,7 @@ const UPDATE_PRODUCT = gql`
     $id: ID!
     $name: String
     $price: Float
+    $defaultPrice: Float
     $stock: Int
     $status: Boolean
     $brand_id: ID
@@ -264,6 +272,7 @@ const UPDATE_PRODUCT = gql`
       id: $id
       name: $name
       price: $price
+      default_price: $defaultPrice
       stock: $stock
       status: $status
       brand_id: $brand_id
@@ -276,6 +285,7 @@ const UPDATE_PRODUCT = gql`
         id
         name
         price
+        default_price
         stock
         status
         brand_id

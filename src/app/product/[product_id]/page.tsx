@@ -349,14 +349,29 @@ export default function ProductDetailPage() {
             </div>
 
             <div className="mt-4 bg-primary/5 p-4 rounded-lg">
-              <div className="flex items-baseline">
-                <span className="text-3xl font-bold text-primary">{formatCurrency(product.price)}</span>
-                {product.old_price && product.old_price > product.price && (
-                  <span className="ml-2 text-lg text-gray-500 line-through">
-                    {formatCurrency(product.old_price)}
-                  </span>
-                )}
-              </div>
+              {product.default_price && product.default_price > product.price ? (
+                // Product on sale
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <span className="text-3xl font-bold text-red-600">{formatCurrency(product.price)}</span>
+                    <span className="text-xl text-gray-500 line-through">
+                      {formatCurrency(product.default_price)}
+                    </span>
+                    <div className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                      -{Math.round(((product.default_price - product.price) / product.default_price) * 100)}%
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-green-600 font-medium">
+                    <Check className="h-4 w-4" />
+                    <span>Tiết kiệm: {formatCurrency(product.default_price - product.price)}</span>
+                  </div>
+                </div>
+              ) : (
+                // Regular price
+                <div className="flex items-baseline">
+                  <span className="text-3xl font-bold text-primary">{formatCurrency(product.price)}</span>
+                </div>
+              )}
             </div>
           </div>
 
