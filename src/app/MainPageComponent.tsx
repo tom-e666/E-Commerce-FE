@@ -1,7 +1,7 @@
 'use client'
 import { useProduct } from "@/hooks/useProduct"
-import { useEffect, useState, useMemo, useRef } from "react";
-import { toast } from "@/lib/toast-config";
+import { useEffect, useState, useRef } from "react";
+// import { toast } from "@/lib/toast-config";
 import { HiOutlineArrowRight } from 'react-icons/hi2'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -60,36 +60,75 @@ const imagePairs = [
   },
 ]
 
-// Fisher-Yates shuffle algorithm for randomizing products
-function shuffleArray<T>(array: T[]): T[] {
-    const newArray = [...array];
-    for (let i = newArray.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
-    }
-    return newArray;
+interface ProductSpecification {
+  name: string;
+  value: string;
+}
+
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  details?: {
+    specifications?: ProductSpecification[];
+    images?: string[];
+  };
 }
 
 const MainPageComponent = () => {
-  const { products, getProducts } = useProduct();
+  const { products, getPaginatedProducts, pagination, getProduct } = useProduct();
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [shuffleKey] = useState(0);
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [largeProducts, setLargeProducts] = useState<Product[]>([]);
   
-  // Thêm ref cho carousel
+  useEffect(() => {
+    const loadFeaturedProducts = async () => {
+      try {
+        await getPaginatedProducts();
+        
+        if (pagination && pagination.total > 0) {
+          const totalProducts = pagination.total;
+          const randomCount = Math.min(8, totalProducts);
+          const randomIndices = new Set<number>();
+
+          while (randomIndices.size < randomCount) {
+            const randomIndex = Math.floor(Math.random() * totalProducts);
+            randomIndices.add(randomIndex);
+          }
+
+          const randomProductPromises = Array.from(randomIndices).map(index => 
+            getProduct((index + 1).toString())
+          );
+          
+          const randomProducts = await Promise.all(randomProductPromises);
+          
+          const validProducts = randomProducts.filter(product => 
+            product && product.details && product.details.images && product.details.images.length > 0
+          );
+          
+          setFeaturedProducts(validProducts);
+
+          // const largeID = Math.floor(Math.random() * totalProducts) + 1;
+          const largeID = 6; // Sử dụng ID cố định cho sản phẩm lớn
+          const largeProduct = await getProduct(largeID.toString());
+          setLargeProducts([largeProduct]);
+        }
+      } catch (error) {
+        console.error("Error loading featured products:", error);
+      }
+    };
+
+    loadFeaturedProducts();
+  }, [pagination]);
+
   const carouselRef = useRef<HTMLDivElement>(null);
-  
-  // Memoize the shuffled products to prevent unnecessary re-shuffling
-  const shuffledProducts = useMemo(() => {
-      return shuffleArray(products);
-  }, [products, shuffleKey]);
 
   const isMounted = useRef(true);
 
-  // Thêm functions cho scroll
   const scrollLeft = () => {
     if (carouselRef.current) {
       carouselRef.current.scrollBy({
-        left: -516, // width của một item (510px) + gap (6px)
+        left: -516,
         behavior: 'smooth'
       });
     }
@@ -98,7 +137,7 @@ const MainPageComponent = () => {
   const scrollRight = () => {
     if (carouselRef.current) {
       carouselRef.current.scrollBy({
-        left: 516, // width của một item (510px) + gap (6px)
+        left: 516,
         behavior: 'smooth'
       });
     }
@@ -111,29 +150,12 @@ const MainPageComponent = () => {
   }, []);
 
   useEffect(() => {
-      // Use the optimized cache version instead
-      getProducts()
-          .then(response => {
-              if (response.code !== 200) {
-                  toast.error("Không thể tải danh sách sản phẩm");
-              }
-          })
-          .catch(error => {
-              toast.error("Không thể tải danh sách sản phẩm");
-              console.error(error);
-          });
-  }, [getProducts]);
-
-  // Auto slide effect
-  useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % urlImg.length);
     }, 3000);
 
     return () => clearInterval(timer);
   }, []);
-
-  console.log("Shuffled products:", shuffledProducts);
 
   return (
     <div className='flex flex-col bg-gradient-to-b from-purple-700 to-blue-800'>
@@ -200,7 +222,6 @@ const MainPageComponent = () => {
           ))}
         </div>
         
-        {/* Navigation dots */}
         <div className='absolute bottom-4 left-1/2 flex -translate-x-1/2 space-x-2'>
           {urlImg.map((_, index) => (
             <button
@@ -255,54 +276,51 @@ const MainPageComponent = () => {
         <div className='flex w-full flex-col items-center justify-center p-10 text-white'>
           <p className='text-5xl font-semibold'>Sản phẩm nổi bật</p>
 
-          {/* Horizontal Scrollable Carousel */}
           <div className='mt-12 w-full relative'>
             <div 
               ref={carouselRef}
               className='w-full overflow-x-auto pb-6 scroll-smooth snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]'
             >
               <div className='flex min-w-max gap-6'>
-                {shuffledProducts.slice(0, 8).map((product) => (
+                {featuredProducts.length > 0 ? featuredProducts.map((product) => (
                   <Link 
                     href={`/product/${product.id}`} 
                     key={product.id}
                     className='group h-[285px] w-[510px] flex-none cursor-pointer overflow-hidden rounded-lg shadow-lg transition-all duration-300 hover:shadow-xl relative snap-start'
                   >
-                    {/* Main Image */}
                     <Image
-                      src={product.details.images[1]}
-                      alt={product.name}
+                      src={product.details?.images?.[1] || product.details?.images?.[0] || '/placeholder-image.jpg'}
+                      alt={product.name || 'Product image'}
                       fill
                       className='object-cover transition-transform duration-300 group-hover:scale-110'
                       sizes='510px'
+                      onError={(e) => {
+                        e.currentTarget.src = '/placeholder-image.jpg';
+                      }}
                     />
                     
-                    {/* Hover Overlay with Full Image */}
-                    {/* <div className='absolute inset-0 bg-black/90 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 flex items-center justify-center'>
-                      <div className='relative w-full h-full p-4'>
-                        <Image
-                          src={product.details.images[1]}
-                          alt={product.name}
-                          fill
-                          className='object-contain'
-                          sizes='510px'
-                        />
-                      </div>
-                    </div> */}
-                    
-                    {/* Product name overlay */}
                     <div className='absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 z-20'>
-                      <p className='text-lg font-medium text-white'>{product.name}</p>
+                      <p className='text-lg font-medium text-white'>{product.name || 'Tên sản phẩm'}</p>
                       <p className='text-sm text-gray-300'>
-                        {product.details.specifications.find(spec => spec.name === 'CPU')?.value}
+                        {product.details?.specifications?.find(spec => spec.name === 'CPU')?.value || 'Thông số kỹ thuật'}
                       </p>
                     </div>
                   </Link>
-                ))}
+                )) : (
+                  Array.from({ length: 8 }).map((_, index) => (
+                    <div 
+                      key={index}
+                      className='h-[285px] w-[510px] flex-none bg-gray-300 animate-pulse rounded-lg'
+                    >
+                      <div className='w-full h-full bg-gradient-to-br from-gray-200 to-gray-400 rounded-lg flex items-center justify-center'>
+                        <span className='text-gray-500'>Đang tải...</span>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
             
-            {/* Navigation arrows with functionality */}
             <button 
               onClick={scrollLeft}
               className='absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 rounded-full p-2 z-30 hover:bg-black/80 transition-all'
@@ -323,7 +341,7 @@ const MainPageComponent = () => {
         </div>
       </div>
 
-      ``<div className='mt-5 mb-5 flex flex-col items-center justify-center'>
+      <div className='mt-5 mb-5 flex flex-col items-center justify-center'>
         <div className='mb-4 flex w-full flex-col justify-between gap-6 p-4 text-white md:flex-row md:p-10'>
           <p className='text-3xl font-semibold md:text-5xl'>
             Máy tính <br className='hidden md:block' /> doanh nghiệp
@@ -333,15 +351,13 @@ const MainPageComponent = () => {
           </p>
         </div>
 
-        {/* New Design Section */}
         <div className='w-full px-4 md:px-10'>
           <div className='grid grid-cols-1 gap-8 lg:grid-cols-2'>
-            {/* Left Column - Featured Product */}
             <div className='relative h-[400px] overflow-hidden rounded-2xl md:h-[570px]'>
-              <Link href="/product/6">
+              <Link href={`/product/${largeProducts[0]?.id || '6'}`}>
                 <div className='group relative h-full w-full'>
                   <Image
-                    src={products.find(p => p.id === '6')?.details.images[0] || 'https://res.cloudinary.com/dwbcqjupj/image/upload/v1748538335/asus_g614jv_jjzvhq.jpg'}
+                    src={largeProducts[0]?.details?.images?.[0] || products.find(p => p.id === '6')?.details?.images?.[0] || 'https://res.cloudinary.com/dwbcqjupj/image/upload/v1748538335/asus_g614jv_jjzvhq.jpg'}
                     alt="Office Computer"
                     fill
                     className='object-cover transition-transform duration-500 group-hover:scale-110'
@@ -350,7 +366,7 @@ const MainPageComponent = () => {
                   <div className='absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100'>
                     <div className='absolute bottom-4 left-4 text-white md:bottom-8 md:left-8'>
                       <h3 className='mb-2 text-2xl font-bold md:mb-4 md:text-4xl'>
-                        {products.find(p => p.id === '6')?.name || 'Dell OptiPlex 7000'}
+                        {largeProducts[0]?.name || products.find(p => p.id === '6')?.name || 'Dell OptiPlex 7000'}
                       </h3>
                       <p className='mb-2 text-base text-purple-200 md:mb-4 md:text-xl'>
                         Hiệu suất mạnh mẽ - Thiết kế tinh tế
@@ -369,18 +385,16 @@ const MainPageComponent = () => {
               </Link>
             </div>
 
-            {/* Right Column - Product Info */}
             <div className='flex flex-col justify-between gap-6'>
-              {/* Product Specifications */}
               <div className='rounded-2xl bg-gradient-to-br from-gray-800 to-gray-900 p-6 text-white md:p-8'>
                 <h3 className='mb-4 text-xl font-bold text-purple-300 md:mb-6 md:text-2xl'>Thông số nổi bật</h3>
                 <div className='space-y-3 md:space-y-4'>
                   {(() => {
-                    const product = products.find(p => p.id === '6');
-                    const specs = product?.details.specifications?.slice(0, 6);
+                    const product = largeProducts[0] || products.find(p => p.id === '6');
+                    const specs = product?.details?.specifications?.slice(0, 6);
                     
                     if (specs && specs.length > 0) {
-                      return specs.map((spec, index) => (
+                      return specs.map((spec: ProductSpecification, index: number) => (
                         <div key={index} className='flex justify-between items-center border-b border-gray-600 pb-2'>
                           <span className='text-sm text-gray-300 font-medium md:text-base'>{spec.name}:</span>
                           <span className='text-sm text-white font-semibold text-right max-w-[150px] truncate md:text-base md:max-w-[200px]'>
@@ -390,12 +404,11 @@ const MainPageComponent = () => {
                       ));
                     }
                     
-                    // Fallback specs
                     const fallbackSpecs = [
-                      { name: 'CPU', value: product?.details.specifications.find(spec => spec.name === 'CPU')?.value || 'Intel Core i7-13700' },
-                      { name: 'RAM', value: product?.details.specifications.find(spec => spec.name === 'RAM')?.value || '16GB DDR4' },
-                      { name: 'Storage', value: product?.details.specifications.find(spec => spec.name === 'Storage')?.value || '512GB SSD' },
-                      { name: 'GPU', value: product?.details.specifications.find(spec => spec.name === 'GPU')?.value || 'Intel UHD Graphics' }
+                      { name: 'CPU', value: product?.details?.specifications?.find(spec => spec.name === 'CPU')?.value || 'Intel Core i7-13700' },
+                      { name: 'RAM', value: product?.details?.specifications?.find(spec => spec.name === 'RAM')?.value || '16GB DDR4' },
+                      { name: 'Storage', value: product?.details?.specifications?.find(spec => spec.name === 'Storage')?.value || '512GB SSD' },
+                      { name: 'GPU', value: product?.details?.specifications?.find(spec => spec.name === 'GPU')?.value || 'Intel UHD Graphics' }
                     ];
                     
                     return fallbackSpecs.map((spec, index) => (
@@ -407,17 +420,15 @@ const MainPageComponent = () => {
                   })()}
                 </div>
                 
-                {/* Price and Features */}
                 <div className='mt-4 pt-4 border-t border-gray-600 md:mt-6 md:pt-6'>
                   <div className='flex items-center justify-between mb-3 md:mb-4'>
                     {(() => {
-                      const product = products.find(p => p.id === '6');
+                      const product = largeProducts[0] || products.find(p => p.id === '6');
                       const currentPrice = product?.price || 25990000;
                       const defaultPrice = product?.default_price;
                       
                       return (
                         <div className='flex flex-col space-y-1'>
-                          {/* Sale price display */}
                           <div className='flex items-center space-x-2'>
                             <span className='text-xl font-bold text-green-400 md:text-2xl'>
                               {currentPrice.toLocaleString('vi-VN')}₫
@@ -429,7 +440,6 @@ const MainPageComponent = () => {
                             )}
                           </div>
                           
-                          {/* Original price and savings */}
                           {defaultPrice && defaultPrice > currentPrice && (
                             <div className='flex items-center space-x-3'>
                               <span className='text-sm text-gray-400 line-through md:text-base'>
@@ -460,7 +470,6 @@ const MainPageComponent = () => {
             </div>
           </div>
 
-          {/* Bottom Section - Call to Action */}
           <div className='mt-6 flex flex-col items-center justify-between gap-6 rounded-2xl bg-gradient-to-r from-purple-900 to-blue-900 p-6 text-white md:mt-8 md:flex-row md:p-8'>
             <div className='max-w-2xl'>
               <h3 className='mb-3 text-2xl font-bold md:mb-4 md:text-3xl'>Khám phá bộ sưu tập máy tính cao cấp</h3>
