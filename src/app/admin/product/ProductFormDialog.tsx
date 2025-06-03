@@ -24,7 +24,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { SubmitHandler, useForm } from "react-hook-form";
 import * as z from "zod";
 import { motion } from "framer-motion";
 import { Plus, X, Edit, Trash2, RefreshCw } from "lucide-react";
@@ -32,45 +32,33 @@ import { toast } from "sonner";
 import ProductImagesManager from "./ProductImagesManager";
 
 const productFormSchema = z.object({
-    name: z.string().min(2, {
-        message: "Tên sản phẩm phải có ít nhất 2 ký tự.",
-    }),
-    price: z.coerce.number().min(0, {
-        message: "Giá sản phẩm phải lớn hơn hoặc bằng 0.",
-    }),
-    default_price: z.coerce.number().min(0, {
-        message: "Giá mặc định phải lớn hơn hoặc bằng 0.",
-    }),
-    stock: z.coerce.number().int().min(0, {
-        message: "Số lượng tồn kho phải là số nguyên không âm.",
-    }),
-    status: z.boolean().default(true),
-    brand_id: z.string().min(1, {
-        message: "Vui lòng chọn thương hiệu.",
-    }),
-    description: z.string().min(10, {
-        message: "Mô tả sản phẩm phải có ít nhất 10 ký tự.",
-    }),
-    images: z.array(z.string()).default([]),
-    keywords: z.array(z.string()).default([]),
+    name: z.string().min(1, "Tên sản phẩm là bắt buộc"),
+    price: z.coerce.number().min(0, "Giá phải lớn hơn 0"),
+    default_price: z.coerce.number().min(0, "Giá gốc phải lớn hơn 0"),
+    stock: z.coerce.number().int().min(0, "Số lượng phải lớn hơn hoặc bằng 0"),
+    weight: z.coerce.number().min(0, "Trọng lượng phải lớn hơn 0"), // Thêm weight
+    status: z.boolean(),
+    brand_id: z.string().min(1, "Thương hiệu là bắt buộc"),
+    description: z.string(),
+    images: z.array(z.string()),
+    keywords: z.array(z.string()),
     specifications: z.array(
         z.object({
-            name: z.string().min(1, {
-                message: "Tên thông số không được để trống.",
-            }),
-            value: z.string().min(1, {
-                message: "Giá trị thông số không được để trống.",
-            })
+            name: z.string(),
+            value: z.string()
         })
-    ).default([]),
+    )
 });
 
-interface Product {
+type ProductFormData = z.infer<typeof productFormSchema>;
+
+type Product = {
     id: string;
     name: string;
     price: number;
     default_price: number;
     stock: number;
+    weight: number;
     status: boolean;
     brand_id: string;
     details: {
@@ -82,7 +70,7 @@ interface Product {
             value: string;
         }[];
     };
-}
+};
 
 interface ProductDetails {
     description: string;
@@ -99,6 +87,7 @@ interface ProductUpdateData {
     price: number;
     default_price?: number;
     stock: number;
+    weight: number;
     status: boolean;
     brand_id: string;
     details: ProductDetails;
@@ -108,7 +97,7 @@ interface ProductFormProps {
     open: boolean;
     onClose: () => void;
     product: Product | null;
-    onSubmit: () => void;
+    onSubmit: (action: 'create' | 'update' | 'delete', productData: Product) => void;
     createProduct: (
         name: string,
         price: number,
@@ -116,11 +105,14 @@ interface ProductFormProps {
         stock: number,
         status: boolean,
         brand_id: string,
-        details: ProductDetails
-    ) => Promise<Product>;
+        details: ProductDetails,
+        weight: number
+    ) => Promise<Product | { id: string }>;
     updateProduct: (id: string, data: ProductUpdateData) => Promise<Product>;
     deleteProduct: (id: string) => Promise<string>;
     brands: { id: string; name: string }[];
+    brandLoading?: boolean;
+    newProductID: number
 }
 
 export default function ProductFormDialog({
@@ -131,9 +123,11 @@ export default function ProductFormDialog({
     createProduct,
     updateProduct,
     deleteProduct,
-    brands
+    brands,
+    brandLoading,
+    newProductID
 }: ProductFormProps) {
-    const [specifications, setSpecifications] = useState<{ name: string, value: string }[]>([]);
+    const [specifications, setSpecifications] = useState<{ name: string, value: string, __typename?: string; }[]>([]);
     const [newSpecName, setNewSpecName] = useState("");
     const [newSpecValue, setNewSpecValue] = useState("");
     const [images, setImages] = useState<string[]>([]);
@@ -142,14 +136,14 @@ export default function ProductFormDialog({
     const loadingToastRef = useRef<string | number | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
 
-    const form = useForm<z.infer<typeof productFormSchema>>({
-        // @ts-expect-error any
+    const form = useForm<ProductFormData>({
         resolver: zodResolver(productFormSchema),
         defaultValues: {
             name: "",
             price: 0,
             stock: 0,
             default_price: 0,
+            weight: 0,
             status: true,
             brand_id: "",
             description: "",
@@ -166,6 +160,7 @@ export default function ProductFormDialog({
                 price: product.price,
                 stock: product.stock,
                 default_price: product.default_price,
+                weight: product.weight,
                 status: product.status,
                 brand_id: product.brand_id,
                 description: product.details.description,
@@ -182,6 +177,7 @@ export default function ProductFormDialog({
                 price: 0,
                 stock: 0,
                 default_price: 0,
+                weight: 0,
                 status: true,
                 brand_id: "",
                 description: "",
@@ -193,6 +189,7 @@ export default function ProductFormDialog({
             setImages([]);
             setKeywords([]);
         }
+        console.log("ProductFormDialog useEffect - product:", product);
     }, [product, form]);
 
     const addSpecification = () => {
@@ -231,31 +228,39 @@ export default function ProductFormDialog({
 
     // Cleanup loading toast on unmount
     useEffect(() => {
+        const toastId = loadingToastRef.current;
+        
         return () => {
-            if (loadingToastRef.current) {
-                toast.dismiss(loadingToastRef.current);
+            if (toastId) {
+                toast.dismiss(toastId);
             }
         };
     }, []);
 
-    const handleSubmit = async (values: z.infer<typeof productFormSchema>) => {
-        setIsProcessing(true);
+    // Type the submit handler correctly
+    const handleSubmit: SubmitHandler<ProductFormData> = async (values) => {
         const details = {
             description: values.description,
             images: images,
             keywords: keywords,
-            specifications: specifications.map(({ __typename, ...rest }) => rest)
+            specifications: specifications.map((spec) => ({
+                name: spec.name,
+                value: spec.value
+            }))
         };
 
         try {
+            setIsProcessing(true);
+            
             if (product) {
-                console.log("Updating product:", product.id, details.specifications);
+                // Update existing product
                 await toast.promise(
                     updateProduct(product.id, {
                         name: values.name,
                         price: values.price,
                         default_price: values.default_price,
                         stock: values.stock,
+                        weight: values.weight,
                         status: values.status,
                         brand_id: values.brand_id,
                         details: details
@@ -266,27 +271,69 @@ export default function ProductFormDialog({
                         error: "Cập nhật sản phẩm thất bại"
                     }
                 );
+
+                const fullUpdatedProduct: Product = {
+                    ...product,
+                    name: values.name,
+                    price: values.price,
+                    default_price: values.default_price,
+                    stock: values.stock,
+                    weight: values.weight,
+                    status: values.status,
+                    brand_id: values.brand_id,
+                    details: details
+                };
+
+                onClose();
+                onSubmit('update', fullUpdatedProduct);
+                
             } else {
-                await toast.promise(
-                    createProduct(
+                // Create new product - KHÔNG dùng toast.promise
+                try {
+                    // Show loading toast
+                    const loadingToastId = toast.loading("Đang tạo sản phẩm mới...");
+                    
+                    // Call API without toast wrapper
+                    const createdProductResponse = await createProduct(
                         values.name,
                         values.price,
                         values.default_price,
                         values.stock,
                         values.status,
                         values.brand_id,
-                        details
-                    ),
-                    {
-                        loading: "Đang tạo sản phẩm mới...",
-                        success: "Tạo sản phẩm thành công",
-                        error: "Tạo sản phẩm thất bại"
-                    }
-                );
+                        details,
+                        values.weight
+                    );
+
+                    console.log("Created product response:", createdProductResponse);
+
+                    // Dismiss loading toast
+                    toast.dismiss(loadingToastId);
+
+                    const newProduct: Product = {
+                        id: createdProductResponse.id || newProductID.toString(),
+                        name: values.name,
+                        price: values.price,
+                        default_price: values.default_price,
+                        stock: values.stock,
+                        weight: values.weight,
+                        status: values.status,
+                        brand_id: values.brand_id,
+                        details: details
+                    };
+
+                    onClose();
+                    
+                    onSubmit('create', newProduct);
+                    
+                    toast.success("Tạo sản phẩm thành công!");
+
+                } catch (error) {
+                    console.error("Error creating product:", error);
+                    toast.error("Tạo sản phẩm thất bại");
+                }
             }
 
-            onClose();
-            onSubmit();
         } catch (error) {
             console.error("Error submitting product:", error);
         } finally {
@@ -296,6 +343,10 @@ export default function ProductFormDialog({
 
     const handleDelete = async () => {
         if (!product) return;
+
+        // Confirm deletion
+        const confirmed = window.confirm("Bạn có chắc chắn muốn xóa sản phẩm này?");
+        if (!confirmed) return;
 
         setIsProcessing(true);
         try {
@@ -307,8 +358,10 @@ export default function ProductFormDialog({
                     error: "Xóa sản phẩm thất bại"
                 }
             );
+            
             onClose();
-            onSubmit();
+            onSubmit('delete', product);
+            
         } catch (error) {
             console.error("Error deleting product:", error);
         } finally {
@@ -318,7 +371,7 @@ export default function ProductFormDialog({
 
     return (
         <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto border border-indigo-100 bg-white/95 backdrop-blur-sm shadow-xl">
+            <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto border border-indigo-100 bg-white shadow-xl">
                 <DialogHeader>
                     <DialogTitle className="text-xl font-bold text-indigo-900 flex items-center gap-2">
                         {product ? (
@@ -342,20 +395,22 @@ export default function ProductFormDialog({
 
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                            <FormField
-                                control={form.control}
-                                name="name"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Tên sản phẩm</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="Nhập tên sản phẩm" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                        <div className="grid grid-cols-3 gap-4">
+                            <div className="col-span-2">
+                                <FormField
+                                    control={form.control}
+                                    name="name"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Tên sản phẩm</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Nhập tên sản phẩm" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
 
                             <FormField
                                 control={form.control}
@@ -374,18 +429,24 @@ export default function ProductFormDialog({
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
-                                                {brands.map((brand) => (
-                                                    <SelectItem key={brand.id} value={brand.id}>
-                                                        {brand.name}
-                                                    </SelectItem>
-                                                ))}
+                                                {brandLoading ? (
+                                                    <div className="px-4 py-2 text-gray-500">Đang tải...</div>
+                                                ) : (
+                                                    brands.map((brand) => (
+                                                        <SelectItem key={brand.id} value={brand.id}>
+                                                            {brand.name}
+                                                        </SelectItem>
+                                                    ))
+                                                )}
                                             </SelectContent>
                                         </Select>
                                         <FormMessage />
                                     </FormItem>
                                 )}
                             />
+                        </div>
 
+                        <div className="grid grid-cols-3 gap-4">
                             <FormField
                                 control={form.control}
                                 name="default_price"
@@ -422,6 +483,30 @@ export default function ProductFormDialog({
                                 )}
                             />
 
+                            <FormField
+                                control={form.control}
+                                name="weight"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Trọng lượng (g)</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                type="number"
+                                                step="0.01"
+                                                placeholder="Nhập trọng lượng sản phẩm"
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                        <FormDescription>
+                                            Trọng lượng tính bằng gram (VD: 500g)
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
                             <FormField
                                 control={form.control}
                                 name="stock"

@@ -102,8 +102,8 @@ const MainPageComponent = () => {
           
           const randomProducts = await Promise.all(randomProductPromises);
           
-          const validProducts = randomProducts.filter(product => 
-            product && product.details && product.details.images && product.details.images.length > 0
+          const validProducts: Product[] = randomProducts.filter(product => 
+            product
           );
           
           setFeaturedProducts(validProducts);

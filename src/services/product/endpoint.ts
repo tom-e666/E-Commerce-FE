@@ -5,6 +5,7 @@ import { apolloClient } from '@/services/apollo/client';
 export interface Specification {
   name: string;
   value: string;
+  __typename?: string;
 }
 
 export interface ProductDetails {
@@ -214,7 +215,7 @@ const CREATE_PRODUCT = gql`
   mutation CreateProduct(
     $name: String!
     $price: Float!
-    $defaultPrice: Float
+    $default_price: Float!
     $stock: Int!
     $status: Boolean!
     $brand_id: ID!
@@ -224,7 +225,7 @@ const CREATE_PRODUCT = gql`
     createProduct(
       name: $name
       price: $price
-      default_price: $defaultPrice
+      default_price: $default_price
       stock: $stock
       status: $status
       brand_id: $brand_id
@@ -261,7 +262,7 @@ const UPDATE_PRODUCT = gql`
     $id: ID!
     $name: String
     $price: Float
-    $defaultPrice: Float
+    $default_price: Float
     $stock: Int
     $status: Boolean
     $brand_id: ID
@@ -272,7 +273,7 @@ const UPDATE_PRODUCT = gql`
       id: $id
       name: $name
       price: $price
-      default_price: $defaultPrice
+      default_price: $default_price
       stock: $stock
       status: $status
       brand_id: $brand_id

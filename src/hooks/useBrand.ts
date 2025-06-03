@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { getBrands, createBrand, updateBrand, deleteBrand } from "@/services/brand/endpoints";
+import { useCallback } from "react";
 
 export interface Brand {
   id: string;
@@ -9,7 +10,7 @@ export interface Brand {
 export const useBrand = () => {
   const [loading, setLoading] = useState(false);
   const [brands, setBrands] = useState<Brand[]>([]);
-  const handleGetBrands = async () => {
+  const handleGetBrands = useCallback(async () => {
     setLoading(true);
     try {
       const response = await getBrands();
@@ -24,7 +25,7 @@ export const useBrand = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
   
   const handleCreateBrand = async (name: string) => {
     setLoading(true);

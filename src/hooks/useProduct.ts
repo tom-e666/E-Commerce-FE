@@ -80,12 +80,12 @@ export function useProduct() {
         setPagination(result.pagination);
         
         // Cache current page data
-        const cacheKey = `paginatedProducts_${JSON.stringify(filters)}_${page}`;
-        localStorage.setItem(cacheKey, JSON.stringify({
-          products: result.products,
-          pagination: result.pagination,
-          timestamp: Date.now()
-        }));
+        // const cacheKey = `paginatedProducts_${JSON.stringify(filters)}_${page}`;
+        // localStorage.setItem(cacheKey, JSON.stringify({
+        //   products: result.products,
+        //   pagination: result.pagination,
+        //   timestamp: Date.now()
+        // }));
       }
       
       loadingState(false);
@@ -175,7 +175,8 @@ export function useProduct() {
     stock: number,
     status: boolean,
     brand_id: string,
-    details: ProductDetails
+    details: ProductDetails,
+    weight: number
   ) => {
     setLoading(true);
     try {
@@ -187,7 +188,7 @@ export function useProduct() {
         status,
         brand_id,
         details,
-        weight: 0
+        weight
       };
 
       const response = await apiCreateProduct(productData);
@@ -263,6 +264,25 @@ export function useProduct() {
     return true;
   };
 
+  const addProductToList = useCallback((product: Product) => {
+    setPaginatedProducts(prev => [product, ...prev]);
+    setPagination(prev => prev ? { ...prev, total: prev.total + 1 } : null);
+  }, []);
+
+  const updateProductInList = useCallback((product: Product) => {
+    setPaginatedProducts(prev =>
+      prev.map(item => item.id === product.id ? product : item)
+    );
+  }, []);
+
+  const deleteProductFromList = useCallback((product: Product) => {
+    setPaginatedProducts(prev =>
+      prev.filter(item => item.id !== product.id)
+    );
+    setPagination(prev => prev ? { ...prev, total: prev.total - 1 } : null);
+  }, []);
+
+
   return {
     loading,
     isLoadingMore,
@@ -282,5 +302,8 @@ export function useProduct() {
     createProduct: handleCreateProduct,
     updateProduct: handleUpdateProduct,
     deleteProduct: handleDeleteProduct,
+    addProductToList,
+    updateProductInList,
+    deleteProductFromList
   };
 }

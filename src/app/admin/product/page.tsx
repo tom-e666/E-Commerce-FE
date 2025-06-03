@@ -3,9 +3,20 @@ import { AgGridReact } from 'ag-grid-react';
 import { useState, useEffect, useMemo } from 'react';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
-import { ClientSideRowModelModule } from 'ag-grid-community';
-import { ModuleRegistry } from 'ag-grid-community';
-ModuleRegistry.registerModules([ClientSideRowModelModule]);
+import { 
+    ClientSideRowModelModule,
+    ModuleRegistry,
+    ValidationModule,
+    CellStyleModule,
+    provideGlobalGridOptions
+} from 'ag-grid-community';
+
+// Register all required modules
+ModuleRegistry.registerModules([
+    ClientSideRowModelModule,
+    ValidationModule,
+    CellStyleModule,
+]);
 import { useBrand } from "@/hooks/useBrand";
 import { useProduct } from "@/hooks/useProduct";
 import { toast } from "sonner";
@@ -13,10 +24,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { motion, useMotionValue, useTransform } from "framer-motion";
-import { Plus, Search, RefreshCw, Package, DollarSign, TrendingUp, Archive } from "lucide-react";
+import { Plus, Search, RefreshCw, Package } from "lucide-react";
 import ProductFormDialog from "./ProductFormDialog";
 
-import { provideGlobalGridOptions } from 'ag-grid-community';
 provideGlobalGridOptions({
     theme: "legacy",
 });
@@ -29,6 +39,7 @@ interface Product {
     stock: number;
     status: boolean;
     brand_id: string;
+    weight: number;
     details: {
         description: string;
         images: string[];
@@ -59,7 +70,8 @@ export default function ProductManagement() {
     const [openForm, setOpenForm] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const { 
-        getProducts,
+        getPaginatedProducts,
+        // getProducts,
         // products,
         resetAndLoadProducts,
         loadMoreProducts,
@@ -70,14 +82,18 @@ export default function ProductManagement() {
         canLoadMore,
         createProduct, 
         updateProduct, 
-        deleteProduct 
+        deleteProduct,
+        addProductToList,
+        updateProductInList,
+        deleteProductFromList,
     } = useProduct();
-    const { getBrands, brands } = useBrand();
+    const { getBrands, brands, loading: brandLoading } = useBrand();
     
     const [forceUpdateKey, setForceUpdateKey] = useState(0);
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState<string>("all");
-    const [sortField, setSortField] = useState<string>("name");
+    const [brandFilter, setBrandFilter] = useState<string>("all"); // Add this
+    const [sortField, setSortField] = useState<string>("id");
     const [sortDirection, setSortDirection] = useState<string>("asc");
     const [isInitialized, setIsInitialized] = useState(false);
 
@@ -85,18 +101,16 @@ export default function ProductManagement() {
     const currentFilters = useMemo(() => ({
         search: searchQuery || undefined,
         status: statusFilter !== "all" ? statusFilter : undefined,
+        brand_id: brandFilter !== "all" ? brandFilter : undefined, // Add this
         sort_field: sortField,
         sort_direction: sortDirection
-    }), [searchQuery, statusFilter, sortField, sortDirection]);
+    }), [searchQuery, statusFilter, brandFilter, sortField, sortDirection]); // Add brandFilter
 
     // Load initial data chỉ một lần
     useEffect(() => {
         const loadInitialData = async () => {
             try {
-                await Promise.all([
-                    getBrands(),
-                    getProducts(),
-                ]);
+                await getBrands();
                 await resetAndLoadProducts({}, 20);
                 setIsInitialized(true);
             } catch (error) {
@@ -106,7 +120,7 @@ export default function ProductManagement() {
         };
 
         loadInitialData();
-    }, []);
+    }, [getBrands, getPaginatedProducts, resetAndLoadProducts]);
 
     // Reload when filters change - chỉ sau khi đã initialized
     useEffect(() => {
@@ -117,36 +131,49 @@ export default function ProductManagement() {
         }, 500);
 
         return () => clearTimeout(timeoutId);
-    }, [currentFilters, isInitialized]);
+    }, [currentFilters, isInitialized, resetAndLoadProducts]);
 
     const handleLoadMore = async () => {
         try {
             await loadMoreProducts();
-        } catch (error) {
+        } catch {
             toast.error("Không thể tải thêm sản phẩm");
         }
     };
 
     const colDefs = useMemo(() => [
-        { field: "id", headerName: "ID", width: 100, suppressCellFlash: true, cellClass: 'no-click' },
-        { field: "name", headerName: "Tên sản phẩm", flex: 1, suppressCellFlash: true, cellClass: 'no-click' },
+        { 
+            field: "id",
+            headerName: "ID",
+            width: 100,
+            cellClass: 'no-click'
+        },
+        { 
+            field: "name",
+            headerName: "Tên sản phẩm",
+            flex: 1,
+            cellClass: 'no-click'
+        },
         {
             field: "price",
             headerName: "Giá (VNĐ)",
             width: 150,
-            suppressCellFlash: true,
             cellClass: 'no-click',
             // @ts-expect-error any
             valueFormatter: (params) => {
                 return new Intl.NumberFormat('vi-VN').format(params.value);
             }
         },
-        { field: "stock", headerName: "Tồn kho", width: 120, suppressCellFlash: true, cellClass: 'no-click' },
+        { 
+            field: "stock",
+            headerName: "Tồn kho",
+            width: 120,
+            cellClass: 'no-click'
+        },
         {
             field: "status",
             headerName: "Trạng thái",
             width: 150,
-            suppressCellFlash: true,
             cellClass: 'no-click',
             // @ts-expect-error any
             cellRenderer: (params) => {
@@ -157,7 +184,6 @@ export default function ProductManagement() {
             field: "brand_id",
             headerName: "Thương hiệu",
             width: 150,
-            suppressCellFlash: true,
             cellClass: 'no-click',
             // @ts-expect-error any
             valueFormatter: (params) => {
@@ -195,17 +221,53 @@ export default function ProductManagement() {
         mouseY.set(event.clientY - rect.top);
     };
 
-    // Function to reload data after create/update/delete
-    const handleFormSubmit = async () => {
+    const handleRefresh = async () => {
         try {
-            await Promise.all([
-                getProducts(),
-                resetAndLoadProducts(currentFilters, 20)
-            ]);
+            await resetAndLoadProducts(currentFilters, 20);
             forceUpdate();
         } catch (error) {
             toast.error("Không thể làm mới danh sách sản phẩm");
+            console.error("Error refreshing products:", error);
         }
+    }
+
+    const handleFormSubmit = async (
+    action: 'create' | 'update' | 'delete',
+    productData?: Product
+    ) => {
+    if (!productData) return;
+
+    try {
+        switch (action) {
+        case 'create':
+            addProductToList(productData);
+            break;
+
+        case 'update':
+            updateProductInList(productData);
+            break;
+
+        case 'delete':
+            deleteProductFromList(productData);
+            break;
+        }
+
+        // Trigger force re-render for components using a key
+        setForceUpdateKey(prev => prev + 1);
+
+        toast.success(
+        action === 'create' ? 'Tạo sản phẩm thành công' :
+        action === 'update' ? 'Cập nhật sản phẩm thành công' :
+        'Xóa sản phẩm thành công'
+        );
+
+    } catch (error) {
+        console.error(`Error in ${action} operation:`, error);
+        toast.error('Có lỗi xảy ra, vui lòng thử lại');
+        
+        // Rollback and sync state
+        await resetAndLoadProducts(currentFilters, pagination?.per_page || 12);
+    }
     };
 
     return (
@@ -260,7 +322,7 @@ export default function ProductManagement() {
                         >
                             <Button 
                                 variant="outline" 
-                                onClick={handleFormSubmit}
+                                onClick={handleRefresh}
                                 className="flex items-center gap-2 text-indigo-700 border-indigo-200 hover:bg-indigo-100"
                             >
                                 <RefreshCw className="w-4 h-4" />
@@ -309,6 +371,27 @@ export default function ProductManagement() {
                         </SelectContent>
                     </Select>
 
+                    {/* Brand Filter */}
+                    <Select value={brandFilter} onValueChange={setBrandFilter}>
+                        <SelectTrigger className="w-48">
+                            <SelectValue placeholder="Thương hiệu" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Tất cả thương hiệu</SelectItem>
+                            {brands && brands.length > 0 ? (
+                                brands.map((brand) => (
+                                    <SelectItem key={brand.id} value={brand.id}>
+                                        {brand.name}
+                                    </SelectItem>
+                                ))
+                            ) : (
+                                <SelectItem value="no-brands" disabled>
+                                    Không có thương hiệu
+                                </SelectItem>
+                            )}
+                        </SelectContent>
+                    </Select>
+
                     <Select value={`${sortField}_${sortDirection}`} onValueChange={(value) => {
                         const [field, direction] = value.split('_');
                         setSortField(field);
@@ -318,11 +401,13 @@ export default function ProductManagement() {
                             <SelectValue placeholder="Sắp xếp" />
                         </SelectTrigger>
                         <SelectContent>
+                            <SelectItem value="id_asc">Mặc định</SelectItem>
                             <SelectItem value="name_asc">Tên A-Z</SelectItem>
                             <SelectItem value="name_desc">Tên Z-A</SelectItem>
                             <SelectItem value="price_asc">Giá thấp-cao</SelectItem>
                             <SelectItem value="price_desc">Giá cao-thấp</SelectItem>
                             <SelectItem value="stock_desc">Tồn kho nhiều</SelectItem>
+                            <SelectItem value="stock_asc">Tồn kho ít</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
@@ -343,12 +428,12 @@ export default function ProductManagement() {
                             domLayout="normal"
                             loading={loading}
                             suppressCellFocus={true}
-                            suppressRowClickSelection={false}
-                            rowSelection="single"
+                            // suppressRowClickSelection={false}
+                            // rowSelection="single"
                             rowHeight={56}
                             headerHeight={48}
                             suppressScrollOnNewData={true}
-                            suppressRowDeselection={true}
+                            // suppressRowDeselection={true}
                             defaultColDef={{
                                 sortable: false,
                                 resizable: true
@@ -378,7 +463,13 @@ export default function ProductManagement() {
                                     Đang tải...
                                 </>
                             ) : (
-                                <>Tải thêm ({pagination?.total! - paginatedProducts.length})</>
+                                <>
+                                    Tải thêm (
+                                    {pagination?.total !== undefined
+                                        ? pagination.total - paginatedProducts.length
+                                        : 0}
+                                    )
+                                </>
                             )}
                         </Button>
                     )}
@@ -481,48 +572,50 @@ export default function ProductManagement() {
                 updateProduct={updateProduct}
                 deleteProduct={deleteProduct}
                 brands={brands}
+                brandLoading={brandLoading}
+                newProductID={paginatedProducts.length + 1} // Tạo ID mới dựa trên số lượng sản phẩm hiện tại
             />
         </motion.div>
     );
 }
 
 // Stat Card Component
-const StatCard = ({ title, value, icon, delay = 0 }) => {
-    return (
-        <motion.div 
-            className="bg-white/70 backdrop-blur-sm rounded-xl shadow-md p-6 border border-white/30 relative overflow-hidden"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay }}
-            whileHover={{ 
-                boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
-                y: -5
-            }}
-        >
-            <motion.div 
-                className="absolute -right-4 -top-4 w-24 h-24 rounded-full bg-indigo-100/50"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ duration: 0.5, delay: delay + 0.2 }}
-            />
+// const StatCard = ({ title, value, icon, delay = 0 }) => {
+//     return (
+//         <motion.div 
+//             className="bg-white/70 backdrop-blur-sm rounded-xl shadow-md p-6 border border-white/30 relative overflow-hidden"
+//             initial={{ opacity: 0, y: 20 }}
+//             animate={{ opacity: 1, y: 0 }}
+//             transition={{ duration: 0.5, delay }}
+//             whileHover={{ 
+//                 boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+//                 y: -5
+//             }}
+//         >
+//             <motion.div 
+//                 className="absolute -right-4 -top-4 w-24 h-24 rounded-full bg-indigo-100/50"
+//                 initial={{ scale: 0 }}
+//                 animate={{ scale: 1 }}
+//                 transition={{ duration: 0.5, delay: delay + 0.2 }}
+//             />
             
-            <div className="relative z-10">
-                <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-gray-600 font-medium">{title}</h3>
-                    <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center">
-                        {icon}
-                    </div>
-                </div>
-                <div>
-                    <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, delay: delay + 0.3 }}
-                    >
-                        <span className="text-3xl font-bold text-indigo-900">{value}</span>
-                    </motion.div>
-                </div>
-            </div>
-        </motion.div>
-    );
-};
+//             <div className="relative z-10">
+//                 <div className="flex items-center justify-between mb-4">
+//                     <h3 className="text-gray-600 font-medium">{title}</h3>
+//                     <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center">
+//                         {icon}
+//                     </div>
+//                 </div>
+//                 <div>
+//                     <motion.div
+//                         initial={{ opacity: 0, y: 10 }}
+//                         animate={{ opacity: 1, y: 0 }}
+//                         transition={{ duration: 0.5, delay: delay + 0.3 }}
+//                     >
+//                         <span className="text-3xl font-bold text-indigo-900">{value}</span>
+//                     </motion.div>
+//                 </div>
+//             </div>
+//         </motion.div>
+//     );
+// };
