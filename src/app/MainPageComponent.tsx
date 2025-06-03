@@ -69,17 +69,46 @@ interface Product {
   id: string;
   name: string;
   price: number;
+  default_price: number;
   details?: {
     specifications?: ProductSpecification[];
     images?: string[];
   };
 }
 
+export interface BaseResponse {
+  code: number;
+  message: string;
+}
+
+export interface ProductResponse extends BaseResponse {
+  product: Product;
+}
+
+type GetProductResponse = Product | ProductResponse | { code: number; message: string; product: null } | null | undefined;
+
+
 const MainPageComponent = () => {
   const { products, getPaginatedProducts, pagination, getProduct } = useProduct();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [largeProducts, setLargeProducts] = useState<Product[]>([]);
+
+  const extractProduct = (response: GetProductResponse): Product | null => {
+    if (!response || typeof response !== 'object') return null;
+    
+    // If it's a ProductResponse with a product property
+    if ('product' in response && response.product) {
+      return response.product;
+    }
+    
+    // If it's already a Product (has required properties)
+    if ('id' in response && 'name' in response && 'price' in response) {
+      return response as Product;
+    }
+    
+    return null;
+  };
   
   useEffect(() => {
     const loadFeaturedProducts = async () => {
@@ -102,16 +131,17 @@ const MainPageComponent = () => {
           
           const randomProducts = await Promise.all(randomProductPromises);
           
-          const validProducts: Product[] = randomProducts.filter(product => 
-            product
-          );
+        const validProducts: Product[] = randomProducts
+          .map(extractProduct)
+          .filter((product): product is Product => product !== null);
           
           setFeaturedProducts(validProducts);
 
           // const largeID = Math.floor(Math.random() * totalProducts) + 1;
-          const largeID = 6; // Sử dụng ID cố định cho sản phẩm lớn
-          const largeProduct = await getProduct(largeID.toString());
-          setLargeProducts([largeProduct]);
+          const largeID = 6; // Fixed ID for large product
+          const largeProductResponse = await getProduct(largeID.toString());
+          const largeProduct = extractProduct(largeProductResponse);
+          setLargeProducts(largeProduct ? [largeProduct] : []);
         }
       } catch (error) {
         console.error("Error loading featured products:", error);
@@ -119,7 +149,7 @@ const MainPageComponent = () => {
     };
 
     loadFeaturedProducts();
-  }, [pagination]);
+  }, [getPaginatedProducts, getProduct, pagination]);
 
   const carouselRef = useRef<HTMLDivElement>(null);
 

@@ -145,7 +145,7 @@ export function useProduct() {
     }
   }, []);
 
-  const handleGetProduct = async (id: string) => {
+  const handleGetProduct = useCallback(async (id: string) => {
     setLoading(true);
     try {
       const response = await apiGetProduct(id);
@@ -166,7 +166,7 @@ export function useProduct() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const handleCreateProduct = async (
     name: string,
