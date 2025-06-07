@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { v2 as cloudinary } from "cloudinary";
-import formidable, { File } from "formidable";
-import { readFile } from "fs/promises";
+import type { UploadApiResponse } from "cloudinary";
+
 
 // Cloudinary config
 cloudinary.config({
@@ -10,33 +10,27 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET!,
 });
 
-// Tắt bodyParser mặc định
+// Disable default body parsing (if using pages router, but not needed in app router)
 export const config = {
   api: { bodyParser: false },
 };
 
-export async function POST(req: NextRequest) {
-  // Parse form data
-  const form = formidable();
-  const buffers: Buffer[] = [];
-
-  // formidable không hỗ trợ Next.js app router trực tiếp, nên ta dùng workaround:
-  const data = await req.formData();
-  const file = data.get("file") as File | null;
-  const folder = data.get("folder") as string | null;
-  const public_id = data.get("public_id") as string | null;
-
-  if (!file || typeof file === "string") {
-    return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
-  }
-
-  // Đọc file buffer
-  const bytes = await file.arrayBuffer();
-  const buffer = Buffer.from(bytes);
-
-  // Upload lên Cloudinary
+export async function POST(req: Request) {
   try {
-    const result = await new Promise<any>((resolve, reject) => {
+    const formData = await req.formData();
+
+    const file = formData.get("file");
+    const folder = formData.get("folder") as string | null;
+    const public_id = formData.get("public_id") as string | null;
+
+    if (!file || !(file instanceof Blob)) {
+      return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
+    }
+
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    const result = await new Promise<UploadApiResponse>((resolve, reject) => {
       cloudinary.uploader.upload_stream(
         {
           folder: folder || "product/unknown",
@@ -45,14 +39,23 @@ export async function POST(req: NextRequest) {
           overwrite: true,
         },
         (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
+          if (error) {
+            reject(error);
+          } else if (result) {
+            resolve(result);
+          } else {
+            reject(new Error("Unknown error occurred during upload."));
+          }
         }
       ).end(buffer);
     });
 
+
     return NextResponse.json({ secure_url: result.secure_url });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message || "Upload failed" }, { status: 500 });
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    return NextResponse.json({ error: "Upload failed" }, { status: 500 });
   }
 }

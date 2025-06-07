@@ -41,21 +41,21 @@ export default function ProductImagesManager({ images, setImages, productName }:
   }
 
   // Fixed checkImageDimensions function
-  const checkImageDimensions = (file: File, width: number, height: number): Promise<boolean> => {
-    return new Promise((resolve) => {
-      const img = new window.Image(); // Use window.Image explicitly
-      img.onload = () => {
-        const isValid = img.naturalWidth === width && img.naturalHeight === height;
-        URL.revokeObjectURL(img.src);
-        resolve(isValid);
-      };
-      img.onerror = () => {
-        URL.revokeObjectURL(img.src);
-        resolve(false);
-      };
-      img.src = URL.createObjectURL(file);
-    });
-  };
+  // const checkImageDimensions = (file: File, width: number, height: number): Promise<boolean> => {
+  //   return new Promise((resolve) => {
+  //     const img = new window.Image(); // Use window.Image explicitly
+  //     img.onload = () => {
+  //       const isValid = img.naturalWidth === width && img.naturalHeight === height;
+  //       URL.revokeObjectURL(img.src);
+  //       resolve(isValid);
+  //     };
+  //     img.onerror = () => {
+  //       URL.revokeObjectURL(img.src);
+  //       resolve(false);
+  //     };
+  //     img.src = URL.createObjectURL(file);
+  //   });
+  // };
 
   const uploadImageFile = async (file: File): Promise<string> => {
     const formData = new FormData();
@@ -96,11 +96,11 @@ export default function ProductImagesManager({ images, setImages, productName }:
       }
 
       // Kiểm tra kích thước ảnh
-      const isValidDimensions = await checkImageDimensions(file, 1020, 570);
-      if (!isValidDimensions) {
-        toast.error(`File ${file.name}: Kích thước phải là 1020x570px`);
-        continue;
-      }
+      // const isValidDimensions = await checkImageDimensions(file, 1020, 570);
+      // if (!isValidDimensions) {
+      //   toast.error(`File ${file.name}: Kích thước phải là 1020x570px`);
+      //   continue;
+      // }
 
       // Kiểm tra trùng lặp
       const isDuplicate = filesToUpload.some(
