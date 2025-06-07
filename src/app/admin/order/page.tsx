@@ -1,17 +1,18 @@
 'use client'
 import { AgGridReact } from 'ag-grid-react';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
-import { ClientSideRowModelModule } from 'ag-grid-community';
-import { ModuleRegistry } from 'ag-grid-community';
+import {
+    ClientSideRowModelModule,
+    provideGlobalGridOptions,
+    ModuleRegistry
+ } from 'ag-grid-community';
 ModuleRegistry.registerModules([ClientSideRowModelModule]);
-
-import { useOrder } from "@/hooks/useOrder";
+import { OrderFilter, useOrder } from "@/hooks/useOrder";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/utils";
 import Image from "next/image";
-
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -33,28 +34,56 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { motion, useMotionValue, AnimatePresence } from "framer-motion";
-import {Search, RefreshCw, ShoppingCart, DollarSign, Clock, Check, Truck, Package, X, AlertCircle } from "lucide-react";
+import {Search, RefreshCw, ShoppingCart, Clock, Check, Truck, Package, X, AlertCircle, Calendar } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {Loader2} from "lucide-react";
-import { provideGlobalGridOptions } from 'ag-grid-community';
+import React from 'react';
+import { OrderInterface } from '@/services/order/endpoints';
+import { ColDef, ValueFormatterParams, ICellRendererParams } from 'ag-grid-community';
+
 provideGlobalGridOptions({
     theme: "legacy",
 });
 
-export default function OrderManagement() {
+const OrderManagement = () => {
     const [openDetail, setOpenDetail] = useState(false);
-    const [selectedOrder, setSelectedOrder] = useState(null);
+    const [selectedOrder, setSelectedOrder] = useState<OrderInterface | null>(null);
     const [filter, setFilter] = useState("all");
-    const { orders, getOrder, getOrders, confirmOrder, processingOrder, shipOrder, completeDelivery, cancelOrder } = useOrder();
+    
+    const { 
+        orders, 
+        pagination,
+        getOrder, 
+        confirmOrder, 
+        processingOrder, 
+        shipOrder, 
+        completeDelivery, 
+        cancelOrder, 
+        getPaginatedOrders,
+        resetAndLoadOrders,
+        loadMoreOrders,
+        isLoadingMore,
+        canLoadMore
+    } = useOrder();
+
     const [forceUpdateKey, setForceUpdateKey] = useState(0);
-    const [gridData, setGridData] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
+    // const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
-    const [filteredOrders, setFilteredOrders] = useState([]);
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+    
+    // Add sort state
+    const [sortField, setSortField] = useState("created_at");
+    const [sortDirection, setSortDirection] = useState("desc");
+    
+    // Add date filter states
+    const [dateFilter, setDateFilter] = useState("all");
+    const [customDateFrom, setCustomDateFrom] = useState("");
+    const [customDateTo, setCustomDateTo] = useState("");
+    
     const mouseX = useMotionValue(0);
     const mouseY = useMotionValue(0);
-    const loadingToastRef = useRef<string | number | null>(null);
+    // const loadingToastRef = useRef<string | number | null>(null);
 
     const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
         const { left, top } = e.currentTarget.getBoundingClientRect();
@@ -79,13 +108,13 @@ export default function OrderManagement() {
     ]);
 
     const statusIcons = {
-        pending: <Clock className="h-4 w-4 mr-1" />,
-        confirmed: <Check className="h-4 w-4 mr-1" />,
-        processing: <Loader2 className="h-4 w-4 mr-1" />,
-        shipping: <Truck className="h-4 w-4 mr-1" />,
-        completed: <Package className="h-4 w-4 mr-1" />,
-        cancelled: <X className="h-4 w-4 mr-1" />,
-        failed: <AlertCircle className="h-4 w-4 mr-1" />
+        pending: <Clock className="h-4 w-4" />,
+        confirmed: <Check className="h-4 w-4" />,
+        processing: <Loader2 className="h-4 w-4" />,
+        shipping: <Truck className="h-4 w-4" />,
+        completed: <Package className="h-4 w-4" />,
+        cancelled: <X className="h-4 w-4" />,
+        failed: <AlertCircle className="h-4 w-4" />
     };
 
     const getStatusDisplayText = (status: string) => {
@@ -127,7 +156,8 @@ export default function OrderManagement() {
         }
     };
 
-    const [colDefs] = useState([
+    // Properly type your column definitions
+    const colDefs = useMemo<ColDef<OrderInterface>[]>(() => [
         {
             field: "id",
             headerName: "Mã đơn hàng",
@@ -139,8 +169,7 @@ export default function OrderManagement() {
             headerName: "Ngày đặt",
             flex: 1.5,
             minWidth: 120,
-            // @ts-expect-error any
-            valueFormatter: (params) => {
+            valueFormatter: (params: ValueFormatterParams<OrderInterface>) => {
                 return new Date(params.value).toLocaleDateString('vi-VN');
             }
         },
@@ -149,9 +178,11 @@ export default function OrderManagement() {
             headerName: "Tổng tiền",
             flex: 1.5,
             minWidth: 120,
-            // @ts-expect-error any
-            valueFormatter: (params) => {
-                return formatCurrency(params.value);
+            valueFormatter: (params: ValueFormatterParams<OrderInterface>) => {
+                return new Intl.NumberFormat('vi-VN', {
+                    style: 'currency',
+                    currency: 'VND'
+                }).format(params.value);
             }
         },
         {
@@ -159,20 +190,8 @@ export default function OrderManagement() {
             headerName: "Trạng thái",
             flex: 1.5,
             minWidth: 130,
-            // @ts-expect-error any
-            cellRenderer: (params) => {
-                const status = normalizeStatus(params?.value || "unknown");
-                const statusClass = statusColors.get(status) || "bg-gray-100 text-gray-800";
-                // @ts-expect-error object deref
-                const icon = statusIcons[status] || <AlertCircle className="h-4 w-4 mr-1" />;
-                const displayText = getStatusDisplayText(status);
-
-                return (
-                    <div className={`flex items-center justify-center px-2 py-1 rounded-full ${statusClass}`}>
-                        {icon}
-                        <span>{displayText}</span>
-                    </div>
-                );
+            cellRenderer: (params: ICellRendererParams<OrderInterface>) => {
+                return <StatusBadge status={params.value} />;
             }
         },
         {
@@ -186,66 +205,138 @@ export default function OrderManagement() {
             headerName: "Số sản phẩm",
             flex: 1,
             minWidth: 100,
-            // @ts-expect-error any
-            valueFormatter: (params) => {
-                return params.value ? params.value.length : 0;
+            valueFormatter: (params: ValueFormatterParams<OrderInterface>) => {
+                return Array.isArray(params.value) ? params.value.length.toString() : '0';
             }
         }
-    ]);
+    ], []);
 
-    useEffect(() => {
-        const filtered = filter === "all"
-            ? orders
-            : orders.filter(order => normalizeStatus(order.status) === filter);
-        
-        const searchFiltered = filtered.filter(order =>
-            order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            order.user_id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            order.recipient_name?.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-        
-        // @ts-expect-error any
-        setGridData(searchFiltered);
-        setFilteredOrders(searchFiltered);
-        forceUpdate();
-    }, [orders, filter, searchQuery]);
+    const itemsPerPage = 10;
 
-    const forceUpdate = () => {
-        setForceUpdateKey(prev => prev + 1);
-    };
-
-    // Cleanup any loading toasts on unmount
-    useEffect(() => {
-        return () => {
-            if (loadingToastRef.current) {
-                toast.dismiss(loadingToastRef.current);
+    const currentFilters = useMemo<OrderFilter>(() => {
+        // Move getDateRange inside useMemo
+        const getDateRange = (filterType: string) => {
+            const now = new Date();
+            const vietnamOffset = 7 * 60;
+            const vietnamTime = new Date(now.getTime() + (vietnamOffset * 60 * 1000));
+            
+            const today = new Date(vietnamTime.getFullYear(), vietnamTime.getMonth(), vietnamTime.getDate());
+            
+            const formatDate = (date: Date) => {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            };
+            
+            switch (filterType) {
+                case 'today':
+                    return {
+                        from: formatDate(today),
+                        to: formatDate(today)
+                    };
+                case 'yesterday':
+                    const yesterday = new Date(today);
+                    yesterday.setDate(yesterday.getDate() - 1);
+                    return {
+                        from: formatDate(yesterday),
+                        to: formatDate(yesterday)
+                    };
+                case 'last7days':
+                    const last7days = new Date(today);
+                    last7days.setDate(last7days.getDate() - 7);
+                    return {
+                        from: formatDate(last7days),
+                        to: formatDate(today)
+                    };
+                case 'last30days':
+                    const last30days = new Date(today);
+                    last30days.setDate(last30days.getDate() - 30);
+                    return {
+                        from: formatDate(last30days),
+                        to: formatDate(today)
+                    };
+                case 'thisMonth':
+                    const thisMonthStart = new Date(vietnamTime.getFullYear(), vietnamTime.getMonth(), 1);
+                    return {
+                        from: formatDate(thisMonthStart),
+                        to: formatDate(today)
+                    };
+                case 'lastMonth':
+                    const lastMonthStart = new Date(vietnamTime.getFullYear(), vietnamTime.getMonth() - 1, 1);
+                    const lastMonthEnd = new Date(vietnamTime.getFullYear(), vietnamTime.getMonth(), 0);
+                    return {
+                        from: formatDate(lastMonthStart),
+                        to: formatDate(lastMonthEnd)
+                    };
+                case 'custom':
+                    return {
+                        from: customDateFrom,
+                        to: customDateTo
+                    };
+                default:
+                    return null;
             }
         };
-    }, []);
 
-    useEffect(() => {
-        loadOrders();
-    }, []);
+        const dateRange = getDateRange(dateFilter);
+            
+        return {
+            status: filter !== "all" ? filter : undefined,
+            sortField,
+            sortDirection,
+            search: searchQuery || undefined,
+            createdAfter: dateRange?.from || undefined,
+            createdBefore: dateRange?.to || undefined
+        };
+    }, [dateFilter, filter, searchQuery, sortDirection, sortField, customDateFrom, customDateTo]);
 
-    const loadOrders = async () => {
+    const forceUpdate = useCallback(() => {
+        setForceUpdateKey(prev => prev + 1);
+    }, []);
+    
+    // Load initial orders (reset data)
+    const loadInitialOrders = useCallback(async () => {
         try {
             setIsLoading(true);
+            
+            const filters = {
+                status: filter !== "all" ? filter : undefined,
+                sortField,
+                sortDirection
+            };
+            
             await toast.promise(
-                getOrders(),
+                getPaginatedOrders(1, itemsPerPage, filters, true), // true = reset data
                 {
-                    loading: "Đang tải danh sách đơn hàng...",
+                    loading: "Đang tải đơn hàng...",
                     success: "Tải danh sách đơn hàng thành công",
-                    error: "Không thể tải danh sách đơn hàng"
+                    error: "Không thể tải đơn hàng"
                 }
             );
         } catch (error) {
-            toast.error("Không thể tải danh sách đơn hàng");
+            toast.error("Không thể tải đơn hàng");
             console.error("Error loading orders:", error);
         } finally {
             setIsLoading(false);
             forceUpdate();
         }
-    };
+    }, [filter, sortField, sortDirection, getPaginatedOrders, itemsPerPage, forceUpdate]);
+
+    // Load initial data on component mount
+    useEffect(() => {
+        loadInitialOrders();
+    }, [loadInitialOrders]);
+
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            resetAndLoadOrders(currentFilters, 10);
+        }, 500);
+
+        return () => clearTimeout(timeoutId);
+    }, [currentFilters, loadInitialOrders, resetAndLoadOrders]);
+
+
     // @ts-expect-error any
     const handleRowClick = async (event) => {
         try {
@@ -263,8 +354,9 @@ export default function OrderManagement() {
         setOpenDetail(false);
         setSelectedOrder(null);
     };
-    // @ts-expect-error any
-    const handleStatusChange = async (action, orderId) => {
+
+    // Updated status change handler to refresh current page
+    const handleStatusChange = async (action: 'confirm' | 'process' | 'ship' | 'complete' | 'cancel', orderId: string) => {
         setIsUpdatingStatus(true);
         try {
             switch (action) {
@@ -322,12 +414,11 @@ export default function OrderManagement() {
                     break;
             }
 
+            // Update selected order if viewing detail
             if (selectedOrder) {
                 const updatedOrder = await getOrder(orderId);
                 setSelectedOrder(updatedOrder);
             }
-
-            await loadOrders();
 
         } catch (error) {
             console.error("Error updating order status:", error);
@@ -340,6 +431,35 @@ export default function OrderManagement() {
         setFilter(value);
     };
 
+    // Handle sort change
+    const handleSortChange = (value: string) => {
+        const [field, direction] = value.split('-');
+        console.log("Sorting by:", field, direction);
+        setSortField(field);
+        setSortDirection(direction);
+    };
+
+    // Handle date filter change
+    const handleDateFilterChange = (value: string) => {
+        setDateFilter(value);
+        // Reset custom dates if not custom filter
+        if (value !== 'custom') {
+            setCustomDateFrom("");
+            setCustomDateTo("");
+        }
+    };
+
+    // Clear all filters
+    const clearAllFilters = () => {
+        setFilter("all");
+        setDateFilter("all");
+        setSearchQuery("");
+        setCustomDateFrom("");
+        setCustomDateTo("");
+        setSortField("created_at");
+        setSortDirection("desc");
+    };
+
     return (
         <motion.div 
             className="w-full min-h-screen p-8 bg-gradient-to-br from-blue-50 to-indigo-50"
@@ -348,7 +468,7 @@ export default function OrderManagement() {
             transition={{ duration: 0.5 }}
             onMouseMove={handleMouseMove}
         >
-            {/* Glossy header */}
+            {/* Header with filters */}
             <motion.div 
                 className="relative p-6 mb-8 rounded-xl bg-white/40 backdrop-blur-sm border border-white/30 shadow-xl overflow-hidden"
                 initial={{ y: -20 }}
@@ -367,44 +487,74 @@ export default function OrderManagement() {
                     }}
                 />
                 
-                <div className="relative z-10 flex justify-between items-center">
-                    <div className="flex items-center">
-                        <motion.div
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            transition={{ type: "spring", stiffness: 300, damping: 25, delay: 0.3 }}
-                            className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mr-4 shadow-lg"
-                        >
-                            <ShoppingCart className="text-white w-6 h-6" />
-                        </motion.div>
-                        <div>
-                            <motion.h1 
-                                className="text-2xl font-bold text-indigo-900"
-                                initial={{ x: -20, opacity: 0 }}
-                                animate={{ x: 0, opacity: 1 }}
-                                transition={{ duration: 0.3, delay: 0.4 }}
+                <div className="relative z-10">
+                    {/* Header title */}
+                    <div className="flex justify-between items-center mb-6">
+                        <div className="flex items-center">
+                            <motion.div
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                transition={{ type: "spring", stiffness: 300, damping: 25, delay: 0.3 }}
+                                className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mr-4 shadow-lg"
                             >
-                                Quản lý đơn hàng
-                            </motion.h1>
-                            <motion.p 
-                                className="text-gray-500"
-                                initial={{ x: -20, opacity: 0 }}
-                                animate={{ x: 0, opacity: 1 }}
-                                transition={{ duration: 0.3, delay: 0.5 }}
-                            >
-                                Theo dõi và quản lý tất cả đơn hàng trong hệ thống
-                            </motion.p>
+                                <ShoppingCart className="text-white w-6 h-6" />
+                            </motion.div>
+                            <div>
+                                <motion.h1 
+                                    className="text-2xl font-bold text-indigo-900"
+                                    initial={{ x: -20, opacity: 0 }}
+                                    animate={{ x: 0, opacity: 1 }}
+                                    transition={{ duration: 0.3, delay: 0.4 }}
+                                >
+                                    Quản lý đơn hàng
+                                </motion.h1>
+                                <motion.p 
+                                    className="text-gray-500"
+                                    initial={{ x: -20, opacity: 0 }}
+                                    animate={{ x: 0, opacity: 1 }}
+                                    transition={{ duration: 0.3, delay: 0.5 }}
+                                >
+                                    Theo dõi và quản lý tất cả đơn hàng trong hệ thống
+                                </motion.p>
+                            </div>
+                        </div>
+                        
+                        <div className="flex gap-3">
+                            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                <Button 
+                                    variant="outline" 
+                                    onClick={clearAllFilters}
+                                    className="flex items-center gap-2 text-gray-600 border-gray-200 hover:bg-gray-100"
+                                >
+                                    <X className="w-4 h-4" />
+                                    <span>Xóa bộ lọc</span>
+                                </Button>
+                            </motion.div>
+                            
+                            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                <Button 
+                                    variant="outline" 
+                                    onClick={() => resetAndLoadOrders()}
+                                    className="flex items-center gap-2 text-indigo-700 border-indigo-200 hover:bg-indigo-100"
+                                    disabled={isLoading}
+                                >
+                                    <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+                                    <span>Làm mới</span>
+                                </Button>
+                            </motion.div>
                         </div>
                     </div>
-                    
-                    <div className="flex gap-3">
-                        <div className="flex items-center space-x-2">
-                            <Label className="text-indigo-700 font-medium">Lọc theo trạng thái:</Label>
+
+                    {/* Filters row */}
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                        {/* Status filter */}
+                        <div className="flex flex-col space-y-2">
+                            <Label className="text-indigo-700 font-medium text-sm">Trạng thái:</Label>
                             <Select
                                 value={filter}
                                 onValueChange={handleFilterChange}
                             >
-                                <SelectTrigger className="w-[180px] border-indigo-200 focus:border-indigo-300">
+                                <SelectTrigger className="border-indigo-200 focus:border-indigo-300">
                                     <SelectValue placeholder="Tất cả đơn hàng" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -419,21 +569,106 @@ export default function OrderManagement() {
                                 </SelectContent>
                             </Select>
                         </div>
-                        
-                        <motion.div
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                        >
-                            <Button 
-                                variant="outline" 
-                                onClick={loadOrders}
-                                className="flex items-center gap-2 text-indigo-700 border-indigo-200 hover:bg-indigo-100"
+
+                        {/* Date filter */}
+                        <div className="flex flex-col space-y-2">
+                            <Label className="text-indigo-700 font-medium text-sm">Thời gian:</Label>
+                            <Select
+                                value={dateFilter}
+                                onValueChange={handleDateFilterChange}
                             >
-                                <RefreshCw className="w-4 h-4" />
-                                <span>Làm mới</span>
-                            </Button>
-                        </motion.div>
+                                <SelectTrigger className="border-indigo-200 focus:border-indigo-300">
+                                    <Calendar className="h-4 w-4 mr-2" />
+                                    <SelectValue placeholder="Tất cả thời gian" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Tất cả thời gian</SelectItem>
+                                    <SelectItem value="today">Hôm nay</SelectItem>
+                                    <SelectItem value="yesterday">Hôm qua</SelectItem>
+                                    <SelectItem value="last7days">7 ngày qua</SelectItem>
+                                    <SelectItem value="last30days">30 ngày qua</SelectItem>
+                                    <SelectItem value="thisMonth">Tháng này</SelectItem>
+                                    <SelectItem value="lastMonth">Tháng trước</SelectItem>
+                                    <SelectItem value="custom">Tùy chọn</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* Sort options */}
+                        <div className="flex flex-col space-y-2">
+                            <Label className="text-indigo-700 font-medium text-sm">Sắp xếp:</Label>
+                            <Select
+                                value={`${sortField}-${sortDirection}`}
+                                onValueChange={handleSortChange}
+                            >
+                                <SelectTrigger className="border-indigo-200 focus:border-indigo-300">
+                                    <SelectValue placeholder="Sắp xếp" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="created_at-desc">📅 Mới nhất</SelectItem>
+                                    <SelectItem value="created_at-asc">📅 Cũ nhất</SelectItem>
+                                    <SelectItem value="total_price-desc">💰 Giá trị cao</SelectItem>
+                                    <SelectItem value="total_price-asc">💰 Giá trị thấp</SelectItem>
+                                    <SelectItem value="status-asc">📊 Trạng thái A-Z</SelectItem>
+                                    <SelectItem value="status-desc">📊 Trạng thái Z-A</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* Active filters indicator */}
+                        <div className="flex flex-col justify-end">
+                            <div className="flex flex-wrap gap-1">
+                                {filter !== "all" && (
+                                    <Badge variant="secondary" className="text-xs">
+                                        {filter}
+                                        <X 
+                                            className="h-3 w-3 ml-1 cursor-pointer" 
+                                            onClick={() => setFilter("all")}
+                                        />
+                                    </Badge>
+                                )}
+                                {searchQuery && (
+                                    <Badge variant="secondary" className="text-xs">
+                                        {'\u201C' + searchQuery + '\u201D'}
+                                        <X 
+                                            className="h-3 w-3 ml-1 cursor-pointer" 
+                                            onClick={() => setSearchQuery("")}
+                                        />
+                                    </Badge>
+                                )}
+                            </div>
+                        </div>
                     </div>
+
+                    {/* Custom date range inputs */}
+                    {dateFilter === 'custom' && (
+                        <motion.div 
+                            className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4"
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.3 }}
+                        >
+                            <div className="flex flex-col space-y-2">
+                                <Label className="text-indigo-700 font-medium text-sm">Từ ngày:</Label>
+                                <Input
+                                    type="date"
+                                    value={customDateFrom}
+                                    onChange={(e) => setCustomDateFrom(e.target.value)}
+                                    className="border-indigo-200 focus:border-indigo-300"
+                                />
+                            </div>
+                            <div className="flex flex-col space-y-2">
+                                <Label className="text-indigo-700 font-medium text-sm">Đến ngày:</Label>
+                                <Input
+                                    type="date"
+                                    value={customDateTo}
+                                    onChange={(e) => setCustomDateTo(e.target.value)}
+                                    className="border-indigo-200 focus:border-indigo-300"
+                                />
+                            </div>
+                        </motion.div>
+                    )}
                 </div>
             </motion.div>
             
@@ -448,7 +683,7 @@ export default function OrderManagement() {
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
                     <Input
                         type="text"
-                        placeholder="Tìm kiếm đơn hàng..."
+                        placeholder="Tìm kiếm theo mã đơn hàng hoặc mã khách hàng..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="pl-10 pr-4 py-2 rounded-full border-gray-200 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
@@ -485,7 +720,7 @@ export default function OrderManagement() {
                 )}
             </AnimatePresence>
 
-            {/* Data grid with glossy effect */}
+            {/* Data grid */}
             <motion.div 
                 className="relative overflow-hidden rounded-xl shadow-xl bg-white/80 backdrop-blur-md mb-6"
                 initial={{ opacity: 0, y: 20 }}
@@ -508,87 +743,60 @@ export default function OrderManagement() {
                     <div className="ag-theme-alpine w-full h-[500px] rounded-lg overflow-hidden">
                         <AgGridReact
                             key={`orders-${forceUpdateKey}`}
-                            rowData={gridData}
-                            // @ts-expect-error any
+                            rowData={orders}
                             columnDefs={colDefs}
                             onRowClicked={handleRowClick}
                             pagination={false}
                             animateRows={true}
                             domLayout="normal"
-                            suppessCellClick={true}
+                            loading={isLoading}
+                            suppressCellFocus={true}
                             defaultColDef={{
                                 resizable: true,
-                                sortable: true
+                                sortable: false
                             }}
                             rowHeight={56}
                             headerHeight={48}
-                            autoSizeColumns={true}
-                            suppressColumnVirtualisation={true}
-                            overlayNoRowsTemplate={
-                                searchQuery || filter !== "all"
-                                    ? "<div class='flex items-center justify-center h-full text-gray-500'>Không tìm thấy đơn hàng nào phù hợp</div>"
-                                    : "<div class='flex items-center justify-center h-full text-gray-500'>Chưa có đơn hàng nào</div>"
-                            }
                         />
                     </div>
                 </div>
                 
-                {filteredOrders.length > 0 && (
-                    <motion.div 
-                        className="p-3 flex items-center justify-between border-t border-indigo-100/50 bg-white/50 backdrop-blur-sm"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.9 }}
-                    >
-                        <span className="text-sm text-gray-500">
-                            Hiển thị {filteredOrders.length} đơn hàng
-                        </span>
-                        
-                        <div className="flex items-center space-x-1">
-                            <Button 
-                                variant="ghost" 
-                                size="sm"
-                                className="text-xs h-8 px-3 text-indigo-600"
-                                disabled
-                            >
-                                Xem tất cả
-                            </Button>
-                        </div>
-                    </motion.div>
-                )}
-            </motion.div>
-
-            {/* Statistics cards */}
-            <motion.div 
-                className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-8"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.5, delay: 0.9 }}
-            >
-                <StatCard 
-                    title="Tổng đơn hàng" 
-                    value={orders?.length || 0} 
-                    icon={<ShoppingCart className="w-5 h-5 text-blue-500" />}
-                    delay={1.0}
-                />
-                <StatCard 
-                    title="Chờ xác nhận" 
-                    value={orders?.filter(o => normalizeStatus(o.status) === 'pending')?.length || 0} 
-                    icon={<Clock className="w-5 h-5 text-yellow-500" />}
-                    delay={1.1}
-                />
-                <StatCard 
-                    title="Hoàn thành" 
-                    value={orders?.filter(o => normalizeStatus(o.status) === 'completed')?.length || 0} 
-                    icon={<Package className="w-5 h-5 text-green-500" />}
-                    delay={1.2}
-                />
-                <StatCard 
-                    title="Doanh thu" 
-                    value={`${((orders?.filter(o => normalizeStatus(o.status) === 'completed')?.reduce((sum, o) => sum + (o.total_price || 0), 0) || 0) / 1000000).toFixed(1)}M`} 
-                    icon={<DollarSign className="w-5 h-5 text-purple-500" />}
-                    delay={1.3}
-                />
+                <motion.div className="p-3 flex items-center justify-between border-t border-indigo-100/50 bg-white/50 backdrop-blur-sm">
+                    <span className="text-sm text-gray-500">
+                        Hiển thị {orders.length} / {pagination?.total || 0} đơn hàng
+                        {pagination && ` (Trang ${pagination.current_page}/${pagination.last_page})`}
+                        {(filter !== "all" || dateFilter !== "all" || searchQuery) && (
+                            <span className="ml-2 text-blue-600 font-medium">
+                                (Đã lọc)
+                            </span>
+                        )}
+                    </span>
+                    
+                    {canLoadMore && (
+                        <Button 
+                            variant="outline"
+                            size="sm"
+                            onClick={loadMoreOrders}
+                            disabled={isLoadingMore}
+                            className="text-indigo-600"
+                        >
+                            {isLoadingMore ? (
+                                <>
+                                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                                    Đang tải...
+                                </>
+                            ) : (
+                                <>
+                                    Tải thêm (
+                                    {pagination?.total !== undefined
+                                        ? pagination.total - orders.length
+                                        : 0}
+                                    )
+                                </>
+                            )}
+                        </Button>
+                    )}
+                </motion.div>
             </motion.div>
             
             <style jsx global>{`
@@ -660,7 +868,7 @@ export default function OrderManagement() {
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center space-x-3">
                                         <Badge className={`${statusColors.get(normalizeStatus(selectedOrder.status))} text-sm px-3 py-1`}>
-                                            {statusIcons[normalizeStatus(selectedOrder.status)]}
+                                            {statusIcons[normalizeStatus(selectedOrder.status) as keyof typeof statusIcons]}
                                             {getStatusDisplayText(normalizeStatus(selectedOrder.status))}
                                         </Badge>
                                         <span className="text-sm text-gray-600">
@@ -675,7 +883,7 @@ export default function OrderManagement() {
                                                     // @ts-expect-error variant
                                                     variant={actionItem.variant}
                                                     size="sm"
-                                                    onClick={() => handleStatusChange(actionItem.action, selectedOrder.id)}
+                                                    onClick={() => handleStatusChange(actionItem.action as 'confirm' | 'process' | 'ship' | 'complete' | 'cancel', selectedOrder.id.toString())}
                                                     disabled={isUpdatingStatus}
                                                     className={actionItem.variant === 'default' ? 
                                                         "bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700" : 
@@ -703,7 +911,9 @@ export default function OrderManagement() {
                                             confirmed: "Đã xác nhận",
                                             processing: "Đang xử lý",
                                             shipping: "Đang giao hàng",
-                                            completed: "Hoàn thành"
+                                            completed: "Hoàn thành",
+                                            cancelled: "Đã hủy",
+                                            failed: "Thất bại"
                                         }[selectedOrder.status]}
                                     </div>
                                 </div>
@@ -976,43 +1186,135 @@ export default function OrderManagement() {
     );
 }
 
-// Stat Card Component (same as brand page)
-const StatCard = ({ title, value, icon, delay = 0 }) => {
+// interface StatCardProps {
+//   title: string;
+//   value: string | number;
+//   icon: React.ReactNode;
+//   delay?: number;
+// }
+
+// const StatCard = ({ title, value, icon, delay = 0 }: StatCardProps) => {
+//   return (
+//     <motion.div 
+//       className="bg-white/70 backdrop-blur-sm rounded-xl shadow-md p-6 border border-white/30 relative overflow-hidden"
+//       initial={{ opacity: 0, y: 20 }}
+//       animate={{ opacity: 1, y: 0 }}
+//       transition={{ duration: 0.5, delay }}
+//       whileHover={{ 
+//         boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+//         y: -5
+//       }}
+//     >
+//       <motion.div 
+//         className="absolute -right-4 -top-4 w-24 h-24 rounded-full bg-indigo-100/50"
+//         initial={{ scale: 0 }}
+//         animate={{ scale: 1 }}
+//         transition={{ duration: 0.5, delay: delay + 0.2 }}
+//       />
+      
+//       <div className="relative z-10">
+//         <div className="flex items-center justify-between mb-4">
+//           <h3 className="text-gray-600 font-medium">{title}</h3>
+//           <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center">
+//             {icon}
+//           </div>
+//         </div>
+//         <div>
+//           <motion.div
+//             initial={{ opacity: 0, y: 10 }}
+//             animate={{ opacity: 1, y: 0 }}
+//             transition={{ duration: 0.5, delay: delay + 0.3 }}
+//           >
+//             <span className="text-3xl font-bold text-indigo-900">{value}</span>
+//           </motion.div>
+//         </div>
+//       </div>
+//     </motion.div>
+//   );
+// };
+
+// StatusBadge component với animation và hover effects
+const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
+    const getStatusConfig = (status: string) => {
+        const configs = {
+            pending: { 
+                label: 'Chờ xác nhận', 
+                className: 'bg-yellow-100 text-yellow-800 border-yellow-200 hover:bg-yellow-200',
+                icon: <Clock className="w-3 h-3" />,
+                color: 'yellow'
+            },
+            confirmed: { 
+                label: 'Đã xác nhận', 
+                className: 'bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200',
+                icon: <Check className="w-3 h-3" />,
+                color: 'blue'
+            },
+            processing: { 
+                label: 'Đang xử lý', 
+                className: 'bg-orange-100 text-orange-800 border-orange-200 hover:bg-orange-200',
+                icon: <Loader2 className="w-3 h-3 animate-spin" />,
+                color: 'orange'
+            },
+            shipping: { 
+                label: 'Đang giao hàng', 
+                className: 'bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-200',
+                icon: <Truck className="w-3 h-3" />,
+                color: 'purple'
+            },
+            completed: { 
+                label: 'Hoàn thành', 
+                className: 'bg-green-100 text-green-800 border-green-200 hover:bg-green-200',
+                icon: <Package className="w-3 h-3" />,
+                color: 'green'
+            },
+            cancelled: { 
+                label: 'Đã hủy', 
+                className: 'bg-red-100 text-red-800 border-red-200 hover:bg-red-200',
+                icon: <X className="w-3 h-3" />,
+                color: 'red'
+            },
+            failed: { 
+                label: 'Thất bại', 
+                className: 'bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-200',
+                icon: <AlertCircle className="w-3 h-3" />,
+                color: 'gray'
+            }
+        };
+        
+        return configs[status as keyof typeof configs] || {
+            label: status,
+            className: 'bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-200',
+            icon: <AlertCircle className="w-3 h-3" />,
+            color: 'gray'
+        };
+    };
+    
+    const config = getStatusConfig(status || '');
+    
     return (
-        <motion.div 
-            className="bg-white/70 backdrop-blur-sm rounded-xl shadow-md p-6 border border-white/30 relative overflow-hidden"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay }}
-            whileHover={{ 
-                boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
-                y: -5
-            }}
+        <motion.span 
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-all duration-200 cursor-default ${config.className}`}
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            whileHover={{ scale: 1.05 }}
+            transition={{ duration: 0.2 }}
         >
-            <motion.div 
-                className="absolute -right-4 -top-4 w-24 h-24 rounded-full bg-indigo-100/50"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ duration: 0.5, delay: delay + 0.2 }}
-            />
-            
-            <div className="relative z-10">
-                <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-gray-600 font-medium">{title}</h3>
-                    <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center">
-                        {icon}
-                    </div>
-                </div>
-                <div>
-                    <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, delay: delay + 0.3 }}
-                    >
-                        <span className="text-3xl font-bold text-indigo-900">{value}</span>
-                    </motion.div>
-                </div>
-            </div>
-        </motion.div>
+            <motion.div
+                initial={{ rotate: 0 }}
+                animate={{ 
+                    rotate: config.color === 'orange' ? 360 : 0 
+                }}
+                transition={{ 
+                    duration: config.color === 'orange' ? 2 : 0,
+                    repeat: config.color === 'orange' ? Infinity : 0,
+                    ease: "linear"
+                }}
+            >
+                {config.icon}
+            </motion.div>
+            {config.label}
+        </motion.span>
     );
 };
+
+export default OrderManagement;

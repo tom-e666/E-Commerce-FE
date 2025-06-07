@@ -1,11 +1,20 @@
 'use client'
 import { AgGridReact } from 'ag-grid-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
-import { ClientSideRowModelModule } from 'ag-grid-community';
-import { ModuleRegistry } from 'ag-grid-community';
-ModuleRegistry.registerModules([ClientSideRowModelModule]);
+import {
+    ModuleRegistry,
+    ClientSideRowModelModule,
+    provideGlobalGridOptions,
+    RowSelectionModule,
+    CellStyleModule
+ } from 'ag-grid-community';
+ModuleRegistry.registerModules([
+    ClientSideRowModelModule,
+    RowSelectionModule,
+    CellStyleModule
+]);
 import { useBrand } from "@/hooks/useBrand";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -32,7 +41,6 @@ import * as z from "zod";
 import { motion, useMotionValue, AnimatePresence } from "framer-motion";
 import { Plus, X, Edit, Trash2, Search, RefreshCw, Sparkles } from "lucide-react";
 
-import { provideGlobalGridOptions } from 'ag-grid-community';
 provideGlobalGridOptions({
     theme: "legacy",
 });
@@ -69,43 +77,25 @@ export default function BrandManagement() {
             field: "id", 
             headerName: "ID", 
             width: 100, 
-            suppressCellFlash: true, 
             cellClass: 'no-click' 
         },
         { 
             field: "name", 
             headerName: "Tên thương hiệu", 
             flex: 1, 
-            suppressCellFlash: true, 
             cellClass: 'no-click' 
         }
     ]);
 
-    useEffect(() => { 
-        // setGridData(brands); 
-        setFilteredBrands(brands);
-        forceUpdate(); 
-    }, [brands]);
-
-    useEffect(() => {
-        const filtered = brands.filter(brand => 
-            brand.name.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-        setFilteredBrands(filtered);
-    }, [searchQuery, brands]);
-
-    const forceUpdate = () => {
+    
+    const forceUpdate = useCallback(() => {
         setForceUpdateKey(prev => prev + 1);
-    };
-
-    useEffect(() => {
-        loadBrands();
     }, []);
 
-    const loadBrands = async () => {
+    const loadBrands = useCallback(async () => {
         try {
             setIsLoading(true);
-            await getBrands();
+        await getBrands();
         } catch (error) {
             toast.error("Không thể tải danh sách thương hiệu");
             console.error(error);
@@ -113,7 +103,7 @@ export default function BrandManagement() {
             setIsLoading(false);
             forceUpdate();
         }
-    };
+    }, [getBrands, forceUpdate]);
 
     //@ts-expect-error dynamic type
     const handleRowClick = (event) => {
@@ -130,6 +120,23 @@ export default function BrandManagement() {
         setOpenForm(false);
         setSelectedBrand(null);
     };
+
+    useEffect(() => {
+        const filtered = brands.filter(brand => 
+            brand.name.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+        setFilteredBrands(filtered);
+    }, [searchQuery, brands]);
+
+    useEffect(() => { 
+        // setGridData(brands); 
+        setFilteredBrands(brands);
+        forceUpdate(); 
+    }, [brands, forceUpdate]);
+
+    useEffect(() => {
+        loadBrands();
+    }, [loadBrands]);
 
     return (
         <motion.div 
@@ -298,7 +305,6 @@ export default function BrandManagement() {
                             animateRows={true}
                             domLayout="normal"
                             suppressCellFocus={true}
-                            suppressRowClickSelection={false}
                             rowSelection="single"
                             rowHeight={56}
                             headerHeight={48}
