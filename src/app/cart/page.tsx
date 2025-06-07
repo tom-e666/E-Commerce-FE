@@ -1,6 +1,6 @@
 'use client'
 import { useCart } from "@/hooks/useCart";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import Image from "next/image";
 import Link from "next/link";
@@ -41,7 +41,6 @@ export default function CartPage() {
     } = useCart();
 
     const [isUpdating, setIsUpdating] = useState<string | null>(null);
-    // Thêm state để lưu các sản phẩm được chọn
     const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
     // Hàm chọn/bỏ chọn từng sản phẩm
@@ -62,9 +61,19 @@ export default function CartPage() {
         }
     };
 
-    const totalPrice = cartItems.reduce((total, item) => {
-        return total + (item.product.price || 0) * item.quantity;
-    }, 0);
+    console.log('selectedItems:', selectedItems);
+
+    const totalPrice = useMemo(() => {
+        return selectedItems.reduce((total, productId) => {
+            const cartItem = cartItems.find(item => item.product.product_id === productId);
+            
+            if (cartItem) {
+                return total + (cartItem.product.price || 0) * cartItem.quantity;
+            }
+            
+            return total;
+        }, 0);
+    }, [selectedItems, cartItems]);
 
     const handleUpdateQuantity = async (productId: string, newQuantity: number) => {
         if (newQuantity < 1) return;

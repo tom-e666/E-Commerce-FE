@@ -28,7 +28,7 @@ export const CREATE_ORDER_FROM_CART = gql`
 
 export const CREATE_ORDER = gql`
   mutation CreateOrder($items: [OrderItemInput!]!) {
-    createOrder(items: $items) {
+    createOrder(typeOrder: "cart", items: $items) {
       code
       message
       order {
@@ -711,7 +711,6 @@ export const getPaginatedOrdersAPI = async (
         search?: string
     }
 ) => {
-  console.log('Search filters:', filters);
     try {
         const { 
             status, 
