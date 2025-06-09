@@ -3,7 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useOrder } from "@/hooks/useOrder";
-import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { CheckCircle2, XCircle, Loader2, Eye } from "lucide-react";
 
 interface OrderItem {
   product_id: string;
@@ -62,6 +62,9 @@ export default function VNPayStatus() {
           setIsSuccess(true);
           setLoading(false);
           clearTimers();
+          setTimeout(() => {
+            window.location.href = `/order/${response.order.id}`;
+          }, 5000);
           return;
         } else if (orderStatus === "failed") {
           setOrder(response.order);
@@ -69,6 +72,9 @@ export default function VNPayStatus() {
           setIsFailed(true);
           setLoading(false);
           clearTimers();
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 5000);
           return;
         } else {
           // Đang chờ xử lý (pending, processing, etc.)
@@ -116,6 +122,13 @@ export default function VNPayStatus() {
       clearTimers();
     };
   }, [vnpTxnRef, checkOrder]);
+
+  // Function để navigate tới chi tiết đơn hàng
+  const handleViewOrderDetail = () => {
+    if (order?.id) {
+      window.location.href = `/order/${order.id}`;
+    }
+  };
 
   if (loading) {
     return (
@@ -233,7 +246,19 @@ export default function VNPayStatus() {
             </div>
           )}
 
+          {/* Action Buttons */}
           <div className="pt-4 space-y-2">
+            {/* Nút xem chi tiết đơn hàng - chỉ hiện khi có order */}
+            {order && (
+              <button
+                onClick={handleViewOrderDetail}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md transition duration-150 ease-in-out flex items-center justify-center gap-2"
+              >
+                <Eye className="w-4 h-4" />
+                Xem chi tiết đơn hàng
+              </button>
+            )}
+            
             <button
               onClick={() => window.location.href = '/'}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition duration-150 ease-in-out"
