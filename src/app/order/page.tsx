@@ -37,6 +37,8 @@ const getStatusBadge = (status: string) => {
       return <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200"><XCircle className="h-3 w-3 mr-1" />Đã hủy</Badge>;
     case 'failed':
       return <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200"><AlertTriangle className="h-3 w-3 mr-1" />Thất bại</Badge>;
+    case 'delivery_failed':
+      return <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200"><AlertTriangle className="h-3 w-3 mr-1" />Giao hàng thất bại</Badge>;
     default:
       return <Badge variant="outline">{status}</Badge>;
   }
@@ -85,7 +87,7 @@ export default function OrdersPage() {
 
     // Filter by active tab
     if (activeTab !== 'all') {
-      filtered = filtered.filter(order => order.status === activeTab);
+      filtered = filtered.filter(order => order.status === activeTab.toLowerCase());
     }
 
     // Apply search filter if any
@@ -207,6 +209,7 @@ export default function OrdersPage() {
           <TabsTrigger value="SHIPPING">Đang giao</TabsTrigger>
           <TabsTrigger value="COMPLETED">Hoàn thành</TabsTrigger>
           <TabsTrigger value="CANCELLED">Đã hủy</TabsTrigger>
+          <TabsTrigger value="DELIVERY_FAILED" className="hidden lg:block">Giao hàng thất bại</TabsTrigger>
           <TabsTrigger value="FAILED" className="hidden lg:block">Thất bại</TabsTrigger>
         </TabsList>
 

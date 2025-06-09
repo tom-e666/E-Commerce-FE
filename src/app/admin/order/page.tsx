@@ -42,6 +42,8 @@ import { OrderInterface } from '@/services/order/endpoints';
 import { ColDef, ValueFormatterParams, ICellRendererParams } from 'ag-grid-community';
 import { useShipping } from '@/hooks/useShipping';
 import { Shipping } from '@/services/shipping/endpoints';
+import { usePayment } from '@/hooks/usePayment';
+import { CheckCircle, XCircle, AlertTriangle } from "lucide-react";
 
 provideGlobalGridOptions({
     theme: "legacy",
@@ -66,10 +68,12 @@ const OrderManagement = () => {
         resetAndLoadOrders,
         loadMoreOrders,
         isLoadingMore,
-        canLoadMore
+        canLoadMore,
+        markOrderFailed
     } = useOrder();
 
     const { handleFetchShippingByOrderId } = useShipping();
+    const { paymentData, fetchPayment } = usePayment();
 
     const [forceUpdateKey, setForceUpdateKey] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
@@ -109,7 +113,8 @@ const OrderManagement = () => {
         ["shipping", "bg-purple-100 text-purple-800"],
         ["completed", "bg-green-100 text-green-800"],
         ["cancelled", "bg-red-100 text-red-800"],
-        ["failed", "bg-gray-100 text-gray-800"]
+        ["failed", "bg-gray-100 text-gray-800"],
+        ["delivery_failed", "bg-red-200 text-red-900"]
     ]);
 
     const statusIcons = {
@@ -131,6 +136,7 @@ const OrderManagement = () => {
             case 'completed': return "Hoàn thành";
             case 'cancelled': return "Đã hủy";
             case 'failed': return "Thất bại";
+            case 'delivery_failed': return "Giao hàng không thành công";
             default: return status.charAt(0).toUpperCase() + status.slice(1);
         }
     };
@@ -154,7 +160,8 @@ const OrderManagement = () => {
                 ];
             case 'shipping':
                 return [
-                    { action: 'complete', label: 'Hoàn thành giao hàng', icon: <Package className="mr-2 h-4 w-4" />, variant: 'default' }
+                    { action: 'complete', label: 'Hoàn thành giao hàng', icon: <Package className="mr-2 h-4 w-4" />, variant: 'default' },
+                    { action: 'delivery_failed', label: 'Giao hàng không thành công', icon: <X className="mr-2 h-4 w-4" />, variant: 'destructive' }
                 ];
             default:
                 return [];
@@ -349,6 +356,7 @@ const OrderManagement = () => {
             const order = await getOrder(orderId);
             setSelectedOrder(order);
             getShipInfo(orderId);
+            getPaymentInfo(orderId);
             setOpenDetail(true);
         } catch (error) {
             toast.error("Không thể tải thông tin đơn hàng");
@@ -362,7 +370,7 @@ const OrderManagement = () => {
     };
 
     // Updated status change handler to refresh current page
-    const handleStatusChange = async (action: 'confirm' | 'process' | 'ship' | 'complete' | 'cancel', orderId: string) => {
+    const handleStatusChange = async (action: 'confirm' | 'process' | 'ship' | 'complete' | 'cancel' | 'delivery_failed', orderId: string) => {
         setIsUpdatingStatus(true);
         try {
             switch (action) {
@@ -413,6 +421,16 @@ const OrderManagement = () => {
                             loading: "Đang hủy đơn hàng...",
                             success: "Đơn hàng đã được hủy",
                             error: "Không thể hủy đơn hàng"
+                        }
+                    );
+                    break;
+                case 'delivery_failed':
+                    await toast.promise(
+                        markOrderFailed(orderId),
+                        {
+                            loading: "Đang cập nhật trạng thái giao hàng không thành công...",
+                            success: "Đơn hàng đã được cập nhật trạng thái giao hàng không thành công",
+                            error: "Không thể cập nhật trạng thái giao hàng không thành công"
                         }
                     );
                     break;
@@ -475,6 +493,65 @@ const OrderManagement = () => {
             console.error("Error fetching shipping info:", error);
         }
     }
+
+    const getPaymentInfo = async (orderId: string) => {
+        try {
+            const paymentInfo = await fetchPayment(orderId);
+            return paymentInfo;
+        } catch (error) {
+            toast.error("Không thể tải thông tin thanh toán");
+            console.error("Error fetching payment info:", error);
+        }
+    }
+
+    // Thêm function helper để lấy trạng thái thanh toán
+    const getPaymentStatusConfig = (status: string) => {
+        const configs = {
+            pending: { 
+                label: 'Chờ thanh toán', 
+                className: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+                icon: <Clock className="w-3 h-3" />,
+                color: 'yellow'
+            },
+            completed: { 
+                label: 'Đã thanh toán', 
+                className: 'bg-green-100 text-green-800 border-green-200',
+                icon: <CheckCircle className="w-3 h-3" />,
+                color: 'green'
+            },
+            failed: { 
+                label: 'Thanh toán thất bại', 
+                className: 'bg-red-100 text-red-800 border-red-200',
+                icon: <XCircle className="w-3 h-3" />,
+                color: 'red'
+            }
+        };
+        
+        return configs[status as keyof typeof configs] || {
+            label: 'Không xác định',
+            className: 'bg-gray-100 text-gray-800 border-gray-200',
+            icon: <AlertTriangle className="w-3 h-3" />,
+            color: 'gray'
+        };
+    };
+
+    // Component PaymentStatusBadge
+    const PaymentStatusBadge: React.FC<{ status: string }> = ({ status }) => {
+        const config = getPaymentStatusConfig(status || 'pending');
+        
+        return (
+            <motion.span 
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-all duration-200 cursor-default ${config.className}`}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                whileHover={{ scale: 1.05 }}
+                transition={{ duration: 0.2 }}
+            >
+                {config.icon}
+                {config.label}
+            </motion.span>
+        );
+    };
 
     return (
         <motion.div 
@@ -582,6 +659,7 @@ const OrderManagement = () => {
                                     <SelectItem value="completed">Hoàn thành</SelectItem>
                                     <SelectItem value="cancelled">Đã hủy</SelectItem>
                                     <SelectItem value="failed">Thất bại</SelectItem>
+                                    <SelectItem value="delivery_failed">Giao hàng không thành công</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -899,7 +977,7 @@ const OrderManagement = () => {
                                                     // @ts-expect-error variant
                                                     variant={actionItem.variant}
                                                     size="sm"
-                                                    onClick={() => handleStatusChange(actionItem.action as 'confirm' | 'process' | 'ship' | 'complete' | 'cancel', selectedOrder.id.toString())}
+                                                    onClick={() => handleStatusChange(actionItem.action as 'confirm' | 'process' | 'ship' | 'complete' | 'cancel' | 'delivery_failed', selectedOrder.id.toString())}
                                                     disabled={isUpdatingStatus}
                                                     className={actionItem.variant === 'default' ? 
                                                         "bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700" : 
@@ -929,7 +1007,8 @@ const OrderManagement = () => {
                                             shipping: "Đang giao hàng",
                                             completed: "Hoàn thành",
                                             cancelled: "Đã hủy",
-                                            failed: "Thất bại"
+                                            failed: "Thất bại",
+                                            delivery_failed: "Giao hàng không thành công"
                                         }[selectedOrder.status]}
                                     </div>
                                 </div>
@@ -960,6 +1039,14 @@ const OrderManagement = () => {
                                                         <span className="text-sm text-gray-600">Mã khách hàng:</span>
                                                         <span className="text-sm">{selectedOrder.user_id || "N/A"}</span>
                                                     </div>
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-sm text-gray-600">Phương thức thanh toán:</span>
+                                                        <span className="text-sm">{paymentData?.payment_method.toUpperCase() || "N/A"}</span>
+                                                    </div>
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-sm text-gray-600">Trạng thái thanh toán:</span>
+                                                        <PaymentStatusBadge status={paymentData?.payment_status || 'pending'} />
+                                                    </div>    
                                                     <div className="flex justify-between items-center">
                                                         <span className="text-sm text-gray-600">Tổng tiền:</span>
                                                         <span className="font-medium text-lg text-indigo-600">{formatCurrency(selectedOrder.total_price)}</span>
@@ -1301,6 +1388,12 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
             },
             failed: { 
                 label: 'Thất bại', 
+                className: 'bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-200',
+                icon: <AlertCircle className="w-3 h-3" />,
+                color: 'gray'
+            },
+            delivery_failed: {
+                label: 'Giao hàng không thành công', 
                 className: 'bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-200',
                 icon: <AlertCircle className="w-3 h-3" />,
                 color: 'gray'

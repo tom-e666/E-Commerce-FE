@@ -38,6 +38,8 @@ const getStatusBadge = (status: string) => {
       return <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200"><XCircle className="h-3 w-3 mr-1" />Đã hủy</Badge>;
     case 'failed':
       return <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200"><AlertTriangle className="h-3 w-3 mr-1" />Thất bại</Badge>;
+    case 'delivery_failed':
+      return <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200"><Truck className="h-3 w-3 mr-1" />Giao hàng thất bại</Badge>;
     default:
       return <Badge variant="outline">{status}</Badge>;
   }
@@ -105,6 +107,24 @@ export default function OrderDetailPage() {
         history.push({ 
           status: 'cancelled', 
           date: new Date(new Date(currentOrder.created_at).getTime() + 12*60*60*1000).toISOString() 
+        });
+      }
+
+      if (currentOrder.status === 'delivery_failed') {
+        history.push({
+          status: 'shipping',
+          date: new Date(new Date(currentOrder.created_at).getTime() + 2*24*60*60*1000).toISOString()
+        });
+        history.push({
+          status: 'delivery_failed',
+          date: new Date(new Date(currentOrder.created_at).getTime() + 3*24*60*60*1000).toISOString()
+        });
+      }
+
+      if (currentOrder.status === 'failed'){
+        history.push({
+          status: 'failed',
+          date: new Date(new Date(currentOrder.created_at).getTime() + 12*60*60*1000).toISOString()
         });
       }
 
@@ -330,6 +350,8 @@ export default function OrderDetailPage() {
                           {historyItem.status === 'shipping' && 'Đơn hàng đang được giao'}
                           {historyItem.status === 'completed' && 'Đơn hàng đã giao thành công'}
                           {historyItem.status === 'cancelled' && 'Đơn hàng đã bị hủy'}
+                          {historyItem.status === 'failed' && 'Đơn hàng đã thất bại'}
+                          {historyItem.status === 'delivery_failed' && 'Giao hàng thất bại'}
                         </p>
                         <p className="text-sm text-gray-500">
                           {new Date(historyItem.date).toLocaleString('vi-VN')}
@@ -343,6 +365,8 @@ export default function OrderDetailPage() {
                       {historyItem.status === 'shipping' && 'Đơn hàng của bạn đã được giao cho đơn vị vận chuyển.'}
                       {historyItem.status === 'completed' && 'Đơn hàng của bạn đã được giao thành công.'}
                       {historyItem.status === 'cancelled' && 'Đơn hàng của bạn đã bị hủy.'}
+                      {historyItem.status === 'failed' && 'Đơn hàng của bạn đã thất bại do lỗi thanh toán.'}
+                      {historyItem.status === 'delivery_failed' && 'Đơn vị vận chuyển không thể giao hàng đến địa chỉ của bạn.'}
                     </p>
                   </div>
                 </div>
@@ -419,7 +443,7 @@ export default function OrderDetailPage() {
               </Button>
             )}
             
-            {currentOrder.status === 'delivered' && currentOrder.items[0]?.product_id && (
+            {currentOrder.status === 'confirmed' && currentOrder.items[0]?.product_id && (
               <Button asChild>
                 <Link href={`/product/${currentOrder.items[0].product_id}`}>
                   Mua lại

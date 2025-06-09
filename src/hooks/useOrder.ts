@@ -12,6 +12,7 @@ import {
     processingOrderAPI,
     shipOrderAPI,
     completeDeliveryAPI,
+    markOrderAsFailedAPI,
     updateOrderAPI,
     deleteOrderAPI,
     createOrderItemAPI,
@@ -539,6 +540,52 @@ export function useOrder() {
     }
   };
 
+  const markOrderFailed = async (orderId: string) => {
+    setLoading(true);
+    try {
+      const response = await markOrderAsFailedAPI(orderId);
+
+      const { code, message } = response.data.markOrderAsFailed;
+
+      if (code === 200) {
+        // Update the current order if it matches
+        if (currentOrder && currentOrder.id === orderId) {
+          setCurrentOrder({
+            ...currentOrder,
+            status: 'delivery_failed'
+          });
+        }
+        
+        // Update the order in the orders list
+        setOrders(prevOrders =>
+          prevOrders.map(o => 
+            o.id === orderId 
+              ? { ...o, status: 'delivery_failed' } 
+              : o
+          )
+        );
+
+        return {
+          success: true,
+          message: message || "Đã đánh dấu đơn hàng là thất bại thành công",
+        };
+      } else {
+        return {
+          success: false,
+          message: message || "Không thể đánh dấu đơn hàng là thất bại"
+        }
+      }
+    } catch (error) {
+      console.error("Error marking order as failed:", error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : "Đã xảy ra lỗi khi đánh dấu đơn hàng là thất bại"
+      };
+    } finally {
+      setLoading(false);
+    }
+  }
+
   const updateOrder = async (orderId: string, status?: string, totalPrice?: number) => {
     setLoading(true);
     try {
@@ -669,6 +716,7 @@ export function useOrder() {
     processingOrder,
     shipOrder,
     completeDelivery,
+    markOrderFailed,
     updateOrder,
     deleteOrder,
     // Deprecated

@@ -201,7 +201,7 @@ export default function CheckoutSuccessPage() {
                         </Link>
                     </Button>
                     <Button asChild>
-                        <Link href="/account/orders">
+                        <Link href="/order">
                             <Package className="mr-2 h-4 w-4" />
                             Xem đơn hàng của tôi
                         </Link>
