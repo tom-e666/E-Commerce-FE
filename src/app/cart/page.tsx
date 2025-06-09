@@ -1,9 +1,7 @@
 'use client'
-import { useEffect, useState } from 'react';
-import { useCart } from '@/hooks/useCart';
-import { useRouter } from 'next/navigation';
-import { useAuthContext } from '@/contexts/AuthContext';
-import { toast } from 'sonner';
+import { useCart } from "@/hooks/useCart";
+import { useState, useMemo } from "react";
+import { toast } from "sonner";
 import Image from "next/image";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
@@ -28,16 +26,45 @@ import {
 } from "@/components/ui/table";
 import { MinusIcon, PlusIcon, ShoppingCart, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useRouter } from "next/navigation";
+import { createOrder } from "@/services/order/endpoints";
 
 export default function CartPage() {
     const { cartItems, loading, updateQuantity, removeFromCart, clearCart } = useCart();
     const [isUpdating, setIsUpdating] = useState<string | null>(null);
-    const router = useRouter();
-    const { user } = useAuthContext();
+    const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
-    const totalPrice = cartItems.reduce((total, item) => {
-        return total + (item.product.price || 0) * item.quantity;
-    }, 0);
+    // Hàm chọn/bỏ chọn từng sản phẩm
+    const handleSelectItem = (productId: string) => {
+        setSelectedItems((prev) =>
+            prev.includes(productId)
+                ? prev.filter((id) => id !== productId)
+                : [...prev, productId]
+        );
+    };
+
+    // Hàm chọn/bỏ chọn tất cả
+    const handleSelectAll = () => {
+        if (selectedItems.length === cartItems.length) {
+            setSelectedItems([]);
+        } else {
+            setSelectedItems(cartItems.map((item) => item.product.product_id));
+        }
+    };
+
+    console.log('selectedItems:', selectedItems);
+
+    const totalPrice = useMemo(() => {
+        return selectedItems.reduce((total, productId) => {
+            const cartItem = cartItems.find(item => item.product.product_id === productId);
+            
+            if (cartItem) {
+                return total + (cartItem.product.price || 0) * cartItem.quantity;
+            }
+            
+            return total;
+        }, 0);
+    }, [selectedItems, cartItems]);
 
     const handleUpdateQuantity = async (productId: string, newQuantity: number) => {
         if (newQuantity < 1) return;

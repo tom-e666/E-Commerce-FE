@@ -1,15 +1,14 @@
-"use client";
-
+'use client';
 import React, { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { X, UploadCloud, RefreshCw, Plus } from "lucide-react";
-import Image from "next/image";
+import { X, UploadCloud, RefreshCw } from "lucide-react";
+import NextImage from 'next/image'; // Rename the import to avoid confusion
 
 interface ProductImagesManagerProps {
   images: string[];
-  setImages: (imgs: string[]) => void;
+  setImages: React.Dispatch<React.SetStateAction<string[]>>;
   productName: string;
 }
 
@@ -27,7 +26,7 @@ export default function ProductImagesManager({
   const inputRef = useRef<HTMLInputElement>(null);
   const [filesToUpload, setFilesToUpload] = useState<FileWithPreview[]>([]);
   const [isUploading, setIsUploading] = useState(false);
-  const [imageUrl, setImageUrl] = useState("");
+  const [failedImages, setFailedImages] = useState<Set<number>>(new Set());
 
   // Cleanup preview URLs khi component unmount
   useEffect(() => {
@@ -40,30 +39,32 @@ export default function ProductImagesManager({
     return name
       .toLowerCase()
       .trim()
-      .replace(/[^a-z0-9\s-]/g, "") // remove invalid chars
-      .replace(/\s+/g, "-")         // replace spaces with -
-      .replace(/-+/g, "-");         // collapse multiple -
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-");
   }
 
-  const checkImageDimensions = (file: File, width: number, height: number): Promise<boolean> => {
-    return new Promise((resolve) => {
-      // Use HTMLImageElement constructor explicitly
-      const img = document.createElement('img') as HTMLImageElement;
-      img.onload = () => {
-        const isValid = img.width === width && img.height === height;
-        URL.revokeObjectURL(img.src);
-        resolve(isValid);
-      };
-      img.onerror = () => resolve(false);
-      img.src = URL.createObjectURL(file);
-    });
-  };
+  // Fixed checkImageDimensions function
+  // const checkImageDimensions = (file: File, width: number, height: number): Promise<boolean> => {
+  //   return new Promise((resolve) => {
+  //     const img = new window.Image(); // Use window.Image explicitly
+  //     img.onload = () => {
+  //       const isValid = img.naturalWidth === width && img.naturalHeight === height;
+  //       URL.revokeObjectURL(img.src);
+  //       resolve(isValid);
+  //     };
+  //     img.onerror = () => {
+  //       URL.revokeObjectURL(img.src);
+  //       resolve(false);
+  //     };
+  //     img.src = URL.createObjectURL(file);
+  //   });
+  // };
 
   const uploadImageFile = async (file: File): Promise<string> => {
     const formData = new FormData();
     formData.append("file", file);
 
-    // Đặt folder và public_id theo yêu cầu
     const folder = `product/${productNameToSlug(productName) || "unknown"}`;
     formData.append("folder", folder);
 
@@ -99,13 +100,13 @@ export default function ProductImagesManager({
       }
 
       // Kiểm tra kích thước ảnh
-      const isValidDimensions = await checkImageDimensions(file, 1020, 570);
-      if (!isValidDimensions) {
-        toast.error(`File ${file.name}: Kích thước phải là 1020x570px`);
-        continue;
-      }
+      // const isValidDimensions = await checkImageDimensions(file, 1020, 570);
+      // if (!isValidDimensions) {
+      //   toast.error(`File ${file.name}: Kích thước phải là 1020x570px`);
+      //   continue;
+      // }
 
-      // Kiểm tra trùng lặp với files đã chọn
+      // Kiểm tra trùng lặp
       const isDuplicate = filesToUpload.some(
         existingFile => existingFile.file.name === file.name && 
                       existingFile.file.size === file.size
@@ -141,18 +142,16 @@ export default function ProductImagesManager({
         try {
           const url = await uploadImageFile(file);
           uploadedUrls.push(url);
-          toast.success(`Upload ${file.name} thành công`, { id: toastId });
         } catch (error) {
           console.error(`Lỗi upload ${file.name}:`, error);
-          toast.error(`Lỗi upload ${file.name}`, { id: toastId });
+          toast.error(`Lỗi upload ${file.name}`);
         }
       }
 
-      // Cập nhật danh sách ảnh sau khi upload thành công
       if (uploadedUrls.length > 0) {
-        setImages((prev:any) => [...prev, ...uploadedUrls]);
-        // Xóa các file đã upload thành công
+        setImages((prev: string[]) => [...prev, ...uploadedUrls]);
         setFilesToUpload([]);
+        toast.success(`Upload thành công ${uploadedUrls.length} ảnh`);
       }
     } finally {
       setIsUploading(false);
@@ -172,10 +171,6 @@ export default function ProductImagesManager({
   const removeUploadedImage = (index: number) => {
     const newImages = [...images];
     newImages.splice(index, 1);
-    
-    // Gọi API xóa ảnh trên server nếu cần
-    // deleteImageFromServer(removedImage);
-    
     setImages(newImages);
     toast.success("Đã xóa ảnh");
   };
@@ -234,12 +229,13 @@ export default function ProductImagesManager({
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
           {filesToUpload.map(({ preview, file }, index) => (
             <div key={`upload-${index}`} className="relative group h-32 rounded-md overflow-hidden border">
-              <Image
+              <NextImage
                 src={preview}
                 alt={`Preview ${file.name}`}
                 fill
-                sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
                 className="object-cover"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                unoptimized // For local file previews
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2">
                 <p className="text-white text-xs truncate w-full">{file.name}</p>
@@ -264,21 +260,26 @@ export default function ProductImagesManager({
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
             {images.map((img, index) => (
               <div key={`uploaded-${index}`} className="relative group h-32 rounded-md overflow-hidden border">
-                <Image
-                  src={img}
-                  alt={`Product image ${index + 1}`}
-                  fill
-                  sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
-                  className="object-cover"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = "/placeholder-product.png";
-                  }}
-                />
+                {failedImages.has(index) ? (
+                  <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                    <span className="text-gray-500 text-xs">Không thể tải ảnh</span>
+                  </div>
+                ) : (
+                  <NextImage
+                    src={img}
+                    alt={`Product image ${index + 1}`}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+                    onError={() => {
+                      setFailedImages(prev => new Set(prev).add(index));
+                    }}
+                  />
+                )}
                 <button
                   type="button"
                   onClick={() => removeUploadedImage(index)}
-                  className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                  className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
                   title="Xóa ảnh này"
                 >
                   <X className="h-3 w-3" />

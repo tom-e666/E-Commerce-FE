@@ -6,14 +6,11 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '**',
-        pathname: '**',
+        hostname: 'res.cloudinary.com', // Your image host
+        port: '',
+        pathname: '/**',
       },
-      {
-        protocol: 'http',
-        hostname: '**',
-        pathname: '**',
-      },
+      // Add other domains as needed
     ],
     domains: ['localhost', '127.0.0.1', '20.11.66.22'],
     unoptimized: process.env.NODE_ENV !== 'production',

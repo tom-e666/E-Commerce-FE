@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
-import { ShoppingCart, Filter, X, Check } from 'lucide-react';
+import { ShoppingCart, Filter, X, Check, RefreshCw } from 'lucide-react';
 import {
   Sheet,
   SheetClose,
@@ -37,10 +37,20 @@ import { useBrand } from "@/hooks/useBrand";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ProductListPage() {
-  const { products, getProducts, loading } = useProduct();
+  const { 
+    getPaginatedProducts, 
+    resetAndLoadProducts,
+    loadMoreProducts,
+    paginatedProducts, 
+    pagination,
+    loading,
+    isLoadingMore,
+    canLoadMore 
+  } = useProduct();
+  
   const { brands, getBrands } = useBrand();
   const { isAuthenticated } = useAuthContext();
-
+  
   // Filter states
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 50000000]);
@@ -50,13 +60,43 @@ export default function ProductListPage() {
   // Display state
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
+  // Thêm state cho filter giảm giá
+  const [showDiscountOnly, setShowDiscountOnly] = useState(false);
+
+  const observerRef = useRef<IntersectionObserver>();
+  const lastProductElementRef = useRef<HTMLDivElement>(null);
+
+  // Intersection Observer for infinite scroll
+  const lastProductRef = useCallback((node: HTMLDivElement) => {
+    if (loading) return;
+    if (observerRef.current) observerRef.current.disconnect();
+    
+    observerRef.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && canLoadMore) {
+        loadMoreProducts();
+      }
+    });
+    
+    if (node) observerRef.current.observe(node);
+  }, [loading, canLoadMore, loadMoreProducts]);
+
+  // Current filters
+  const currentFilters = useMemo(() => ({
+    search: searchQuery || undefined,
+    brand_id: selectedBrands.length > 0 ? selectedBrands[0] : undefined, // For simplicity
+    price_min: priceRange[0] > 0 ? priceRange[0] : undefined,
+    price_max: priceRange[1] < 50000000 ? priceRange[1] : undefined,
+    sort_field: sortOption.includes('-') ? sortOption.split('-')[0] : 'name',
+    sort_direction: sortOption.includes('-') ? sortOption.split('-')[1] : 'asc'
+  }), [searchQuery, selectedBrands, priceRange, sortOption]);
+
   // Fetch initial data
   useEffect(() => {
     const loadData = async () => {
       try {
         await Promise.all([
-          getProducts(),
-          getBrands()
+          getBrands(),
+          resetAndLoadProducts(currentFilters, 12)
         ]);
       } catch {
         toast.error("Không thể tải danh sách sản phẩm");
@@ -64,10 +104,19 @@ export default function ProductListPage() {
     };
 
     loadData();
-}, []);
+  }, []);
+
+  // Reload when filters change
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      resetAndLoadProducts(currentFilters, 12);
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [currentFilters, resetAndLoadProducts]);
 
   // Filter products based on selected filters
-  const filteredProducts = products.filter(product => {
+  const filteredProducts = paginatedProducts.filter(product => {
     // Brand filter
     if (selectedBrands.length > 0 && !selectedBrands.includes(product.brand_id)) {
       return false;
@@ -75,6 +124,11 @@ export default function ProductListPage() {
 
     // Price filter
     if (product.price < priceRange[0] || product.price > priceRange[1]) {
+      return false;
+    }
+
+    // Discount filter
+    if (showDiscountOnly && (!product.default_price || product.default_price <= product.price)) {
       return false;
     }
 
@@ -104,6 +158,15 @@ export default function ProductListPage() {
         return a.name.localeCompare(b.name);
       case 'name-desc':
         return b.name.localeCompare(a.name);
+      case 'discount-desc':
+        // Sort by discount percentage (highest first)
+        const discountA = a.default_price && a.default_price > a.price 
+          ? ((a.default_price - a.price) / a.default_price) * 100 
+          : 0;
+        const discountB = b.default_price && b.default_price > b.price 
+          ? ((b.default_price - b.price) / b.default_price) * 100 
+          : 0;
+        return discountB - discountA;
       default: // 'featured'
         return 0; // Keep original order
     }
@@ -149,6 +212,7 @@ export default function ProductListPage() {
     setPriceRange([0, 50000000]);
     setSearchQuery("");
     setSortOption("featured");
+    setShowDiscountOnly(false);
   };
 
   // Format price for display
@@ -156,11 +220,12 @@ export default function ProductListPage() {
     return `${formatCurrency(priceRange[0])} - ${formatCurrency(priceRange[1])}`;
   };
 
-  // Check if any filter is active
+  // Check if any filter is active (chỉ giữ lại một định nghĩa)
   const hasActiveFilters = selectedBrands.length > 0 ||
     priceRange[0] > 0 ||
     priceRange[1] < 50000000 ||
-    searchQuery !== "";
+    searchQuery !== "" ||
+    showDiscountOnly;
 
   return (
     <div className="container mx-auto py-8 px-4 md:px-6">
@@ -255,6 +320,20 @@ export default function ProductListPage() {
                   className="w-full h-8 text-xs"
                   placeholder="Max"
                 />
+              </div>
+            </div>
+
+            {/* Discount filter */}
+            <div className="mb-4">
+              <div className="flex items-center">
+                <Checkbox
+                  id="discount-only"
+                  checked={showDiscountOnly}
+                  onCheckedChange={setShowDiscountOnly}
+                />
+                <Label htmlFor="discount-only" className="ml-2 text-sm font-normal cursor-pointer">
+                  Chỉ hiển thị sản phẩm giảm giá
+                </Label>
               </div>
             </div>
           </div>
@@ -362,6 +441,21 @@ export default function ProductListPage() {
                     />
                   </div>
                 </div>
+
+                {/* Discount filter in mobile sheet */}
+                <div className="mb-6">
+                  <h3 className="font-medium mb-3">Giảm giá</h3>
+                  <div className="flex items-center">
+                    <Checkbox
+                      id="mobile-discount-only"
+                      checked={showDiscountOnly}
+                      onCheckedChange={setShowDiscountOnly}
+                    />
+                    <Label htmlFor="mobile-discount-only" className="ml-2 text-sm font-normal cursor-pointer">
+                      Chỉ hiển thị sản phẩm giảm giá
+                    </Label>
+                  </div>
+                </div>
               </div>
 
               <SheetFooter>
@@ -408,6 +502,7 @@ export default function ProductListPage() {
                   <SelectItem value="featured">Nổi bật</SelectItem>
                   <SelectItem value="price-asc">Giá: Thấp đến cao</SelectItem>
                   <SelectItem value="price-desc">Giá: Cao đến thấp</SelectItem>
+                  <SelectItem value="discount-desc">Giảm giá: Cao đến thấp</SelectItem>
                   <SelectItem value="name-asc">Tên: A-Z</SelectItem>
                   <SelectItem value="name-desc">Tên: Z-A</SelectItem>
                 </SelectContent>
@@ -482,6 +577,16 @@ export default function ProductListPage() {
                     />
                   </Badge>
                 )}
+
+                {showDiscountOnly && (
+                  <Badge variant="outline" className="flex items-center gap-1">
+                    Giảm giá
+                    <X
+                      className="h-3 w-3 cursor-pointer"
+                      onClick={() => setShowDiscountOnly(false)}
+                    />
+                  </Badge>
+                )}
               </div>
             </div>
           )}
@@ -531,8 +636,12 @@ export default function ProductListPage() {
               ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
               : "space-y-4"
             }>
-              {sortedProducts.map((product) => (
-                <Card key={product.id} className={viewMode === 'list' ? "flex flex-col sm:flex-row" : ""}>
+              {sortedProducts.map((product, index) => (
+                <Card 
+                  key={product.id} 
+                  className="overflow-hidden"
+                  ref={index === sortedProducts.length - 1 ? lastProductRef : undefined}
+                >
                   <div className={viewMode === 'list' ? "sm:w-48 relative" : "relative"}>
                     <Link
                       href={`/product/${product.id}`}
@@ -573,9 +682,28 @@ export default function ProductListPage() {
                       >
                         <h3 className="font-medium text-lg mb-1 hover:underline line-clamp-2">{product.name}</h3>
                       </Link>
-                      <div className="text-lg font-bold text-primary mb-2">
-                        {formatCurrency(product.price)}
+                      <div className="mb-2">
+                        {product.default_price && product.default_price > product.price ? (
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-red-500 font-medium line-through text-base">
+                                {formatCurrency(product.default_price)}
+                              </span>
+                            </div>
+                            <div className="text-lg font-bold text-green-600">
+                              {formatCurrency(product.price)}
+                            </div>
+                            <div className="text-sm text-green-600 font-medium">
+                              Tiết kiệm: {formatCurrency(product.default_price - product.price)}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-lg font-bold text-primary">
+                            {formatCurrency(product.price)}
+                          </div>
+                        )}
                       </div>
+
                       <p className="text-sm text-muted-foreground line-clamp-2">
                         {product.details?.description}
                       </p>
@@ -617,11 +745,26 @@ export default function ProductListPage() {
             </div>
           )}
 
-          {/* Result Count */}
-          <div className="mt-6 text-center text-sm text-muted-foreground">
-            {!loading && (
-              <>Hiển thị {sortedProducts.length} sản phẩm {hasActiveFilters ? 'phù hợp' : ''}</>
-            )}
+          {/* Loading indicator */}
+          {isLoadingMore && (
+            <div className="text-center py-8">
+              <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4" />
+              <p>Đang tải thêm sản phẩm...</p>
+            </div>
+          )}
+
+          {/* Load more button (alternative to infinite scroll) */}
+          {canLoadMore && !isLoadingMore && (
+            <div className="text-center py-8">
+              <Button onClick={loadMoreProducts} variant="outline">
+                Tải thêm sản phẩm ({pagination?.total! - paginatedProducts.length})
+              </Button>
+            </div>
+          )}
+
+          {/* Results info */}
+          <div className="text-center text-sm text-muted-foreground mt-6">
+            Hiển thị {paginatedProducts.length} / {pagination?.total || 0} sản phẩm
           </div>
         </div>
       </div>

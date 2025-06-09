@@ -28,7 +28,7 @@ export const CREATE_ORDER_FROM_CART = gql`
 
 export const CREATE_ORDER = gql`
   mutation CreateOrder($items: [OrderItemInput!]!) {
-    createOrder(items: $items) {
+    createOrder(typeOrder: "cart", items: $items) {
       code
       message
       order {
@@ -354,6 +354,57 @@ export const GET_ORDER_BY_TRANSACTION = gql`
   }
 `;
 
+export const GET_PAGINATED_ORDERS = gql`
+  query GetPaginatedOrders(
+    $status: String
+    $created_after: String
+    $created_before: String
+    $search: String
+    $sort_field: String
+    $sort_direction: String
+    $page: Int
+    $per_page: Int
+  ) {
+    getPaginatedOrders(
+      status: $status
+      created_after: $created_after
+      created_before: $created_before
+      search: $search
+      sort_field: $sort_field
+      sort_direction: $sort_direction
+      page: $page
+      per_page: $per_page
+      ) {
+      code
+      message
+      orders {
+        id
+        user_id
+        status
+        created_at
+        total_price
+        items {
+          id
+          product_id
+          name
+          quantity
+          price
+          image
+        }
+      }
+      pagination {
+        total
+        current_page
+        per_page
+        last_page
+        from
+        to
+        has_more_pages
+      }
+    }
+  }
+`;
+
 // API function implementations
 export const createOrderFromCartAPI = async () => {
   try {
@@ -648,6 +699,52 @@ export const getOrderByTransactionAPI = async (transactionId: string) => {
   }
 };
 
+export const getPaginatedOrdersAPI = async (
+    page: number = 1,
+    perPage: number = 10,
+    filters?: {
+        status?: string,
+        createdAfter?: string,
+        createdBefore?: string,
+        sortField?: string,
+        sortDirection?: string,
+        search?: string
+    }
+) => {
+    try {
+        const { 
+            status, 
+            createdAfter, 
+            createdBefore, 
+            sortField, 
+            sortDirection,
+            search
+        } = filters || {};
+
+        const response = await apolloClient.query({
+            query: GET_PAGINATED_ORDERS,
+            variables: {
+                status,
+                created_after: createdAfter,
+                created_before: createdBefore,
+                search: search,
+                sort_field: sortField,
+                sort_direction: sortDirection,
+                page,
+                per_page: perPage
+            },
+            fetchPolicy: 'network-only',
+            context: {
+                requiresAuth: true
+            }
+        });
+        return response;
+    } catch (error) {
+        console.error('Error fetching paginated orders:', error);
+        throw error;
+    }
+}
+
 export interface OrderItemInterface {
   id: string;
   product_id: string;
@@ -667,6 +764,10 @@ export interface OrderInterface {
   recipient_phone?: string;
   recipient_address?: string;
   items: OrderItemInterface[];
+  recipient_name?: string;
+  recipient_phone?: string;
+  shipping_address?: string;
+  notes?: string;
 }
 
 export interface OrderResponse {
@@ -684,4 +785,14 @@ export interface OrdersResponse {
 export interface BaseResponse {
   code: number;
   message: string;
+}
+
+export interface PaginationInfo {
+  total: number;
+  current_page: number;
+  per_page: number;
+  last_page: number;
+  from: number;
+  to: number;
+  has_more_pages: boolean;
 }

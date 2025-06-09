@@ -5,6 +5,7 @@ import { apolloClient } from '@/services/apollo/client';
 export interface Specification {
   name: string;
   value: string;
+  __typename?: string;
 }
 
 export interface ProductDetails {
@@ -18,6 +19,7 @@ export interface Product {
   id: string;
   name: string;
   price: number;
+  default_price: number;
   stock: number;
   status: boolean;
   brand_id: string;
@@ -63,6 +65,7 @@ export const GET_PRODUCT = gql`
         id
         name
         price
+        default_price
         stock
         status
         brand_id
@@ -130,6 +133,7 @@ const GET_PRODUCTS = gql`
         id
         name
         price
+        default_price
         stock
         status
         brand_id
@@ -179,6 +183,7 @@ const GET_PAGINATED_PRODUCTS = gql`
         id
         name
         price
+        default_price
         stock
         status
         brand_id
@@ -210,6 +215,7 @@ const CREATE_PRODUCT = gql`
   mutation CreateProduct(
     $name: String!
     $price: Float!
+    $default_price: Float!
     $stock: Int!
     $status: Boolean!
     $brand_id: ID!
@@ -219,6 +225,7 @@ const CREATE_PRODUCT = gql`
     createProduct(
       name: $name
       price: $price
+      default_price: $default_price
       stock: $stock
       status: $status
       brand_id: $brand_id
@@ -231,6 +238,7 @@ const CREATE_PRODUCT = gql`
         id
         name
         price
+        default_price
         stock
         status
         brand_id
@@ -254,6 +262,7 @@ const UPDATE_PRODUCT = gql`
     $id: ID!
     $name: String
     $price: Float
+    $default_price: Float
     $stock: Int
     $status: Boolean
     $brand_id: ID
@@ -264,6 +273,7 @@ const UPDATE_PRODUCT = gql`
       id: $id
       name: $name
       price: $price
+      default_price: $default_price
       stock: $stock
       status: $status
       brand_id: $brand_id
@@ -276,6 +286,7 @@ const UPDATE_PRODUCT = gql`
         id
         name
         price
+        default_price
         stock
         status
         brand_id
@@ -352,7 +363,7 @@ export const getProduct = (() => {
           message: isNetworkError
             ? 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng và thử lại.'
             : 'Có lỗi xảy ra khi tải thông tin sản phẩm',
-          product: null as any
+          product: null as Product | null
         };
       } finally {
         // Remove from the request cache after a short delay to allow for batched requests
