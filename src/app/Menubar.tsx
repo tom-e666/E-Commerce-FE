@@ -206,7 +206,7 @@ const Menubar = () => {
                                             </DropdownMenuItem>
                                         </Link>
                                         {mounted && user && user.role === "user" && (
-                                        <Link href="/Order" passHref style={{ textDecoration: 'none' }}>
+                                        <Link href="/order" passHref style={{ textDecoration: 'none' }}>
                                             <DropdownMenuItem>
                                                 Đơn hàng của tôi
                                             </DropdownMenuItem>
@@ -346,7 +346,7 @@ const Menubar = () => {
                                                 </Button>
                                             </Link>
                                             {mounted && user && user.role === "user" && (
-                                            <Link href="/Order" passHref>
+                                            <Link href="/order" passHref>
                                                 <Button variant="ghost" className="w-full justify-start text-white hover:bg-white hover:text-black">
                                                     Đơn hàng của tôi
                                                 </Button>

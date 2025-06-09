@@ -18,6 +18,8 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbS
 
 // Icons
 import { Package, Clock, ArrowLeft, CheckCircle, Truck, XCircle, ChevronRight, Home, Loader2, AlertTriangle } from 'lucide-react';
+import { useShipping } from '@/hooks/useShipping';
+import { Shipping } from '@/services/shipping/endpoints';
 
 // Order status badge map
 const getStatusBadge = (status: string) => {
@@ -48,13 +50,15 @@ export default function OrderDetailPage() {
   const { isAuthenticated, isLoading: authLoading } = useAuthContext();
   const { loading, getOrder, currentOrder, cancelOrder } = useOrder();
   const [isCancelling, setIsCancelling] = useState(false);
+  const { handleFetchShippingByOrderId } = useShipping();
   const [orderStatusHistory, setOrderStatusHistory] = useState<{status: string, date: string}[]>([]);
+  const [shippingData, setShippingData] = useState<Shipping | null>(null);
 
   // Redirect if not authenticated
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       toast.error('Vui lòng đăng nhập để xem chi tiết đơn hàng');
-      router.push('/login?redirect=/Order');
+      router.push('/login?redirect=/order');
       return;
     }
 
@@ -79,16 +83,20 @@ export default function OrderDetailPage() {
         });
       }
 
-      if (currentOrder.status === 'shipped' || currentOrder.status === 'delivered') {
+      if (currentOrder.status === 'shipping') {
         history.push({ 
-          status: 'shipped', 
+          status: 'shipping', 
           date: new Date(new Date(currentOrder.created_at).getTime() + 2*24*60*60*1000).toISOString() 
         });
       }
 
-      if (currentOrder.status === 'delivered') {
+      if (currentOrder.status === 'completed') {
         history.push({ 
-          status: 'delivered', 
+          status: 'shipping', 
+          date: new Date(new Date(currentOrder.created_at).getTime() + 5*24*60*60*1000).toISOString() 
+        });
+        history.push({ 
+          status: 'completed', 
           date: new Date(new Date(currentOrder.created_at).getTime() + 5*24*60*60*1000).toISOString() 
         });
       }
@@ -101,8 +109,20 @@ export default function OrderDetailPage() {
       }
 
       setOrderStatusHistory(history);
+      fetchShippingData(); // Fetch shipping data when order details are available
     }
   }, [currentOrder]);
+
+  const fetchShippingData = async () => {
+    try{
+      if (currentOrder) {
+        const shipping = await handleFetchShippingByOrderId(currentOrder.id);
+        setShippingData(shipping);
+      }
+    }catch{
+      toast.error('Không thể tải thông tin vận chuyển');
+    }
+  }
 
   const fetchOrderDetails = async () => {
     try {
@@ -186,7 +206,7 @@ export default function OrderDetailPage() {
             Đơn hàng không tồn tại hoặc bạn không có quyền truy cập đơn hàng này.
           </p>
           <Button asChild variant="outline">
-            <Link href="/Order">
+            <Link href="/order">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Quay lại danh sách đơn hàng
             </Link>
@@ -212,7 +232,7 @@ export default function OrderDetailPage() {
               <ChevronRight className="h-4 w-4" />
             </BreadcrumbSeparator>
             <BreadcrumbItem>
-              <BreadcrumbLink href="/Order">
+              <BreadcrumbLink href="/order">
                 Đơn hàng của tôi
               </BreadcrumbLink>
             </BreadcrumbItem>
@@ -263,9 +283,15 @@ export default function OrderDetailPage() {
             </CardHeader>
             <CardContent className="pt-0">
               <div className="space-y-2 text-sm">
-                <p><span className="text-gray-500">Người nhận:</span> {currentOrder.recipient_name || 'Không có thông tin'}</p>
-                <p><span className="text-gray-500">Số điện thoại:</span> {currentOrder.recipient_phone || 'Không có thông tin'}</p>
-                <p><span className="text-gray-500">Địa chỉ:</span> {currentOrder.shipping_address || 'Không có thông tin'}</p>
+                <p><span className="text-gray-500">Người nhận:</span> {shippingData?.recipient_name || 'Không có thông tin'}</p>
+                <p><span className="text-gray-500">Số điện thoại:</span> {shippingData?.recipient_phone || 'Không có thông tin'}</p>
+                <p><span className="text-gray-500">Địa chỉ:</span> {
+                  [
+                    shippingData?.address,
+                    shippingData?.ward_name,
+                    shippingData?.district_name,
+                    shippingData?.province_name
+                  ].filter(Boolean).join(', ') || 'Không có thông tin'}</p>
                 {currentOrder.notes && (
                   <p><span className="text-gray-500">Ghi chú:</span> {currentOrder.notes}</p>
                 )}
@@ -301,8 +327,8 @@ export default function OrderDetailPage() {
                         <p className="font-medium">
                           {historyItem.status === 'pending' && 'Đơn hàng đã được tạo'}
                           {historyItem.status === 'confirmed' && 'Đơn hàng đã được xác nhận'}
-                          {historyItem.status === 'shipped' && 'Đơn hàng đang được giao'}
-                          {historyItem.status === 'delivered' && 'Đơn hàng đã giao thành công'}
+                          {historyItem.status === 'shipping' && 'Đơn hàng đang được giao'}
+                          {historyItem.status === 'completed' && 'Đơn hàng đã giao thành công'}
                           {historyItem.status === 'cancelled' && 'Đơn hàng đã bị hủy'}
                         </p>
                         <p className="text-sm text-gray-500">
@@ -314,8 +340,8 @@ export default function OrderDetailPage() {
                     <p className="text-sm text-gray-600 mt-1">
                       {historyItem.status === 'pending' && 'Đơn hàng của bạn đã được tạo và đang chờ xác nhận.'}
                       {historyItem.status === 'confirmed' && 'Đơn hàng của bạn đã được xác nhận và đang được chuẩn bị.'}
-                      {historyItem.status === 'shipped' && 'Đơn hàng của bạn đã được giao cho đơn vị vận chuyển.'}
-                      {historyItem.status === 'delivered' && 'Đơn hàng của bạn đã được giao thành công.'}
+                      {historyItem.status === 'shipping' && 'Đơn hàng của bạn đã được giao cho đơn vị vận chuyển.'}
+                      {historyItem.status === 'completed' && 'Đơn hàng của bạn đã được giao thành công.'}
                       {historyItem.status === 'cancelled' && 'Đơn hàng của bạn đã bị hủy.'}
                     </p>
                   </div>
@@ -377,7 +403,7 @@ export default function OrderDetailPage() {
           </CardContent>
           <CardFooter className="flex justify-between pt-0">
             <Button variant="outline" asChild>
-              <Link href="/Order">
+              <Link href="/order">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Quay lại
               </Link>

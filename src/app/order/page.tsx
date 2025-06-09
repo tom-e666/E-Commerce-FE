@@ -66,7 +66,7 @@ export default function OrdersPage() {
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       toast.error('Vui lòng đăng nhập để xem đơn hàng của bạn');
-      router.push('/login?redirect=/Order');
+      router.push('/login?redirect=/order');
     }
   }, [isAuthenticated, authLoading, router]);
 
@@ -303,7 +303,7 @@ export default function OrdersPage() {
                         size="sm" 
                         asChild
                       >
-                        <Link href={`/Order/${order.id}`}>
+                        <Link href={`/order/${order.id}`}>
                           Xem chi tiết <ChevronRight className="ml-1 h-4 w-4" />
                         </Link>
                       </Button>

@@ -40,6 +40,8 @@ import {Loader2} from "lucide-react";
 import React from 'react';
 import { OrderInterface } from '@/services/order/endpoints';
 import { ColDef, ValueFormatterParams, ICellRendererParams } from 'ag-grid-community';
+import { useShipping } from '@/hooks/useShipping';
+import { Shipping } from '@/services/shipping/endpoints';
 
 provideGlobalGridOptions({
     theme: "legacy",
@@ -49,6 +51,7 @@ const OrderManagement = () => {
     const [openDetail, setOpenDetail] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState<OrderInterface | null>(null);
     const [filter, setFilter] = useState("all");
+    const [shipInfor, setShipInfor] = useState<Shipping | null>(null);
     
     const { 
         orders, 
@@ -65,6 +68,8 @@ const OrderManagement = () => {
         isLoadingMore,
         canLoadMore
     } = useOrder();
+
+    const { handleFetchShippingByOrderId } = useShipping();
 
     const [forceUpdateKey, setForceUpdateKey] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
@@ -343,6 +348,7 @@ const OrderManagement = () => {
             const orderId = event.data.id;
             const order = await getOrder(orderId);
             setSelectedOrder(order);
+            getShipInfo(orderId);
             setOpenDetail(true);
         } catch (error) {
             toast.error("Không thể tải thông tin đơn hàng");
@@ -459,6 +465,16 @@ const OrderManagement = () => {
         setSortField("created_at");
         setSortDirection("desc");
     };
+
+    const getShipInfo = async (orderId: string) => {
+        try {
+            const shippingInfo = await handleFetchShippingByOrderId(orderId);
+            setShipInfor(shippingInfo);
+        } catch (error) {
+            toast.error("Không thể tải thông tin vận chuyển");
+            console.error("Error fetching shipping info:", error);
+        }
+    }
 
     return (
         <motion.div 
@@ -958,15 +974,25 @@ const OrderManagement = () => {
                                                 <div className="space-y-3">
                                                     <div className="flex justify-between items-center">
                                                         <span className="text-sm text-gray-600">Người nhận:</span>
-                                                        <span className="text-sm">{selectedOrder.recipient_name || "N/A"}</span>
+                                                        <span className="text-sm">{shipInfor?.recipient_name || "N/A"}</span>
                                                     </div>
                                                     <div className="flex justify-between items-center">
                                                         <span className="text-sm text-gray-600">Số điện thoại:</span>
-                                                        <span className="text-sm">{selectedOrder.recipient_phone || "N/A"}</span>
+                                                        <span className="text-sm">{shipInfor?.recipient_phone || "N/A"}</span>
                                                     </div>
                                                     <div className="space-y-1">
                                                         <span className="text-sm text-gray-600">Địa chỉ:</span>
-                                                        <p className="text-sm bg-white p-2 rounded border">{selectedOrder.shipping_address || "N/A"}</p>
+                                                        <p className="text-sm bg-white p-2 rounded border">
+                                                            {shipInfor ? 
+                                                                [
+                                                                    shipInfor.address,
+                                                                    shipInfor.ward_name,
+                                                                    shipInfor.district_name,
+                                                                    shipInfor.province_name
+                                                                ].filter(Boolean).join(', ') 
+                                                                : (selectedOrder.shipping_address || "N/A")
+                                                            }
+                                                        </p>
                                                     </div>
                                                     {selectedOrder.notes && (
                                                         <div className="space-y-1">
