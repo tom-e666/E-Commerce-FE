@@ -300,9 +300,23 @@ export default function CartPage() {
                             Tiếp tục mua sắm
                         </Link>
                     </Button>
-                    <Button onClick={handleCheckout} disabled={cartItems.length === 0}>
-                        Thanh toán
-                    </Button>
+                    <div className="flex flex-col items-end gap-2">
+                        {selectedItems.length === 0 && (
+                            <p className="text-sm text-muted-foreground">
+                                Vui lòng chọn ít nhất 1 sản phẩm để thanh toán
+                            </p>
+                        )}
+                        <Button 
+                            onClick={handleCheckout} 
+                            disabled={selectedItems.length === 0}
+                            className={selectedItems.length === 0 ? "opacity-50 cursor-not-allowed" : ""}
+                        >
+                            {selectedItems.length > 0 
+                                ? `Thanh toán (${selectedItems.length} sản phẩm)` 
+                                : "Thanh toán"
+                            }
+                        </Button>
+                    </div>
                 </CardFooter>
             </Card>
         </div>
