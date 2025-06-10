@@ -62,9 +62,6 @@ export default function VNPayStatus() {
           setIsSuccess(true);
           setLoading(false);
           clearTimers();
-          setTimeout(() => {
-            window.location.href = `/order/${response.order.id}`;
-          }, 5000);
           return;
         } else if (orderStatus === "failed") {
           setOrder(response.order);
@@ -72,9 +69,6 @@ export default function VNPayStatus() {
           setIsFailed(true);
           setLoading(false);
           clearTimers();
-          setTimeout(() => {
-            window.location.href = '/';
-          }, 5000);
           return;
         } else {
           // Đang chờ xử lý (pending, processing, etc.)
