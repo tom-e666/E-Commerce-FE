@@ -108,6 +108,25 @@ export default function CartPage() {
             setIsUpdating(null);
         }
     };
+        const handleCheckout = async () => {
+        try {
+            const toastId = toast.loading("Đang tạo đơn hàng");
+            // const response = await createOrderFromCartAPI();
+            const response = await createOrder(selectedItems.map((productId) => ({
+                product_id: productId,
+                quantity: cartItems.find(item => item.product.product_id === productId)?.quantity || 1
+            })));
+            console.log(response);
+            if (!response?.data) {
+                throw new Error("Có lỗi! Đơn hàng không được tạo!");
+            }
+            sessionStorage.setItem("newOrder", JSON.stringify(response.data.createOrder.order));
+            toast.dismiss(toastId);
+            router.push("/checkout");
+        } catch {
+            toast.error("Có lỗi! Đơn hàng không được tạo!");
+        }
+    };
 
     if (loading) {
         return (
