@@ -405,6 +405,15 @@ export const GET_PAGINATED_ORDERS = gql`
   }
 `;
 
+export const MARK_ORDER_AS_FAILED = gql`
+  mutation MarkOrderAsFailed($order_id: ID!) {
+    markOrderAsFailed(order_id: $order_id) {
+      code
+      message
+      }
+    }
+`;
+
 // API function implementations
 export const createOrderFromCartAPI = async () => {
   try {
@@ -608,6 +617,22 @@ export const deleteOrderAPI = async (orderId: string, userId: string) => {
   }
 };
 
+export const markOrderAsFailedAPI = async (orderId: string) => {
+  try {
+    const response = await apolloClient.mutate({
+      mutation: MARK_ORDER_AS_FAILED,
+      variables: { order_id: orderId },
+      context: {
+        requiresAuth: true
+      }
+    });
+    return response;
+  } catch (error) {
+    console.error('Error marking order as failed:', error);
+    throw error;
+  }
+};
+
 // Deprecated - keeping for backward compatibility
 export const deliverOrderAPI = async (orderId: string) => {
   console.warn('deliverOrderAPI is deprecated. Use completeDeliveryAPI instead.');
@@ -757,7 +782,7 @@ export interface OrderItemInterface {
 export interface OrderInterface {
   id: string;
   user_id: string;
-  status: 'pending' | 'confirmed' | 'processing' | 'shipping' | 'completed' | 'cancelled' | 'failed';
+  status: 'pending' | 'confirmed' | 'processing' | 'shipping' | 'completed' | 'cancelled' | 'failed' | 'delivery_failed';
   created_at: string;
   total_price: number;
   recipient_name?: string;
