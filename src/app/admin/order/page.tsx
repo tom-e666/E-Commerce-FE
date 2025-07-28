@@ -48,6 +48,9 @@ import { CheckCircle, XCircle, AlertTriangle } from "lucide-react";
 provideGlobalGridOptions({
     theme: "legacy",
 });
+const normalizeStatus = (status: string): string => {
+    return status?.trim().toLowerCase() || 'pending';
+}
 
 const OrderManagement = () => {
     const [openDetail, setOpenDetail] = useState(false);
@@ -344,7 +347,25 @@ const OrderManagement = () => {
 
 
     // @ts-expect-error any
-    const handleRowClick = async (event) => {
+    const handleRowClick = useCallback(async (event) => {
+        const getShipInfo = async (orderId: string) => {
+        try {
+            const shippingInfo = await handleFetchShippingByOrderId(orderId);
+            setShipInfor(shippingInfo);
+        } catch (error) {
+            toast.error("Không thể tải thông tin vận chuyển");
+            console.error("Error fetching shipping info:", error);
+        }
+        };
+         const getPaymentInfo = async (orderId: string) => {
+        try {
+            const paymentInfo = await fetchPayment(orderId);
+            return paymentInfo;
+        } catch (error) {
+            toast.error("Không thể tải thông tin thanh toán");
+            console.error("Error fetching payment info:", error);
+        }
+        }
         try {
             const orderId = event.data.id;
             const order = await getOrder(orderId);
@@ -352,19 +373,19 @@ const OrderManagement = () => {
             getShipInfo(orderId);
             getPaymentInfo(orderId);
             setOpenDetail(true);
-        } catch (error) {
+        } catch (error) {   
             toast.error("Không thể tải thông tin đơn hàng");
             console.error(error);
         }
-    }, [getOrder]);
+    }, [getOrder,handleFetchShippingByOrderId, fetchPayment]);
 
     const handleCloseDetail = useCallback(() => {
         setOpenDetail(false);
         setSelectedOrder(null);
-    };
+    }, []);
 
     // Updated status change handler to refresh current page
-    const handleStatusChange = async (action: 'confirm' | 'process' | 'ship' | 'complete' | 'cancel' | 'delivery_failed', orderId: string) => {
+    const handleStatusChange = useCallback( async (action: 'confirm' | 'process' | 'ship' | 'complete' | 'cancel' | 'delivery_failed', orderId: string) => {
         setIsUpdatingStatus(true);
         try {
             switch (action) {
@@ -441,7 +462,7 @@ const OrderManagement = () => {
         } catch (error) {
             console.error("Error updating order status:", error);
         }
-    }, [confirmOrder, processingOrder, shipOrder, completeDelivery, cancelOrder, selectedOrder, getOrder, loadOrders]);
+    }, [confirmOrder, processingOrder, shipOrder, completeDelivery, cancelOrder, selectedOrder, getOrder, markOrderFailed]);
     
     const handleFilterChange = useCallback((value: string) => {
         setFilter(value);
@@ -484,25 +505,25 @@ const OrderManagement = () => {
         setSortDirection("desc");
     };
 
-    const getShipInfo = async (orderId: string) => {
-        try {
-            const shippingInfo = await handleFetchShippingByOrderId(orderId);
-            setShipInfor(shippingInfo);
-        } catch (error) {
-            toast.error("Không thể tải thông tin vận chuyển");
-            console.error("Error fetching shipping info:", error);
-        }
-    }
+    // const getShipInfo = async (orderId: string) => {
+    //     try {
+    //         const shippingInfo = await handleFetchShippingByOrderId(orderId);
+    //         setShipInfor(shippingInfo);
+    //     } catch (error) {
+    //         toast.error("Không thể tải thông tin vận chuyển");
+    //         console.error("Error fetching shipping info:", error);
+    //     }
+    // }
 
-    const getPaymentInfo = async (orderId: string) => {
-        try {
-            const paymentInfo = await fetchPayment(orderId);
-            return paymentInfo;
-        } catch (error) {
-            toast.error("Không thể tải thông tin thanh toán");
-            console.error("Error fetching payment info:", error);
-        }
-    }
+    // const getPaymentInfo = async (orderId: string) => {
+    //     try {
+    //         const paymentInfo = await fetchPayment(orderId);
+    //         return paymentInfo;
+    //     } catch (error) {
+    //         toast.error("Không thể tải thông tin thanh toán");
+    //         console.error("Error fetching payment info:", error);
+    //     }
+    // }
 
     // Thêm function helper để lấy trạng thái thanh toán
     const getPaymentStatusConfig = (status: string) => {

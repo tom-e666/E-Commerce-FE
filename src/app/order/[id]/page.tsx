@@ -88,7 +88,7 @@ function OrderDetailContent() {
     if (isAuthenticated && orderId) {
       fetchOrderDetails();
     }
-  }, [isAuthenticated, authLoading, orderId]);
+  }, [isAuthenticated, authLoading, orderId,fetchOrderDetails,router]);
 
   // Generate status history when order details load
   useEffect(() => {
@@ -152,9 +152,7 @@ function OrderDetailContent() {
       setOrderStatusHistory(history);
       fetchShippingData(); // Fetch shipping data when order details are available
     }
-  }, [currentOrder]);
-
-  const fetchShippingData = async () => {
+    const fetchShippingData = async () => {
     try{
       if (currentOrder) {
         const shipping = await handleFetchShippingByOrderId(currentOrder.id);
@@ -164,15 +162,16 @@ function OrderDetailContent() {
       toast.error('Không thể tải thông tin vận chuyển');
     }
   }
+  }, [currentOrder, handleFetchShippingByOrderId]);
 
-  const fetchOrderDetails = async () => {
+  const fetchOrderDetails = useCallback(async () => {
     try {
       await getOrder(orderId);
     } catch (error) {
       console.error('Failed to fetch order details:', error);
       toast.error('Không thể tải thông tin đơn hàng');
     }
-  };
+  }, [getOrder, orderId]);
 
   const handleCancelOrder = async () => {
     if (!currentOrder) return;

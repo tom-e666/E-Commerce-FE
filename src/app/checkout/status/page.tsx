@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, Suspense } from "react";
 import { useOrder } from "@/hooks/useOrder";
 import { CheckCircle2, XCircle, Loader2, Eye } from "lucide-react";
 
@@ -20,7 +20,7 @@ interface Order {
   items: OrderItem[];
 }
 
-export default function VNPayStatus() {
+function VNPayStatus() {
   const searchParams = useSearchParams();
   const { getOrderByTransaction } = useOrder();
   const vnpTxnRef = searchParams.get("vnp_TxnRef");
@@ -115,7 +115,7 @@ export default function VNPayStatus() {
     return () => {
       clearTimers();
     };
-  }, [vnpTxnRef, checkOrder]);
+  }, [vnpTxnRef, checkOrder, clearTimers]);
 
   // Function để navigate tới chi tiết đơn hàng
   const handleViewOrderDetail = () => {
@@ -204,8 +204,14 @@ export default function VNPayStatus() {
                         {item.image ? (
                           <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
                         ) : (
-                            <XCircle className="h-16 w-16 text-red-500" />
+                          <XCircle className="h-16 w-16 text-red-500" />
                         )}
+                      </div>
+                      <div className="ml-4 flex-1">
+                        <h3 className="font-medium text-gray-900">{item.name}</h3>
+                        <p className="text-sm text-gray-500">Số lượng: {item.quantity}</p>
+                        <p className="text-sm font-medium text-gray-900">{item.price.toLocaleString()} ₫</p>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -256,22 +262,24 @@ export default function VNPayStatus() {
             )}
           </div>
         </div>
+      </div>
+    </div>
     );
 }
-
 export default function CheckoutStatusPage() {
-    return (
-        <Suspense fallback={
-            <div className="container mx-auto py-12 px-4">
-                <Card className="max-w-md mx-auto">
-                    <CardContent className="p-6 text-center">
-                        <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-                        <p>Đang tải...</p>
-                    </CardContent>
-                </Card>
-            </div>
-        }>
-            <CheckoutStatusContent />
-        </Suspense>
-    );
+  return (
+    <Suspense fallback={
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-gray-50 p-4">
+        <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
+          <div className="flex justify-center mb-6">
+            <Loader2 className="h-12 w-12 text-blue-500 animate-spin" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-800 mb-2">Đang tải</h1>
+          <p className="text-gray-600 mb-4">Vui lòng đợi trong giây lát...</p>
+        </div>
+      </div>
+    }>
+      <VNPayStatus />
+    </Suspense>
+  );
 }
