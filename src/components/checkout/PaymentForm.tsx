@@ -21,58 +21,72 @@ const PaymentForm = React.memo(({ orderId, totalAmount, onBack, onComplete }: Pa
     const [isLoading, setIsLoading] = useState(false);
     const { createCODPayment, createVNPayPayment } = usePayment();
 
-    const handlePayment = async () => {
-        if (!selectedMethod) {
-            toast.error("Vui lòng chọn phương thức thanh toán");
-            return;
-        }
+    // ...existing code...
 
-        if (!orderId) {
-            toast.error("Không có thông tin đơn hàng");
-            return;
-        }
+const handlePayment = async () => {
+    if (!selectedMethod) {
+        toast.error("Vui lòng chọn phương thức thanh toán");
+        return;
+    }
 
-        setIsLoading(true);
+    if (!orderId) {
+        toast.error("Không có thông tin đơn hàng");
+        return;
+    }
 
-        try {
-            switch (selectedMethod) {
-                case 'cod':
-                    const response = await createCODPayment(orderId);
-                    console.log("COD response:", response);
-                    if (response.code === 200) {
-                        toast.success("Đặt hàng thành công!");
-                        // onComplete('cod');
+    setIsLoading(true);
 
-                        setTimeout(() => {
-                            router.push(`/checkout/status?vnp_TxnRef=${response.transaction_id}`);
-                        }, 1000);
-                    } else {
-                        toast.error(response.message || "Có lỗi xảy ra khi xử lý thanh toán COD");
-                    }
-                    break;
-
-                case 'cc':
-                    toast.info("Chức năng thanh toán qua thẻ quốc tế đang được phát triển");
-                    toast.success("Đang xử lý thanh toán demo...");
-
-                    onComplete('cc');
-
+    try {
+        switch (selectedMethod) {
+            case 'cod':
+                const codResponse = await createCODPayment(orderId);
+                console.log("COD response:", codResponse);
+                if (codResponse.code === 200) {
+                    toast.success("Đặt hàng thành công!");
                     setTimeout(() => {
-                        router.push(`/checkout/success?orderId=${orderId}&demo=true&method=cc`);
-                    }, 5000);
-                    break;
+                        router.push(`/checkout/status?vnp_TxnRef=${codResponse.transaction_id}`);
+                    }, 1000);
+                } else {
+                    toast.error(codResponse.message || "Có lỗi xảy ra khi xử lý thanh toán COD");
+                }
+                break;
 
-                default:
-                    break;
-            }
-        } catch (error) {
-            console.error("Payment error:", error);
-            toast.error("Có lỗi xảy ra khi xử lý thanh toán");
-        } finally {
-            setIsLoading(false);
+            case 'vnpay':
+                try {
+                    const vnpayResponse = await createVNPayPayment(orderId, totalAmount);
+                    console.log("VNPay response:", vnpayResponse);
+                    if (vnpayResponse && vnpayResponse.payment_url) {
+                        toast.success("Đang chuyển hướng đến VNPay...");
+                        window.location.href = vnpayResponse.payment_url;
+                    } else {
+                        toast.error(vnpayResponse?.message || "Không thể tạo liên kết thanh toán VNPay");
+                    }
+                } catch (vnpayError) {
+                    console.error("VNPay payment error:", vnpayError);
+                    toast.error("Có lỗi xảy ra khi xử lý thanh toán VNPay");
+                }
+                break;
+
+            case 'cc':
+                toast.info("Chức năng thanh toán qua thẻ quốc tế đang được phát triển");
+                toast.success("Đang xử lý thanh toán demo...");
+                onComplete('cc');
+                setTimeout(() => {
+                    router.push(`/checkout/success?orderId=${orderId}&demo=true&method=cc`);
+                }, 5000);
+                break;
+
+            default:
+                toast.error("Phương thức thanh toán không được hỗ trợ");
+                break;
         }
-    };
-
+    } catch (error) {
+        console.error("Payment error:", error);
+        toast.error("Có lỗi xảy ra khi xử lý thanh toán");
+    } finally {
+        setIsLoading(false);
+    }
+};
     return (
         <Card className="w-full">
             <CardHeader>

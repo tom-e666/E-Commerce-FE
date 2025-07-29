@@ -254,7 +254,7 @@ const ShippingForm = React.memo(({
                         </div>
 
                         <div className="flex items-center space-x-2 border p-3 rounded-md bg-gray-50/50">
-                            <RadioGroupItem value="GHN" id="ghn" disabled />
+                            <RadioGroupItem value="GHN" id="ghn" />
                             <Label htmlFor="ghn" className="flex-1 cursor-not-allowed opacity-70">
                                 <div className="font-medium">Giao Hàng Nhanh (GHN)</div>
                                 <div className="text-xs text-muted-foreground">
