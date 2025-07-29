@@ -67,6 +67,11 @@ export default function CheckoutPage() {
         wards: false
     });
 
+    const [addressCache, setAddressCache] = useState({
+        currentCity: '',
+        currentDistrict: ''
+    });
+
     const debouncedSetNotes = useCallback((value: string) => {
         if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
             (window).requestIdleCallback(() => {
@@ -94,52 +99,75 @@ export default function CheckoutPage() {
             }
         }
         loadProvinces();
-    }, [loadingStates.provinces, provinces.length]);
+    }, [provinces.length, loadingStates.provinces]);
 
+    // Fix districts loading with proper cache management
     useEffect(() => {
         async function loadDistricts() {
-            if (!shippingInfo.city || loadingStates.districts) return;
+            // Only load if city exists, not already loading, and city has changed
+            if (!shippingInfo.city || 
+                loadingStates.districts || 
+                addressCache.currentCity === shippingInfo.city) {
+                return;
+            }
 
+            console.log('Loading districts for city:', shippingInfo.city);
             setLoadingStates(prev => ({ ...prev, districts: true }));
+            setAddressCache(prev => ({ ...prev, currentCity: shippingInfo.city }));
+
             try {
                 const selectedProvince = provinces.find(p => p.province_name === shippingInfo.city);
                 if (selectedProvince) {
                     const data = await getDistricts(selectedProvince.province_id.toString());
                     setDistricts(data);
+                    // Clear dependent fields when city changes
                     setShippingInfo(prev => ({ ...prev, district: "", ward: "" }));
                     setWards([]);
+                    setAddressCache(prev => ({ ...prev, currentDistrict: '' }));
                 }
             } catch (error) {
                 console.error("Failed to load districts:", error);
+                toast.error("Không thể tải danh sách quận/huyện");
             } finally {
                 setLoadingStates(prev => ({ ...prev, districts: false }));
             }
         }
 
         loadDistricts();
-    }, [shippingInfo.city, provinces, loadingStates.districts]);
+    }, [shippingInfo.city, provinces]); // Only depend on city and provinces
 
+    // Fix wards loading with proper cache management
     useEffect(() => {
         async function loadWards() {
-            if (!shippingInfo.district || loadingStates.wards) return;
+            // Only load if district exists, not already loading, and district has changed
+            if (!shippingInfo.district || 
+                loadingStates.wards || 
+                addressCache.currentDistrict === shippingInfo.district) {
+                return;
+            }
 
+            console.log('Loading wards for district:', shippingInfo.district);
             setLoadingStates(prev => ({ ...prev, wards: true }));
+            setAddressCache(prev => ({ ...prev, currentDistrict: shippingInfo.district }));
+
             try {
                 const selectedDistrict = districts.find(d => d.district_name === shippingInfo.district);
                 if (selectedDistrict) {
                     const data = await getWards(selectedDistrict.district_id.toString());
                     setWards(data);
+                    // Clear ward when district changes
                     setShippingInfo(prev => ({ ...prev, ward: "" }));
                 }
             } catch (error) {
                 console.error("Failed to load wards:", error);
+                toast.error("Không thể tải danh sách phường/xã");
             } finally {
                 setLoadingStates(prev => ({ ...prev, wards: false }));
             }
         }
 
         loadWards();
-    }, [shippingInfo.district, districts, loadingStates.wards]);
+    }, [shippingInfo.district, districts]); // Only depend on district and districts
 
     useEffect(() => {
         const initializeOrder = async () => {
@@ -182,11 +210,28 @@ export default function CheckoutPage() {
         }));
     }, [debouncedSetNotes]);
 
+    // Fix handleSelectChange to prevent unnecessary re-renders
     const handleSelectChange = useCallback((name: string, value: string) => {
-        setShippingInfo(prev => ({
-            ...prev,
-            [name]: value
-        }));
+        console.log(`Selecting ${name}:`, value);
+        
+        setShippingInfo(prev => {
+            // Prevent unnecessary updates if value hasn't changed
+            if (prev[name as keyof typeof prev] === value) {
+                return prev;
+            }
+
+            const newInfo = { ...prev, [name]: value };
+
+            // Clear dependent fields when parent selection changes
+            if (name === 'city') {
+                newInfo.district = '';
+                newInfo.ward = '';
+            } else if (name === 'district') {
+                newInfo.ward = '';
+            }
+
+            return newInfo;
+        });
     }, []);
 
     const validateShippingInfo = useCallback(() => {

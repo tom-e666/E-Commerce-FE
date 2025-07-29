@@ -273,10 +273,10 @@ const ShippingForm = React.memo(({
                     <Textarea
                         id="notes"
                         name="notes"
-                        defaultValue={shippingInfo.notes}
+                        value={shippingInfo.notes}
                         onChange={(e) => {
-                            e.currentTarget.value = e.currentTarget.value;
-                            debouncedSetNotes(e.currentTarget.value);
+                            onInputChange(e);
+                            debouncedSetNotes(e.target.value);
                         }}
                         placeholder="Ghi chú về đơn hàng, ví dụ: thời gian hay chỉ dẫn địa điểm giao hàng chi tiết hơn."
                         className="h-24"

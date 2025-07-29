@@ -22,7 +22,8 @@ import { Label } from "@/components/ui/label";
 function LoginContent() {
   const [username, setUsername] = React.useState<string>('');
   const [password, setPassword] = React.useState<string>('');
-  const { login, loading } = useAuth();
+  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
+  const { login } = useAuth();
   const { isAuthenticated, user } = useAuthContext();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -53,6 +54,8 @@ function LoginContent() {
       loadingToastRef.current = null;
     }
 
+    setIsSubmitting(true);
+
     try {
       // Show loading toast and store the ID
       loadingToastRef.current = toast.loading("Đang đăng nhập...");
@@ -82,6 +85,8 @@ function LoginContent() {
         loadingToastRef.current = null;
       }
       toast.error("Đăng nhập thất bại");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -160,9 +165,9 @@ function LoginContent() {
               <Button
                 type="submit"
                 className="w-full"
-                disabled={loading}
+                disabled={isSubmitting}
               >
-                {loading ? (
+                {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Đang đăng nhập
