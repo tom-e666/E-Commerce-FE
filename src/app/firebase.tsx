@@ -1,18 +1,18 @@
 import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyBlc3u9fY7t9H-mabz9UAB5Tz1jFW_e498",
-  authDomain: "e-commerce-8bf03.firebaseapp.com",
-  projectId: "e-commerce-8bf03",
-  storageBucket: "e-commerce-8bf03.firebasestorage.app",
-  messagingSenderId: "392067813677",
-  appId: "1:392067813677:web:b5b76104f6dd65a6b583a4",
-  measurementId: "G-L817WZ496F"
+  apiKey: "AIzaSyD8kWI1fZAcQjcXUzYsYfQrNn7-lLCO__A",
+  authDomain: "ecommerce-da2c8.firebaseapp.com",
+  projectId: "ecommerce-da2c8",
+  storageBucket: "ecommerce-da2c8.firebasestorage.app",
+  messagingSenderId: "533306985399",
+  appId: "1:533306985399:web:0a9d6e03b7b44b3d44c2f0",
+  measurementId: "G-M9FJY8LGEV"
 };
+
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
+const firebaseApp = initializeApp(firebaseConfig);
+
+export { firebaseApp };
+// Initialize Firebase
+// const app = initializeApp(firebaseConfig);

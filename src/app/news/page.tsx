@@ -41,7 +41,7 @@ async function fetchTechNews(): Promise<NewsItem[]> {
     
     // Chuyển đổi dữ liệu sang định dạng NewsItem
     //@ts-expect-error nothing
-    return data.articles.map((article: any, index: number) => ({
+    return data.articles.map((article: unknown, index: number) => ({
       id: article.url ? encodeURIComponent(article.url) : `tech-${index}`,
       title: article.title || 'Không có tiêu đề',
       summary: article.description || 'Không có tóm tắt',

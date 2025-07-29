@@ -20,6 +20,7 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbS
 import { Package, Clock, ArrowLeft, CheckCircle, Truck, XCircle, ChevronRight, Home, Loader2, AlertTriangle } from 'lucide-react';
 import { useShipping } from '@/hooks/useShipping';
 import { Shipping } from '@/services/shipping/endpoints';
+import Image from 'next/image';
 
 // Order status badge map
 const getStatusBadge = (status: string) => {
@@ -67,7 +68,15 @@ export default function OrderDetailPage() {
     if (isAuthenticated && orderId) {
       fetchOrderDetails();
     }
-  }, [isAuthenticated, authLoading, orderId]);
+      const fetchOrderDetails = async () => {
+    try {
+      await getOrder(orderId);
+    } catch (error) {
+      console.error('Failed to fetch order details:', error);
+      toast.error('Không thể tải thông tin đơn hàng');
+    }
+  };
+  }, [isAuthenticated, authLoading, orderId, router, getOrder]);
 
   // Generate status history when order details load
   useEffect(() => {
@@ -131,9 +140,7 @@ export default function OrderDetailPage() {
       setOrderStatusHistory(history);
       fetchShippingData(); // Fetch shipping data when order details are available
     }
-  }, [currentOrder]);
-
-  const fetchShippingData = async () => {
+     const fetchShippingData = async () => {
     try{
       if (currentOrder) {
         const shipping = await handleFetchShippingByOrderId(currentOrder.id);
@@ -143,15 +150,9 @@ export default function OrderDetailPage() {
       toast.error('Không thể tải thông tin vận chuyển');
     }
   }
+  }, [currentOrder, handleFetchShippingByOrderId]);
 
-  const fetchOrderDetails = async () => {
-    try {
-      await getOrder(orderId);
-    } catch (error) {
-      console.error('Failed to fetch order details:', error);
-      toast.error('Không thể tải thông tin đơn hàng');
-    }
-  };
+
 
   const handleCancelOrder = async () => {
     if (!currentOrder) return;
@@ -386,10 +387,12 @@ export default function OrderDetailPage() {
                 <div key={item.id} className="flex items-center p-3 border rounded-md">
                   <div className="flex-shrink-0 w-16 h-16 bg-gray-100 rounded-md flex items-center justify-center">
                     {item.image ? (
-                      <img 
-                        src={item.image} 
-                        alt={item.name} 
-                        className="max-w-full max-h-full object-contain"
+                      <Image
+                        src={item.image || "/laptop.png"}
+                        alt={item.name}
+                        width={80}
+                        height={80}
+                        className="object-contain rounded"
                       />
                     ) : (
                       <Package className="h-8 w-8 text-gray-400" />

@@ -80,7 +80,7 @@ export default function AdminSupportPage() {
 
   useEffect(() => {
     filterTickets();
-  }, [tickets, statusFilter, searchQuery, dateFilter, activeTab]);
+  }, [tickets, statusFilter, searchQuery, dateFilter, activeTab, filterTickets]);
 
   const fetchTickets = async () => {
     setLoading(true);
@@ -113,7 +113,7 @@ export default function AdminSupportPage() {
     }
   };
 
-  const filterTickets = () => {
+  const filterTickets = useCallback(() => {
     let filtered = [...tickets];
     
     // Filter by tab (status groups)
@@ -167,7 +167,7 @@ export default function AdminSupportPage() {
     }
     
     setFilteredTickets(filtered);
-  };
+  }, [tickets, statusFilter, searchQuery, dateFilter, activeTab]);
 
   const handleSelectTicket = async (ticket: SupportTicket) => {
     setSelectedTicket(ticket);
@@ -463,8 +463,10 @@ export default function AdminSupportPage() {
                         </span>
                       </div>
                     </div>
-                  ))
-                )}
+                  )
+                )
+              )
+                }
               </div>
             </CardContent>
           </Card>

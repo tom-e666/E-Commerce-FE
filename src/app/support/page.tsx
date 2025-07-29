@@ -33,7 +33,7 @@ export default function SupportPage() {
         toast.error('Không thể tải danh sách yêu cầu hỗ trợ');
       });
     }
-  }, [isAuthenticated, authLoading]);
+  }, [isAuthenticated, authLoading, fetchUserTickets, router]);
 
   const handleCreateTicket = () => {
     setIsCreateDialogOpen(true);

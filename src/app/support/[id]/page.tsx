@@ -24,21 +24,25 @@ export default function SupportTicketDetailPage() {
   const [isClosingTicket, setIsClosingTicket] = useState(false);
 
   useEffect(() => {
-    // Check if user is authenticated
-    if (!authLoading && !isAuthenticated) {
-      toast.error('Vui lòng đăng nhập để xem yêu cầu hỗ trợ');
-      router.push('/login?redirect=/support');
-      return;
-    }
+    const initializeTicket = async () => {
+      if (!authLoading && !isAuthenticated) {
+        toast.error('Vui lòng đăng nhập để xem chi tiết yêu cầu hỗ trợ');
+        router.push('/login?redirect=/support');
+        return;
+      }
 
-    // Load ticket details and responses
-    if (isAuthenticated && ticketId) {
-      fetchTicketResponses(ticketId).catch(err => {
-        console.error('Failed to load ticket details:', err);
-        toast.error('Không thể tải thông tin yêu cầu hỗ trợ');
-      });
-    }
-  }, [ticketId]);
+      if (isAuthenticated && ticketId) {
+        try {
+          await fetchTicketResponses(ticketId as string);
+        } catch (err) {
+          console.error('Failed to load ticket responses:', err);
+          toast.error('Không thể tải chi tiết yêu cầu hỗ trợ');
+        }
+      }
+    };
+
+    initializeTicket();
+  }, [isAuthenticated, authLoading, ticketId, fetchTicketResponses, router]);
 
   const handleCloseTicket = async () => {
     if (!ticketId) return;

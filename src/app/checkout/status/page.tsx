@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useOrder } from "@/hooks/useOrder";
 import { CheckCircle2, XCircle, Loader2, Eye } from "lucide-react";
+import Image from "next/image";
 
 interface OrderItem {
   product_id: string;
@@ -115,7 +116,7 @@ export default function VNPayStatus() {
     return () => {
       clearTimers();
     };
-  }, [vnpTxnRef, checkOrder]);
+  }, [vnpTxnRef, checkOrder, clearTimers]);
 
   // Function để navigate tới chi tiết đơn hàng
   const handleViewOrderDetail = () => {
@@ -202,7 +203,7 @@ export default function VNPayStatus() {
                     <div key={item.product_id} className="flex items-start border-b pb-4 last:border-0 last:pb-0">
                       <div className="flex-shrink-0 h-16 w-16 rounded-md bg-gray-200 overflow-hidden">
                         {item.image ? (
-                          <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
+                          <Image src={item.image} alt={item.name} width={64} height={64} className="h-full w-full object-cover" />
                         ) : (
                           <div className="h-full w-full flex items-center justify-center text-gray-400">
                             <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">

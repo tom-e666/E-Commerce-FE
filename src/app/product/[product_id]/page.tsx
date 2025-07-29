@@ -136,11 +136,10 @@ export default function ProductDetailPage() {
     loadData();
 
     // Cleanup function không cần reset productFetchedRef vì chúng ta muốn nhớ product_id đã xử lý
-  }, [product_id, fetchProductDetails, loadBrandsAndProducts]); // Thêm các dependencies cần thiết
+  }, [product_id, fetchProductDetails, loadBrandsAndProducts, product]); // Thêm các dependencies cần thiết
 
   // When products are loaded, filter for related products (same brand)
-  // Sử dụng useCallback để tránh tạo lại hàm mỗi khi component re-render
-  const updateRelatedProducts = useCallback(() => {
+  useEffect(() => {
     if (product && products.length > 0) {
       // Find products from the same brand, excluding the current product
       const sameBrandProducts = products
@@ -149,11 +148,6 @@ export default function ProductDetailPage() {
       setRelatedProducts(sameBrandProducts);
     }
   }, [product, products]);
-
-  // Effect để cập nhật sản phẩm liên quan khi product hoặc products thay đổi
-  useEffect(() => {
-    updateRelatedProducts();
-  }, [updateRelatedProducts]);
 
   const handleAddToCart = async () => {
     if (!isAuthenticated) {

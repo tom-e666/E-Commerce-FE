@@ -94,7 +94,7 @@ export default function CheckoutPage() {
             }
         }
         loadProvinces();
-    }, []);
+    }, [loadingStates.provinces, provinces.length]);
 
     useEffect(() => {
         async function loadDistricts() {
@@ -117,7 +117,7 @@ export default function CheckoutPage() {
         }
 
         loadDistricts();
-    }, [shippingInfo.city, provinces]);
+    }, [shippingInfo.city, provinces, loadingStates.districts]);
 
     useEffect(() => {
         async function loadWards() {
@@ -139,7 +139,7 @@ export default function CheckoutPage() {
         }
 
         loadWards();
-    }, [shippingInfo.district, districts]);
+    }, [shippingInfo.district, districts, loadingStates.wards]);
 
     useEffect(() => {
         const initializeOrder = async () => {
@@ -166,7 +166,7 @@ export default function CheckoutPage() {
         };
 
         initializeOrder();
-    }, []);
+    }, [setCurrentOrder]);
 
     const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;

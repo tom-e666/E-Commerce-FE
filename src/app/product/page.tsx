@@ -38,7 +38,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ProductListPage() {
   const { 
-    getPaginatedProducts, 
     resetAndLoadProducts,
     loadMoreProducts,
     paginatedProducts, 
@@ -64,7 +63,7 @@ export default function ProductListPage() {
   const [showDiscountOnly, setShowDiscountOnly] = useState(false);
 
   const observerRef = useRef<IntersectionObserver>();
-  const lastProductElementRef = useRef<HTMLDivElement>(null);
+  // const lastProductElementRef = useRef<HTMLDivElement>(null);
 
   // Intersection Observer for infinite scroll
   const lastProductRef = useCallback((node: HTMLDivElement) => {
@@ -104,7 +103,7 @@ export default function ProductListPage() {
     };
 
     loadData();
-  }, []);
+  }, [getBrands, resetAndLoadProducts, currentFilters]);
 
   // Reload when filters change
   useEffect(() => {
@@ -757,7 +756,7 @@ export default function ProductListPage() {
           {canLoadMore && !isLoadingMore && (
             <div className="text-center py-8">
               <Button onClick={loadMoreProducts} variant="outline">
-                Tải thêm sản phẩm ({pagination?.total! - paginatedProducts.length})
+                Tải thêm sản phẩm ({(pagination?.total || 0) - paginatedProducts.length})
               </Button>
             </div>
           )}
@@ -771,3 +770,4 @@ export default function ProductListPage() {
     </div>
   );
 }
+

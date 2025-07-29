@@ -1,22 +1,20 @@
-'use client'
+"use client";
 
-import React from 'react';
+import React from "react";
 import {
   FaExchangeAlt,
   FaClipboardCheck,
   FaVideo,
-  FaShoppingBag,
   FaCalendarAlt,
   FaTimesCircle,
-  FaCheckCircle,
   FaExclamationTriangle,
   FaHandshake,
-  FaBoxOpen
-} from 'react-icons/fa';
-import { MdOutlinePolicy, MdOutlineShoppingBag, MdSupportAgent } from 'react-icons/md';
-import { GiReturnArrow } from 'react-icons/gi';
-import { BsShieldCheck, BsArrowRight, BsPatchCheck } from 'react-icons/bs';
-import { BiPackage } from 'react-icons/bi';
+  FaBoxOpen,
+} from "react-icons/fa";
+import { MdOutlinePolicy, MdOutlineShoppingBag, MdSupportAgent } from "react-icons/md";
+import { GiReturnArrow } from "react-icons/gi";
+import { BsShieldCheck, BsPatchCheck } from "react-icons/bs";
+import { BiPackage } from "react-icons/bi";
 
 const ReturnPolicy = () => {
   return (
@@ -147,29 +145,25 @@ const ReturnPolicy = () => {
                 {/* Step 1 */}
                 <div className="flex">
                   <div className="flex-shrink-0 mr-4">
-                    <div className="flex items-center justify-center h-10 w-10 rounded-full bg-blue-100 text-blue-600 font-bold">
-                      1
-                    </div>
+                    <div className="flex items-center justify-center h-10 w-10 rounded-full bg-blue-100 text-blue-600 font-bold">1</div>
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-800">Kiểm tra điều kiện</h3>
-                    <p className="text-gray-600 mt-1">
-                      Đảm bảo sản phẩm đáp ứng các điều kiện đổi hàng bên cạnh
-                    </p>
+                    <p className="text-gray-600 mt-1">Đảm bảo sản phẩm đáp ứng các điều kiện đổi hàng bên cạnh</p>
                   </div>
                 </div>
 
                 {/* Step 2 */}
                 <div className="flex">
                   <div className="flex-shrink-0 mr-4">
-                    <div className="flex items-center justify-center h-10 w-10 rounded-full bg-blue-100 text-blue-600 font-bold">
-                      2
-                    </div>
+                    <div className="flex items-center justify-center h-10 w-10 rounded-full bg-blue-100 text-blue-600 font-bold">2</div>
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-800">Liên hệ hỗ trợ</h3>
                     <p className="text-gray-600 mt-1">
-                      Nhắn tin qua Instagram <span className="font-medium">@Think5</span> hoặc Facebook <span className="font-medium">Think5</span>
+                      Nhắn tin qua Instagram{" "}
+                      <span className="font-medium">@Think5</span> hoặc Facebook{" "}
+                      <span className="font-medium">Think5</span>
                     </p>
                     <div className="mt-2 flex items-center text-sm text-blue-600">
                       <MdSupportAgent className="mr-1" />
@@ -181,15 +175,11 @@ const ReturnPolicy = () => {
                 {/* Step 3 */}
                 <div className="flex">
                   <div className="flex-shrink-0 mr-4">
-                    <div className="flex items-center justify-center h-10 w-10 rounded-full bg-blue-100 text-blue-600 font-bold">
-                      3
-                    </div>
+                    <div className="flex items-center justify-center h-10 w-10 rounded-full bg-blue-100 text-blue-600 font-bold">3</div>
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-800">Gửi video unbox</h3>
-                    <p className="text-gray-600 mt-1">
-                      Cung cấp video quá trình mở hộp sản phẩm đầy đủ, rõ nét
-                    </p>
+                    <p className="text-gray-600 mt-1">Cung cấp video quá trình mở hộp sản phẩm đầy đủ, rõ nét</p>
                     <div className="mt-2 flex items-center text-sm text-gray-500">
                       <FaBoxOpen className="mr-1" />
                       <span>Video cần thể hiện rõ tình trạng sản phẩm</span>
@@ -200,15 +190,11 @@ const ReturnPolicy = () => {
                 {/* Step 4 */}
                 <div className="flex">
                   <div className="flex-shrink-0 mr-4">
-                    <div className="flex items-center justify-center h-10 w-10 rounded-full bg-blue-100 text-blue-600 font-bold">
-                      4
-                    </div>
+                    <div className="flex items-center justify-center h-10 w-10 rounded-full bg-blue-100 text-blue-600 font-bold">4</div>
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-800">Mô tả vấn đề</h3>
-                    <p className="text-gray-600 mt-1">
-                      Cung cấp thông tin chi tiết về sản phẩm và vấn đề gặp phải
-                    </p>
+                    <p className="text-gray-600 mt-1">Cung cấp thông tin chi tiết về sản phẩm và vấn đề gặp phải</p>
                   </div>
                 </div>
 
@@ -218,9 +204,7 @@ const ReturnPolicy = () => {
                     <div className="w-full border-t border-dashed border-gray-300"></div>
                   </div>
                   <div className="relative flex justify-center">
-                    <span className="px-3 bg-white text-sm text-gray-500">
-                      Sau khi hoàn tất các bước trên
-                    </span>
+                    <span className="px-3 bg-white text-sm text-gray-500">Sau khi hoàn tất các bước trên</span>
                   </div>
                 </div>
 
@@ -228,15 +212,11 @@ const ReturnPolicy = () => {
                 <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
                   <div className="flex">
                     <div className="flex-shrink-0 mr-4">
-                      <div className="flex items-center justify-center h-10 w-10 rounded-full bg-blue-200 text-blue-700 font-bold">
-                        ✓
-                      </div>
+                      <div className="flex items-center justify-center h-10 w-10 rounded-full bg-blue-200 text-blue-700 font-bold">✓</div>
                     </div>
                     <div>
                       <h3 className="text-lg font-semibold text-gray-800">Xác nhận đổi hàng</h3>
-                      <p className="text-gray-600 mt-1">
-                        Nhân viên sẽ liên hệ để hướng dẫn các bước tiếp theo trong vòng 24h
-                      </p>
+                      <p className="text-gray-600 mt-1">Nhân viên sẽ liên hệ để hướng dẫn các bước tiếp theo trong vòng 24h</p>
                     </div>
                   </div>
                 </div>
@@ -255,5 +235,4 @@ const ReturnPolicy = () => {
     </div>
   );
 };
-
 export default ReturnPolicy;
