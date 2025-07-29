@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import { Loader2, MessageSquarePlus, Search } from 'lucide-react';
 import Link from 'next/link';
-import CreateTicketDialog from '@/components/support/CreateTicketDialog';
+import CreateTicketDialog from '@/components/Support/CreateTicketDialog';
 
 export default function SupportPage() {
   const router = useRouter();
