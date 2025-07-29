@@ -245,3 +245,5 @@ For support and questions:
 - UI/UX inspiration from modern e-commerce platforms
 ---
 **Note**: This project is part of the JTBR project series developed at Ho Chi Minh City University of Education.
+
+Trigger application
