@@ -16,14 +16,38 @@ import AddResponseForm from '@/components/Support/AddResponseForm';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 export default function SupportTicketDetailPage() {
-  const params = useParams();
-  const ticketId = params.id as string;
   const router = useRouter();
+  const params = useParams();
+  const [ticketId, setTicketId] = useState<string | null>(null);
   const { isAuthenticated, isLoading: authLoading, user } = useAuthContext();
   const { loading, error, currentTicket, responses, fetchTicketResponses, closeTicket } = useSupportTicket();
   const [isClosingTicket, setIsClosingTicket] = useState(false);
 
+  // Extract ticket ID from params
   useEffect(() => {
+    async function extractTicketId() {
+      try {
+        // Handle params as Promise in Next.js 15
+        if (params instanceof Promise) {
+          const resolvedParams = await params;
+          setTicketId(resolvedParams.id as string);
+        } else {
+          // Fallback for older versions
+          setTicketId(params.id as string);
+        }
+      } catch (error) {
+        console.error("Error extracting params:", error);
+        router.push('/support');
+      }
+    }
+
+    extractTicketId();
+  }, [params, router]);
+
+  // Load ticket data when ticketId is available
+  useEffect(() => {
+    if (!ticketId) return;
+    
     const initializeTicket = async () => {
       if (!authLoading && !isAuthenticated) {
         toast.error('Vui lòng đăng nhập để xem chi tiết yêu cầu hỗ trợ');
@@ -147,7 +171,7 @@ export default function SupportTicketDetailPage() {
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink href={`/support/${ticketId}`}>
-              Chi tiết yêu cầu #{ticketId.substring(0, 8)}
+              Chi tiết yêu cầu #{ticketId?.substring(0, 8)}
             </BreadcrumbLink>
           </BreadcrumbItem>
         </BreadcrumbList>

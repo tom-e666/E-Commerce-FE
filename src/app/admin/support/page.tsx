@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   getSupportTickets, 
   getSupportTicketResponses,
@@ -78,41 +78,6 @@ export default function AdminSupportPage() {
     fetchTickets();
   }, []);
 
-  useEffect(() => {
-    filterTickets();
-  }, [tickets, statusFilter, searchQuery, dateFilter, activeTab, filterTickets]);
-
-  const fetchTickets = async () => {
-    setLoading(true);
-    try {
-      const response = await getSupportTickets();
-      if (response.code === 200 && response.supportTickets) {
-        setTickets(response.supportTickets);
-      } else {
-        toast.error("Không thể tải danh sách phiếu hỗ trợ");
-      }
-    } catch (error) {
-      console.error("Error fetching support tickets:", error);
-      toast.error("Đã xảy ra lỗi khi tải dữ liệu");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchTicketResponses = async (ticketId: string) => {
-    try {
-      const response = await getSupportTicketResponses(ticketId);
-      if (response.code === 200 && response.supportTicketResponses) {
-        setTicketResponses(response.supportTicketResponses);
-      } else {
-        setTicketResponses([]);
-      }
-    } catch (error) {
-      console.error("Error fetching ticket responses:", error);
-      setTicketResponses([]);
-    }
-  };
-
   const filterTickets = useCallback(() => {
     let filtered = [...tickets];
     
@@ -169,6 +134,41 @@ export default function AdminSupportPage() {
     setFilteredTickets(filtered);
   }, [tickets, statusFilter, searchQuery, dateFilter, activeTab]);
 
+  useEffect(() => {
+    filterTickets();
+  }, [filterTickets]);
+
+  const fetchTickets = async () => {
+    setLoading(true);
+    try {
+      const response = await getSupportTickets();
+      if (response.code === 200 && response.supportTickets) {
+        setTickets(response.supportTickets);
+      } else {
+        toast.error("Không thể tải danh sách phiếu hỗ trợ");
+      }
+    } catch (error) {
+      console.error("Error fetching support tickets:", error);
+      toast.error("Đã xảy ra lỗi khi tải dữ liệu");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchTicketResponses = async (ticketId: string) => {
+    try {
+      const response = await getSupportTicketResponses(ticketId);
+      if (response.code === 200 && response.supportTicketResponses) {
+        setTicketResponses(response.supportTicketResponses);
+      } else {
+        setTicketResponses([]);
+      }
+    } catch (error) {
+      console.error("Error fetching ticket responses:", error);
+      setTicketResponses([]);
+    }
+  };
+
   const handleSelectTicket = async (ticket: SupportTicket) => {
     setSelectedTicket(ticket);
     await fetchTicketResponses(ticket.id);
@@ -209,7 +209,7 @@ export default function AdminSupportPage() {
     }
   };
 
-  const updateTicketStatus = async (ticketId: string, status: string) => {
+  const updateTicketStatus = async (ticketId: string, status: 'open' | 'in_progress' | 'resolved' | 'closed') => {
     setIsChangingStatus(true);
     try {
       const response = await updateSupportTicket(ticketId, { status });
@@ -239,7 +239,7 @@ export default function AdminSupportPage() {
     }
   };
 
-  const getStatusLabel = (status: string): string => {
+  const getStatusLabel = (status: 'open' | 'in_progress' | 'resolved' | 'closed'): string => {
     switch (status) {
       case 'open': return 'Đang mở';
       case 'in_progress': return 'Đang xử lý';
@@ -499,7 +499,7 @@ export default function AdminSupportPage() {
                     <Select
                       disabled={isChangingStatus}
                       value={selectedTicket.status}
-                      onValueChange={(value) => updateTicketStatus(selectedTicket.id, value)}
+                      onValueChange={(value: 'open' | 'in_progress' | 'resolved' | 'closed') => updateTicketStatus(selectedTicket.id, value)}
                     >
                       <SelectTrigger className="w-[140px]">
                         {isChangingStatus ? (

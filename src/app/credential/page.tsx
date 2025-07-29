@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Loader2, Save, KeyRound, User } from "lucide-react";
@@ -42,19 +42,22 @@ export default function CredentialPage() {
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPasswordForm, setShowPasswordForm] = useState(false);
-    useEffect(() => {
-        const disguise = async () => {
-            try {
-                setIsLoading(true);
-                await fetchUserCredential();
-            } catch {
-                toast.error("Lỗi. Không thể lấy thông tin người dùng");
-            }
-            setIsLoading(false);
 
+    const loadUserCredential = useCallback(async () => {
+        try {
+            setIsLoading(true);
+            await fetchUserCredential();
+        } catch {
+            toast.error("Lỗi. Không thể lấy thông tin người dùng");
+        } finally {
+            setIsLoading(false);
         }
-        disguise();
-    }, [])
+    }, [fetchUserCredential]);
+
+    useEffect(() => {
+        loadUserCredential();
+    }, []);
+
     useEffect(() => {
         if (userCredential) {
             setCredentials({

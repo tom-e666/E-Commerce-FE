@@ -1,24 +1,22 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { Suspense, useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { resendVerificationEmail } from '@/services/auth/endpoints'
+import { motion } from 'framer-motion'
+import { Mail, ArrowLeft, CheckCircle } from 'lucide-react'
 
 // UI Components
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Progress } from '@/components/ui/progress'
-import { Loader2, MailOpen, ArrowLeft, Mail, Info, CheckCircle } from 'lucide-react'
 
-export default function CheckEmailPage() {
+function CheckEmailContent() {
   const searchParams = useSearchParams()
-  const email = searchParams.get('email')
+  const email = searchParams?.get('email') || ''
   const [isSending, setIsSending] = useState(false)
   const [countdown, setCountdown] = useState(5)
-  const [showSuccessPopup, setShowSuccessPopup] = useState(false)
-  
+
   useEffect(() => {
     // Start countdown when the component mounts
     if (countdown > 0) {
@@ -29,7 +27,6 @@ export default function CheckEmailPage() {
       return () => clearTimeout(timer)
     } else {
       // When countdown reaches 0, show the success popup
-      setShowSuccessPopup(true)
       toast.success("Vui lòng xác nhận email của bạn để hoàn tất quá trình đăng ký.", {
         duration: 5000,
       })
@@ -53,82 +50,99 @@ export default function CheckEmailPage() {
       setIsSending(false)
     }
   }
+
   return (
-    <div className="container mx-auto max-w-md py-12 mb-8"> {/* Added margin bottom */}
-      <Card className="w-full"> 
-        <CardHeader className="text-center">
-          <Mail className="h-12 w-12 mx-auto mb-4 text-primary" />
-          <CardTitle className="text-2xl">Kiểm tra email của bạn</CardTitle>
-          <CardDescription>
-            Chúng tôi đã gửi một email xác minh đến {email ? <span className="font-medium">{email}</span> : 'địa chỉ email của bạn'}
-          </CardDescription>
-        </CardHeader>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center"
+      >
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: "spring", stiffness: 300, damping: 25, delay: 0.2 }}
+          className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6"
+        >
+          <CheckCircle className="w-8 h-8 text-green-600" />
+        </motion.div>
 
-        <CardContent className="py-4">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span>Đăng ký thành công</span>
-                <span>{countdown > 0 ? countdown : 0}</span>
-              </div>
-              <Progress value={(5 - countdown) * 20} className="h-2" />
-            </div>
+        <motion.h1
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="text-2xl font-bold text-gray-900 mb-4"
+        >
+          Kiểm tra email của bạn
+        </motion.h1>
 
-            <div className={`bg-green-50 p-4 rounded-md border-green-200 border text-center ${showSuccessPopup ? 'block' : 'hidden'} mb-4`}>
-              <div className="flex items-center justify-center mb-2">
-                <CheckCircle className="h-6 w-6 text-green-500 mr-2" />
-                <span className="font-medium text-green-700">Đăng ký tài khoản thành công!</span>
-              </div>
-              <p className="text-green-600">Vui lòng kiểm tra email của bạn để hoàn tất quá trình xác minh.</p>
-            </div>
-            
-            <p className="text-center">
-              Vui lòng kiểm tra hộp thư đến của bạn và nhấp vào liên kết trong email để xác minh tài khoản.
-            </p>
-            
-            <div className="bg-blue-50 p-4 rounded-md border border-blue-200 text-blue-700 text-sm">
-              <div className="flex">
-                <Info className="h-5 w-5 text-blue-500 mr-2 flex-shrink-0" />
-                <div>
-                  <p className="font-medium mb-1">Lưu ý:</p>
-                  <ul className="list-disc list-inside space-y-1 text-blue-600">
-                    <li>Liên kết xác minh chỉ có hiệu lực trong 24 giờ</li>
-                    <li>Nếu bạn không nhận được email, vui lòng kiểm tra thư mục spam</li>
-                    <li>Đảm bảo địa chỉ email bạn đã đăng ký là chính xác</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4 }}
+          className="mb-6"
+        >
+          <div className="flex items-center justify-center mb-4">
+            <Mail className="w-12 h-12 text-blue-500" />
           </div>
-        </CardContent>
+          <p className="text-gray-600 mb-2">
+            Chúng tôi đã gửi email xác nhận đến:
+          </p>
+          <p className="font-semibold text-blue-600 break-all">
+            {email || 'địa chỉ email của bạn'}
+          </p>
+        </motion.div>
 
-        <CardFooter className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
-          <Button
-            onClick={handleResendVerification}
-            disabled={isSending}
-            variant="outline"
-          >
-            {isSending ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Đang gửi lại...
-              </>
-            ) : (
-              <>
-                <MailOpen className="mr-2 h-4 w-4" />
-                Gửi lại email
-              </>
-            )}
-          </Button>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="space-y-4"
+        >
+          <p className="text-sm text-gray-500">
+            Vui lòng kiểm tra hộp thư đến và làm theo hướng dẫn để xác nhận tài khoản của bạn.
+          </p>
           
-          <Button asChild variant="secondary">
-            <Link href="/login">
-              <ArrowLeft className="mr-2 h-4 w-4" />
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <p className="text-xs text-gray-600">
+              Không nhận được email? Kiểm tra thư mục spam hoặc 
+              <button className="text-blue-600 hover:underline ml-1" onClick={handleResendVerification} disabled={isSending}>
+                {isSending ? 'Đang gửi lại...' : 'Gửi lại email xác nhận'}
+              </button>
+            </p>
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.6 }}
+          className="mt-8"
+        >
+          <Button asChild variant="outline" className="w-full">
+            <Link href="/login" className="flex items-center justify-center">
+              <ArrowLeft className="w-4 h-4 mr-2" />
               Quay lại đăng nhập
             </Link>
           </Button>
-        </CardFooter>
-      </Card>
+        </motion.div>
+      </motion.div>
     </div>
+  )
+}
+
+export default function CheckEmailPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Đang tải...</p>
+        </div>
+      </div>
+    }>
+      <CheckEmailContent />
+    </Suspense>
   )
 }

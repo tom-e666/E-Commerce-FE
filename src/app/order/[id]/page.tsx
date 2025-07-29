@@ -49,13 +49,34 @@ const getStatusBadge = (status: string) => {
 export default function OrderDetailPage() {
   const router = useRouter();
   const params = useParams();
-  const orderId = params.id as string;
+  const [orderId, setOrderId] = useState<string | null>(null);
   const { isAuthenticated, isLoading: authLoading } = useAuthContext();
   const { loading, getOrder, currentOrder, cancelOrder } = useOrder();
   const [isCancelling, setIsCancelling] = useState(false);
   const { handleFetchShippingByOrderId } = useShipping();
   const [orderStatusHistory, setOrderStatusHistory] = useState<{status: string, date: string}[]>([]);
   const [shippingData, setShippingData] = useState<Shipping | null>(null);
+
+  // Extract order ID from params
+  useEffect(() => {
+    async function extractOrderId() {
+      try {
+        // Handle params as Promise in Next.js 15
+        if (params instanceof Promise) {
+          const resolvedParams = await params;
+          setOrderId(resolvedParams.id as string);
+        } else {
+          // Fallback for older versions
+          setOrderId(params.id as string);
+        }
+      } catch (error) {
+        console.error("Error extracting params:", error);
+        router.push('/order');
+      }
+    }
+
+    extractOrderId();
+  }, [params, router]);
 
   // Redirect if not authenticated
   useEffect(() => {

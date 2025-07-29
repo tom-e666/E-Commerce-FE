@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useParams, useSearchParams, useRouter } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 // UI Components
@@ -13,14 +13,37 @@ import { verifyEmail } from '@/services/auth/endpoints'
 export default function EmailVerification() {
   const router = useRouter()
   const params = useParams()
-  const searchParams = useSearchParams()
+  const [token, setToken] = useState<string | null>(null)
   const [verificationStatus, setVerificationStatus] = useState<'loading' | 'success' | 'error' | 'expired'>('loading')
   const [errorMessage, setErrorMessage] = useState<string>('')
 
+  // Extract token from params
+  useEffect(() => {
+    async function extractToken() {
+      try {
+        // Handle params as Promise in Next.js 15
+        if (params instanceof Promise) {
+          const resolvedParams = await params;
+          setToken(resolvedParams.token as string);
+        } else {
+          // Fallback for older versions
+          setToken(params.token as string);
+        }
+      } catch (error) {
+        console.error("Error extracting params:", error);
+        setVerificationStatus('error');
+        setErrorMessage('Có lỗi xảy ra khi xử lý thông tin xác minh.');
+      }
+    }
+
+    extractToken();
+  }, [params]);
+
   useEffect(() => {
     async function verifyUserEmail() {
+      if (!token) return;
+      
       try {
-        const {token} = params
         const response = await verifyEmail(token)
         if (response.code === 200) {
           setVerificationStatus('success')
@@ -45,7 +68,7 @@ export default function EmailVerification() {
     }
 
     verifyUserEmail()
-  }, [params, searchParams, router])
+  }, [token, router])
 
   return (
     <div className="container mx-auto max-w-md py-12">

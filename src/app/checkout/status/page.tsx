@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, Suspense } from "react";
 import { useOrder } from "@/hooks/useOrder";
 import { CheckCircle2, XCircle, Loader2, Eye } from "lucide-react";
 import Image from "next/image";
@@ -21,7 +21,7 @@ interface Order {
   items: OrderItem[];
 }
 
-export default function VNPayStatus() {
+function VNPayStatusContent() {
   const searchParams = useSearchParams();
   const { getOrderByTransaction } = useOrder();
   const vnpTxnRef = searchParams.get("vnp_TxnRef");
@@ -273,5 +273,26 @@ export default function VNPayStatus() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function VNPayStatus() {
+  return (
+    <Suspense fallback={
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-gray-50 p-4">
+        <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
+          <div className="flex justify-center mb-6">
+            <Loader2 className="h-12 w-12 text-blue-500 animate-spin" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-800 mb-2">Đang tải</h1>
+          <p className="text-gray-600 mb-4">Đang kiểm tra thông tin giao dịch...</p>
+          <p className="text-sm text-gray-500">
+            Vui lòng đợi trong giây lát...
+          </p>
+        </div>
+      </div>
+    }>
+      <VNPayStatusContent />
+    </Suspense>
   );
 }

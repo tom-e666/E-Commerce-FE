@@ -1,6 +1,6 @@
 'use client'
 import { AgGridReact } from 'ag-grid-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 import { ClientSideRowModelModule } from 'ag-grid-community';
@@ -53,6 +53,21 @@ provideGlobalGridOptions({
     theme: "legacy",
 });
 
+// Define User interface to match API response
+interface User {
+    id: string;
+    email: string;
+    full_name?: string;
+    phone?: string;
+    role?: string; // Change from union type to string to match API
+    email_verified?: boolean;
+}
+
+// Define AG Grid row click event interface
+interface RowClickEvent {
+    data: User;
+}
+
 // Define form schema for user roles
 const userRoleSchema = z.object({
     role: z.string().min(1, {
@@ -61,12 +76,12 @@ const userRoleSchema = z.object({
 });
 export default function UserManagement() {
     const [openForm, setOpenForm] = useState(false);
-    const [selectedUser, setSelectedUser] = useState(null);
+    const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const { users, getUsers, updateUserRole } = useUser();
     const [forceUpdateKey, setForceUpdateKey] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
-    const [filteredUsers, setFilteredUsers] = useState<typeof User[]>([]);
+    const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
     const mouseX = useMotionValue(0);
     const mouseY = useMotionValue(0);
 
@@ -85,24 +100,13 @@ export default function UserManagement() {
             field: "role",
             headerName: "Vai trò",
             width: 140,
-            // @ts-expect-error any
-            cellRenderer: (params) => {
+            cellRenderer: (params: { value?: string }) => {
                 const role = params.value || "user";
-                // const roleClass =
-                //     role === "admin" ? "bg-blue-100 text-blue-800" :
-                //         role === "staff" ? "bg-purple-100 text-purple-800" :
-                //             "bg-gray-100 text-gray-800";
-
                 const roleText =
                     role === "admin" ? "Quản trị viên" :
                         role === "staff" ? "Nhân viên" :
                             "Người dùng";
 
-                // return `
-                //     <div class="flex items-center justify-center px-2 py-1 rounded-full ${roleClass}">
-                //         <span class="text-xs font-medium">${roleText}</span>
-                //     </div>
-                // `;
                 return `${roleText}`;
             }
         },
@@ -110,12 +114,8 @@ export default function UserManagement() {
             field: "email_verified",
             headerName: "Đã xác thực",
             width: 140,
-            // @ts-expect-error any
-            cellRenderer: (params) => {
+            cellRenderer: (params: { value?: boolean }) => {
                 const verified = params.value === true;
-                // const statusClass = verified
-                //     ? "bg-green-100 text-green-800"
-                //     : "bg-red-100 text-red-800";
                 const statusText = verified ? "Đã xác thực" : "Chưa xác thực";
                 
                 return `${statusText}`;
@@ -129,7 +129,7 @@ export default function UserManagement() {
     }, [users]);
 
     useEffect(() => {
-        const filtered = users.filter(user => 
+        const filtered = users.filter((user: User) => 
             user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
             user.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             user.phone?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -140,7 +140,7 @@ export default function UserManagement() {
     const forceUpdate = () => {
         setForceUpdateKey(prev => prev + 1);
     };
-    const loadUsers = async () => {
+    const loadUsers = useCallback(async () => {
         try {
             setIsLoading(true);
             await toast.promise(
@@ -157,15 +157,15 @@ export default function UserManagement() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [getUsers]);
+
     useEffect(() => {
         loadUsers();
-    },[]);
+    }, []);
 
 
 
-    // @ts-expect-error any
-    const handleRowClick = (event) => {
+    const handleRowClick = (event: RowClickEvent) => {
         setSelectedUser(event.data);
         setOpenForm(true);
     };
@@ -322,7 +322,6 @@ export default function UserManagement() {
                         <AgGridReact
                             key={`users-${forceUpdateKey}`}
                             rowData={filteredUsers}
-                            // @ts-expect-error any
                             columnDefs={colDefs}
                             onRowClicked={handleRowClick}
                             pagination={false}
@@ -384,19 +383,19 @@ export default function UserManagement() {
                 />
                 <StatCard 
                     title="Quản trị viên" 
-                    value={users.filter(u => u.role === 'admin').length} 
+                    value={users.filter((u: User) => u.role === 'admin').length} 
                     icon={<Shield className="w-5 h-5 text-purple-500" />}
                     delay={1.1}
                 />
                 <StatCard 
                     title="Đã xác thực" 
-                    value={users.filter(u => u.email_verified).length} 
+                    value={users.filter((u: User) => u.email_verified).length} 
                     icon={<UserCheck className="w-5 h-5 text-green-500" />}
                     delay={1.2}
                 />
                 <StatCard 
                     title="Chưa xác thực" 
-                    value={users.filter(u => !u.email_verified).length} 
+                    value={users.filter((u: User) => !u.email_verified).length} 
                     icon={<UserX className="w-5 h-5 text-red-500" />}
                     delay={1.3}
                 />
@@ -464,7 +463,14 @@ export default function UserManagement() {
 }
 
 // Stat Card Component (same as brand page)
-const StatCard = ({ title, value, icon, delay = 0 }) => {
+interface StatCardProps {
+    title: string;
+    value: number;
+    icon: React.ReactNode;
+    delay?: number;
+}
+
+const StatCard = ({ title, value, icon, delay = 0 }: StatCardProps) => {
     return (
         <motion.div 
             className="bg-white/70 backdrop-blur-sm rounded-xl shadow-md p-6 border border-white/30 relative overflow-hidden"
@@ -507,17 +513,9 @@ const StatCard = ({ title, value, icon, delay = 0 }) => {
 interface UserRoleDialogProps {
     open: boolean;
     onClose: () => void;
-    user: {
-        id: string;
-        email: string;
-        full_name: string;
-        phone: string;
-        role?: string;
-        email_verified?: boolean;
-    } | null;
+    user: User | null;
     onSubmit: () => void;
-    //@ts-expect-error any
-    updateUserRole: (userId: string, role: string) => Promise<unknown>;
+    updateUserRole: (userId: string, role: string) => Promise<void>;
 }
 
 function UserRoleDialog({
@@ -622,15 +620,15 @@ function UserRoleDialog({
                     <div className="mt-2">
                         <div className="text-sm font-medium mb-2">Vai trò hiện tại:</div>
                         <Badge className={
-                            user.role === "admin" ? "bg-blue-100 text-blue-800" :
-                                user.role === "staff" ? "bg-purple-100 text-purple-800" :
+                            user?.role === "admin" ? "bg-blue-100 text-blue-800" :
+                                user?.role === "staff" ? "bg-purple-100 text-purple-800" :
                                     "bg-gray-100 text-gray-800"
                         }>
-                            {user.role === "admin" ? <Shield className="h-4 w-4 mr-1" /> :
-                                user.role === "staff" ? <UserCog className="h-4 w-4 mr-1" /> :
+                            {user?.role === "admin" ? <Shield className="h-4 w-4 mr-1" /> :
+                                user?.role === "staff" ? <UserCog className="h-4 w-4 mr-1" /> :
                                     <User className="h-4 w-4 mr-1" />}
-                            {user.role === "admin" ? "Quản trị viên" :
-                                user.role === "staff" ? "Nhân viên" :
+                            {user?.role === "admin" ? "Quản trị viên" :
+                                user?.role === "staff" ? "Nhân viên" :
                                     "Người dùng thường"}
                         </Badge>
                     </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { SmartSearchResponse } from '@/services/search/endpoints';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,7 +14,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { AlertCircle, ChevronRight, Home } from 'lucide-react';
 
-export default function SmartSearchPage() {
+function SmartSearchContent() {
   const searchParams = useSearchParams();
   const query = searchParams.get('q') || '';
   const [searchResults, setSearchResults] = useState<SmartSearchResponse | null>(null);
@@ -289,5 +289,38 @@ export default function SmartSearchPage() {
       {/* Debug: Hiển thị dữ liệu JSON */}
     
     </div>
+  );
+}
+
+export default function SmartSearchPage() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto py-8 px-4">
+        <div className="text-center mb-10">
+          <h1 className="text-3xl font-bold mb-2">Kết quả tìm kiếm</h1>
+          <p className="text-gray-600">Đang tải kết quả tìm kiếm...</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {Array(8).fill(0).map((_, index) => (
+            <Card key={index} className="overflow-hidden">
+              <Skeleton className="h-48 w-full" />
+              <CardHeader>
+                <Skeleton className="h-6 w-3/4 mb-2" />
+                <Skeleton className="h-4 w-full" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-4 w-full mb-2" />
+                <Skeleton className="h-4 w-5/6" />
+              </CardContent>
+              <CardFooter>
+                <Skeleton className="h-10 w-1/3" />
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      </div>
+    }>
+      <SmartSearchContent />
+    </Suspense>
   );
 }
