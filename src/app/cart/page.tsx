@@ -1,6 +1,6 @@
 'use client'
 import { useCart } from "@/hooks/useCart";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { toast } from "sonner";
 import Image from "next/image";
 import Link from "next/link";
@@ -31,8 +31,16 @@ import { createOrder } from "@/services/order/endpoints";
 
 export default function CartPage() {
     const { cartItems, loading, updateQuantity, removeFromCart, clearCart } = useCart();
+    const router = useRouter();
     const [isUpdating, setIsUpdating] = useState<string | null>(null);
     const [selectedItems, setSelectedItems] = useState<string[]>([]);
+
+    // Tự động chọn tất cả items khi cart được load
+    useEffect(() => {
+        if (cartItems.length > 0 && selectedItems.length === 0) {
+            setSelectedItems(cartItems.map((item) => item.product.product_id));
+        }
+    }, [cartItems, selectedItems.length]);
 
     // Hàm chọn/bỏ chọn từng sản phẩm
     const handleSelectItem = (productId: string) => {
@@ -46,8 +54,10 @@ export default function CartPage() {
     // Hàm chọn/bỏ chọn tất cả
     const handleSelectAll = () => {
         if (selectedItems.length === cartItems.length) {
+            // Nếu đã chọn hết thì bỏ chọn tất cả
             setSelectedItems([]);
         } else {
+            // Nếu chưa chọn hết thì chọn tất cả
             setSelectedItems(cartItems.map((item) => item.product.product_id));
         }
     };
@@ -85,6 +95,8 @@ export default function CartPage() {
         setIsUpdating(productId);
         try {
             const response = await removeFromCart(productId);
+            // Xóa item khỏi danh sách selected
+            setSelectedItems(prev => prev.filter(id => id !== productId));
             toast.success(response);
         } catch (error) {
             console.log(error);
@@ -99,6 +111,8 @@ export default function CartPage() {
         try {
             setIsUpdating('clearing');
             const response = await clearCart();
+            // Xóa tất cả selected items
+            setSelectedItems([]);
             toast.success(response);
         } catch (error) {
             console.error('Error clearing cart:', error);
@@ -182,7 +196,14 @@ export default function CartPage() {
                 <CardHeader className="flex flex-row items-center justify-between">
                     <div>
                         <CardTitle className="text-2xl">Giỏ hàng của bạn</CardTitle>
-                        <CardDescription>{cartItems.length} sản phẩm trong giỏ hàng</CardDescription>
+                        <CardDescription>
+                            {cartItems.length} sản phẩm trong giỏ hàng
+                            {selectedItems.length > 0 && (
+                                <span className="ml-2 text-blue-600">
+                                    ({selectedItems.length} đã chọn)
+                                </span>
+                            )}
+                        </CardDescription>
                     </div>
                     <Button
                         variant="outline"
@@ -201,8 +222,8 @@ export default function CartPage() {
                                 <TableHead className="w-10">
                                     <input
                                         type="checkbox"
-                                        checked={cartItems.length > 0}
-                                        onChange={handleClearCart}
+                                        checked={cartItems.length > 0 && selectedItems.length === cartItems.length}
+                                        onChange={handleSelectAll}
                                         aria-label="Chọn tất cả"
                                     />
                                 </TableHead>
@@ -219,8 +240,8 @@ export default function CartPage() {
                                     <TableCell>
                                         <input
                                             type="checkbox"
-                                            checked={true}
-                                            onChange={() => { }}
+                                            checked={selectedItems.includes(item.product.product_id)}
+                                            onChange={() => handleSelectItem(item.product.product_id)}
                                             aria-label={`Chọn sản phẩm ${item.product.name}`}
                                         />
                                     </TableCell>
