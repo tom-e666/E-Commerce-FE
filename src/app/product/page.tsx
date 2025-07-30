@@ -35,7 +35,8 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { useProduct } from "@/hooks/useProduct";
 import { useBrand } from "@/hooks/useBrand";
 import { Skeleton } from "@/components/ui/skeleton";
-import { viewItemList } from "@/lib/gtag";
+import { addToCartGA, viewItemList } from "@/lib/gtag";
+import { Product } from "@/services/product/endpoint";
 
 export default function ProductListPage() {
   const {
@@ -221,14 +222,21 @@ export default function ProductListPage() {
   };
 
   // Add to cart handler
-  const handleAddToCart = async (productId: string) => {
+  const handleAddToCart = async (product: Product) => {
     if (!isAuthenticated) {
       toast.error("Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng");
       return;
     }
 
+    addToCartGA({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      quantity: 1,
+    });
+
     try {
-      await toast.promise(addToCart(productId), {
+      await toast.promise(addToCart(product.id), {
         loading: "Đang thêm sản phẩm vào giỏ hàng...",
         success: "Thêm sản phẩm vào giỏ hàng thành công",
         error: "Không thể thêm sản phẩm vào giỏ hàng",
@@ -849,7 +857,7 @@ export default function ProductListPage() {
                     >
                       <div className="w-full flex gap-2">
                         <Button
-                          onClick={() => handleAddToCart(product.id)}
+                          onClick={() => handleAddToCart(product)}
                           className="flex-1"
                         >
                           <ShoppingCart className="mr-2 h-4 w-4" />

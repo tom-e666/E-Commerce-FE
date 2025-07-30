@@ -45,7 +45,7 @@ export const viewItem = (item: {
   });
 };
 
-export const addToCart = (item: {
+export const addToCartGA = (item: {
   id: string;
   name: string;
   category?: string;
@@ -53,7 +53,17 @@ export const addToCart = (item: {
   quantity?: number;
 }) => {
   window.gtag("event", "add_to_cart", {
-    items: [item],
+    currency: "VND",
+    value: item.price ? item.price * (item.quantity || 1) : 0,
+    items: [
+      {
+        item_id: item.id,
+        item_name: item.name,
+        item_category: item.category,
+        price: item.price,
+        quantity: item.quantity || 1,
+      },
+    ],
   });
 };
 
@@ -72,10 +82,10 @@ export const beginCheckout = (items: GTagItem[]) => {
 };
 
 export const purchase = (data: {
-  transaction_id: string;
-  value: number;
-  currency: string;
-  items: GTagItem[];
+  transaction_id?: string;
+  value?: number;
+  currency?: string;
+  items?: GTagItem[];
 }) => {
   window.gtag("event", "purchase", data);
 };
@@ -99,13 +109,13 @@ export const viewItemList = ({
   });
 };
 
-export const removeFromCart = (item: GTagItem) => {
+export const removeFromCartGA = (item: GTagItem) => {
   window.gtag("event", "remove_from_cart", {
     items: [item],
   });
 };
 
-export const search = (searchTerm: string) => {
+export const searchGA = (searchTerm: string) => {
   window.gtag("event", "search", {
     search_term: searchTerm,
   });
