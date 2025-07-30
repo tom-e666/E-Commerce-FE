@@ -4,8 +4,9 @@ import "./globals.css";
 import Menubar from "@/app/Menubar";
 import Footer from "@/app/Footer";
 import Provider from "./ApolloProvider";
-import { Toaster } from "@/components/ui/sonner"
+import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/contexts/AuthContext";
+import Script from "next/script";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,12 +30,32 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en-vi">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <head>
+        <Script
+          src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
+          strategy="afterInteractive"
+        />
+        <Script id="gtag-init" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}', {
+              page_path: window.location.pathname,
+            });
+          `}
+        </Script>
+      </head>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
         <Provider>
           <AuthProvider>
             <div className="flex flex-col w-full min-h-screen">
               <Menubar />
-              <main className="flex-grow w-full flex pb-8"> {/* Added padding bottom */}
+              <main className="flex-grow w-full flex pb-8">
+                {" "}
+                {/* Added padding bottom */}
                 <div className="w-full">
                   {children}
                   <Toaster />
