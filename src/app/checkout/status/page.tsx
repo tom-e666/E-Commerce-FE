@@ -296,3 +296,6 @@ export default function VNPayStatus() {
     </Suspense>
   );
 }
+
+// The existing implementation should work for Stripe payments as well
+// since it tracks orders by transaction ID

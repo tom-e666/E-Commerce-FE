@@ -19,7 +19,7 @@ const PaymentForm = React.memo(({ orderId, totalAmount, onBack, onComplete }: Pa
     const router = useRouter();
     const [selectedMethod, setSelectedMethod] = useState<string | null>('cod');
     const [isLoading, setIsLoading] = useState(false);
-    const { createCODPayment, createVNPayPayment } = usePayment();
+    const { createCODPayment, createVNPayPayment, createStripePayment } = usePayment();
 
     const handlePayment = async () => {
         if (!selectedMethod) {
@@ -118,6 +118,32 @@ const PaymentForm = React.memo(({ orderId, totalAmount, onBack, onComplete }: Pa
                   } catch (error) {
                     console.error("VNPay payment error:", error);
                     toast.error("Có lỗi xảy ra khi xử lý thanh toán VNPay");
+                  }
+                  break;
+
+                case 'stripe':
+                  try {
+                    const successUrl = `${window.location.origin}/checkout/success/${orderId}/stripe`;
+                    const cancelUrl = `${window.location.origin}/checkout/cancel`;
+                    
+                    const stripeResponse = await createStripePayment(
+                      orderId,
+                      successUrl,
+                      cancelUrl
+                    );
+
+                    console.log("Stripe response:", stripeResponse);
+
+                    if (stripeResponse.code === 200 && stripeResponse.checkout_url) {
+                      toast.success("Khởi tạo thanh toán Stripe thành công!");
+                      // Redirect to Stripe checkout
+                      window.location.href = stripeResponse.checkout_url;
+                    } else {
+                      toast.error(stripeResponse.message || "Lỗi khi khởi tạo thanh toán Stripe");
+                    }
+                  } catch (error) {
+                    console.error("Stripe payment error:", error);
+                    toast.error("Có lỗi xảy ra khi xử lý thanh toán Stripe");
                   }
                   break;
 
@@ -293,6 +319,33 @@ const PaymentForm = React.memo(({ orderId, totalAmount, onBack, onComplete }: Pa
                             )}
                         </div>
                     </div> */}
+
+                    {/* Stripe Payment Option */}
+                    <div
+                        className={`flex items-center p-4 border rounded-md mb-3 cursor-pointer ${selectedMethod === 'stripe' ? 'border-primary bg-primary/5' : ''}`}
+                        onClick={() => setSelectedMethod('stripe')}
+                    >
+                        <div className="w-12 h-12 flex-shrink-0 mr-4 flex justify-center items-center">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="48"
+                              height="48"
+                              viewBox="0 0 24 24"
+                              className="text-primary"
+                            >
+                              <path fill="currentColor" d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409c0-.831.683-1.305 1.901-1.305c2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0C9.667 0 7.589.654 6.104 1.872C4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219c2.585.92 3.445 1.574 3.445 2.583c0 .98-.84 1.545-2.354 1.545c-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813c1.664-1.305 2.525-3.236 2.525-5.732c0-4.128-2.524-5.851-6.591-7.305z"/>
+                            </svg>
+                        </div>
+                        <div className="flex-1">
+                            <h4 className="font-medium">Thanh toán qua Stripe</h4>
+                            <p className="text-sm text-muted-foreground">Thanh toán an toàn với thẻ tín dụng/ghi nợ quốc tế</p>
+                        </div>
+                        <div className="w-5 h-5 rounded-full border-2 border-muted flex-shrink-0">
+                            {selectedMethod === 'stripe' && (
+                                <div className="w-full h-full bg-primary rounded-full"></div>
+                            )}
+                        </div>
+                    </div>
 
                 </div>
 
