@@ -1,5 +1,5 @@
 "use client";
-import { useParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import React, {
   useState,
   useEffect,
@@ -48,8 +48,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { addToCartGA, viewItem } from "@/lib/gtag";
 
 export default function ProductDetailPage() {
-  const params = useParams();
-  const product_id = params.product_id as string;
+  // const params = useParams();
+  // const product_id = params.product_id as string;
+  const searchParams = useSearchParams();
+  const product_id = searchParams.get("id") as string;
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
