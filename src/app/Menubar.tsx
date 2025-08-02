@@ -153,6 +153,11 @@ const Menubar = () => {
                                     Showroom
                                 </Button>
                             </Link>
+                            <Link href="/subscribe" passHref>
+                                <Button variant={"outline"} className="bg-transparent border-0 text-white hover:bg-white hover:text-black whitespace-nowrap">
+                                    Đăng kí
+                                </Button>
+                            </Link>
 
                             {/* Quản trị viên - placeholder để tránh nhảy */}
                             <div className="min-w-[120px]">
