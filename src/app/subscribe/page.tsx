@@ -2,7 +2,7 @@
 
 import Script from 'next/script'
 import { useEffect, useState } from 'react'
-import { Mail, User, MapPin, Phone, Building2, CheckCircle, X } from 'lucide-react'
+import { Mail, User, MapPin, Phone, CheckCircle, X } from 'lucide-react'
 
 export default function SubscribePage() {
   const [toast, setToast] = useState<{show: boolean, type: 'success' | 'error', message: string}>({
@@ -34,8 +34,6 @@ export default function SubscribePage() {
       window.ftypes[3]='address';
       window.fnames[4]='PHONE';
       window.ftypes[4]='phone';
-      window.fnames[5]='COMPANY';
-      window.ftypes[5]='text';
       window.$mcj = $.noConflict(true);
 
       // Handle form submission
@@ -122,10 +120,10 @@ export default function SubscribePage() {
             </div>
             <div className="bg-gray-50 rounded-2xl p-6 text-center border border-gray-200">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Building2 className="w-8 h-8 text-green-600" />
+                <Phone className="w-8 h-8 text-green-600" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Tư Vấn Miễn Phí</h3>
-              <p className="text-gray-600">Hỗ trợ chọn sản phẩm phù hợp với nhu cầu</p>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Hỗ Trợ 24/7</h3>
+              <p className="text-gray-600">Hỗ trợ tư vấn và chăm sóc khách hàng tận tình</p>
             </div>
           </div>
 
@@ -220,7 +218,7 @@ export default function SubscribePage() {
               </style>
               
               <div id="mc_embed_signup" className="custom-form">
-                <form action="https://tempure.us10.list-manage.com/subscribe/post?u=86e5d6c65bdc481dfe51790d9&amp;id=44cf01e801&amp;f_id=0096cde3f0" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" className="validate" target="_blank">
+                <form action="https://tempure.us7.list-manage.com/subscribe/post?u=113af64fb56477d5f3439d21c&amp;id=2ee3476fb6&amp;f_id=007952e0f0" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" className="validate" target="_blank">
                   <div id="mc_embed_signup_scroll">
                     <h2 className="text-3xl font-bold text-gray-900 text-center mb-8">
                       Thông Tin Đăng Ký
@@ -297,8 +295,22 @@ export default function SubscribePage() {
                             />
                           </div>
                         </div>
+
+                        <div className="mc-field-group">
+                          <label htmlFor="mce-ADDRESS-addr2">Địa chỉ (Dòng 2)</label>
+                          <div className="field-wrapper">
+                            <MapPin className="input-icon w-5 h-5" />
+                            <input 
+                              type="text" 
+                              maxLength="70" 
+                              name="ADDRESS[addr2]" 
+                              id="mce-ADDRESS-addr2" 
+                              placeholder="Phường/Quận"
+                            />
+                          </div>
+                        </div>
                         
-                        <div className="grid md:grid-cols-2 gap-4">
+                        <div className="grid md:grid-cols-3 gap-4">
                           <div className="mc-field-group">
                             <label htmlFor="mce-ADDRESS-city">Thành phố</label>
                             <input 
@@ -307,6 +319,17 @@ export default function SubscribePage() {
                               name="ADDRESS[city]" 
                               id="mce-ADDRESS-city" 
                               placeholder="Hồ Chí Minh"
+                              className="no-icon-input"
+                            />
+                          </div>
+                          <div className="mc-field-group">
+                            <label htmlFor="mce-ADDRESS-state">Tỉnh/Thành phố</label>
+                            <input 
+                              type="text" 
+                              maxLength="20" 
+                              name="ADDRESS[state]" 
+                              id="mce-ADDRESS-state" 
+                              placeholder="TP. Hồ Chí Minh"
                               className="no-icon-input"
                             />
                           </div>
@@ -332,37 +355,26 @@ export default function SubscribePage() {
                             <option value="South Korea">Hàn Quốc</option>
                             <option value="Singapore">Singapore</option>
                             <option value="Thailand">Thái Lan</option>
+                            <option value="United Kingdom">Vương quốc Anh</option>
+                            <option value="Australia">Úc</option>
+                            <option value="Canada">Canada</option>
                           </select>
                         </div>
                       </div>
                     </div>
 
-                    {/* Contact Info */}
-                    <div className="grid md:grid-cols-2 gap-6">
-                      <div className="mc-field-group">
-                        <label htmlFor="mce-PHONE">Số điện thoại</label>
-                        <div className="field-wrapper">
-                          <Phone className="input-icon w-5 h-5" />
-                          <input 
-                            type="text" 
-                            name="PHONE" 
-                            id="mce-PHONE" 
-                            placeholder="+84 123 456 789"
-                          />
-                        </div>
-                      </div>
-                      
-                      <div className="mc-field-group">
-                        <label htmlFor="mce-COMPANY">Công ty</label>
-                        <div className="field-wrapper">
-                          <Building2 className="input-icon w-5 h-5" />
-                          <input 
-                            type="text" 
-                            name="COMPANY" 
-                            id="mce-COMPANY" 
-                            placeholder="Tên công ty"
-                          />
-                        </div>
+                    {/* Phone Field */}
+                    <div className="mc-field-group">
+                      <label htmlFor="mce-PHONE">Số điện thoại</label>
+                      <div className="field-wrapper">
+                        <Phone className="input-icon w-5 h-5" />
+                        <input 
+                          type="text" 
+                          name="PHONE" 
+                          className="REQ_CSS"
+                          id="mce-PHONE" 
+                          placeholder="+84 123 456 789"
+                        />
                       </div>
                     </div>
 
@@ -374,7 +386,7 @@ export default function SubscribePage() {
 
                     {/* Honeypot */}
                     <div aria-hidden="true" style={{position: 'absolute', left: '-5000px'}}>
-                      <input type="text" name="b_86e5d6c65bdc481dfe51790d9_44cf01e801" tabIndex={-1} />
+                      <input type="text" name="b_113af64fb56477d5f3439d21c_2ee3476fb6" tabIndex={-1} />
                     </div>
 
                     {/* Submit Button */}

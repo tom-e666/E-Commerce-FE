@@ -60,6 +60,26 @@ export const CREATE_VNPAY_PAYMENT = gql`
   }
 `;
 
+export const CREATE_STRIPE_PAYMENT = gql`
+  mutation CreateStripePayment(
+    $orderId: String!
+    $successUrl: String!
+    $cancelUrl: String!
+  ) {
+    createStripeCheckoutSession(
+      order_id: $orderId
+      success_url: $successUrl
+      cancel_url: $cancelUrl
+    ) {
+      code
+      message
+      session_id
+      checkout_url
+      transaction_id
+    }
+  }
+`;
+
 // Define interfaces for response types
 export interface Payment {
   id: string;
@@ -95,6 +115,14 @@ export interface VNPayPaymentResponse {
   code: number;
   message: string;
   payment_url?: string;
+}
+
+export interface StripePaymentResponse {
+  code: number;
+  message: string;
+  session_id?: string;
+  checkout_url?: string;
+  transaction_id?: string;
 }
 
 // API function implementations
@@ -134,7 +162,7 @@ export const createCODPayment = async (orderId: string): Promise<CODPaymentRespo
 export const createZaloPayPayment = async (orderId: string): Promise<ZaloPayPaymentResponse> => {
   try {
     const response = await apolloClient.mutate({
-      mutation: CREATE_VNPAY_PAYMENT,
+      mutation: CREATE_ZALOPAY_PAYMENT,
       variables: { orderId },
       context: {
         requiresAuth: true
@@ -163,6 +191,26 @@ export const createVNPayPayment = async (
     return response.data.createPaymentVNPay;
   } catch (error) {
     console.error('Error creating VNPay payment:', error);
+    throw error;
+  }
+};
+
+export const createStripePayment = async (
+  orderId: string,
+  successUrl: string,
+  cancelUrl: string
+): Promise<StripePaymentResponse> => {
+  try {
+    const response = await apolloClient.mutate({
+      mutation: CREATE_STRIPE_PAYMENT,
+      variables: { orderId, successUrl, cancelUrl },
+      context: {
+        requiresAuth: true
+      }
+    });
+    return response.data.createStripeCheckoutSession;
+  } catch (error) {
+    console.error('Error creating Stripe payment:', error);
     throw error;
   }
 };
