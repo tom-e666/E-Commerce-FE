@@ -461,6 +461,95 @@ export const getPaginatedProducts = async (filters?: {
   }
 };
 
+export const getGamingLaptops = async (limit: number = 5): Promise<PaginatedProductsResponse> => {
+  try {
+    const response = await apolloClient.query({
+      query: GET_PAGINATED_PRODUCTS,
+      variables: {
+        search: 'gaming',
+        sort_field: 'created_at',
+        sort_direction: 'desc',
+        page: 1,
+        per_page: limit,
+        status: 'active'
+      },
+      fetchPolicy: 'network-only',
+      context: {
+        requiresAuth: false
+      }
+    });
+    return response.data.getPaginatedProducts;
+  } catch (error) {
+    console.error('Error fetching gaming laptops:', error);
+
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const isNetworkError = errorMessage.includes('Failed to fetch') ||
+                           errorMessage.includes('Network error') ||
+                           errorMessage.includes('timeout');
+
+    return {
+      code: 500,
+      message: isNetworkError
+        ? 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng và thử lại.'
+        : 'Không thể tải danh sách laptop gaming',
+      products: [],
+      pagination: {
+        total: 0,
+        current_page: 1,
+        per_page: limit,
+        last_page: 1,
+        from: null,
+        to: null,
+        has_more_pages: false
+      }
+    };
+  }
+};
+
+export const getNewestProducts = async (limit: number = 5): Promise<PaginatedProductsResponse> => {
+  try {
+    const response = await apolloClient.query({
+      query: GET_PAGINATED_PRODUCTS,
+      variables: {
+        sort_field: 'created_at',
+        sort_direction: 'desc',
+        page: 1,
+        per_page: limit,
+        status: 'active'
+      },
+      fetchPolicy: 'network-only',
+      context: {
+        requiresAuth: false
+      }
+    });
+    return response.data.getPaginatedProducts;
+  } catch (error) {
+    console.error('Error fetching newest products:', error);
+
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const isNetworkError = errorMessage.includes('Failed to fetch') ||
+                           errorMessage.includes('Network error') ||
+                           errorMessage.includes('timeout');
+
+    return {
+      code: 500,
+      message: isNetworkError
+        ? 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng và thử lại.'
+        : 'Không thể tải danh sách sản phẩm mới nhất',
+      products: [],
+      pagination: {
+        total: 0,
+        current_page: 1,
+        per_page: limit,
+        last_page: 1,
+        from: null,
+        to: null,
+        has_more_pages: false
+      }
+    };
+  }
+};
+
 export const createProduct = async (
   productData: Omit<Product, "id">
 ): Promise<ProductResponse> => {
