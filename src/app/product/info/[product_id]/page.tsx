@@ -17,11 +17,27 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 
 // Icons
-import { ShoppingCart, ChevronRight, Star, Truck, Check, Package, Shield, Home } from "lucide-react";
+import {
+  ShoppingCart,
+  ChevronRight,
+  Star,
+  Truck,
+  Check,
+  Package,
+  Shield,
+  Home,
+} from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { addToCartGA } from "@/lib/gtag";
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -107,7 +123,7 @@ export default function ProductDetailPage() {
     if (product && products.length > 0) {
       // Find products from the same brand, excluding the current product
       const sameBrandProducts = products
-        .filter(p => p.brand_id === product.brand_id && p.id !== product.id)
+        .filter((p) => p.brand_id === product.brand_id && p.id !== product.id)
         .slice(0, 4); // Limit to 4 related products
       setRelatedProducts(sameBrandProducts);
     }
@@ -120,6 +136,13 @@ export default function ProductDetailPage() {
     }
 
     if (!product) return;
+
+    addToCartGA({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      quantity: quantity,
+    });
 
     try {
       setIsAddingToCart(true);
@@ -138,7 +161,7 @@ export default function ProductDetailPage() {
   };
 
   const getBrandName = (brandId: string) => {
-    const brand = brands.find(b => b.id === brandId);
+    const brand = brands.find((b) => b.id === brandId);
     return brand ? brand.name : "Không xác định";
   };
 
@@ -181,7 +204,8 @@ export default function ProductDetailPage() {
         <div className="max-w-md mx-auto">
           <h1 className="text-2xl font-bold mb-4">Không tìm thấy sản phẩm</h1>
           <p className="text-muted-foreground mb-6">
-            Rất tiếc, chúng tôi không thể tìm thấy sản phẩm bạn đang tìm kiếm. Sản phẩm có thể đã bị xóa hoặc không tồn tại.
+            Rất tiếc, chúng tôi không thể tìm thấy sản phẩm bạn đang tìm kiếm.
+            Sản phẩm có thể đã bị xóa hoặc không tồn tại.
           </p>
           <Button asChild>
             <Link href="/product">Trở lại trang sản phẩm</Link>
@@ -207,13 +231,17 @@ export default function ProductDetailPage() {
             <ChevronRight className="h-4 w-4" />
           </BreadcrumbSeparator>
           <BreadcrumbItem>
-            <BreadcrumbLink href="/product" className="text-black">Sản phẩm</BreadcrumbLink>
+            <BreadcrumbLink href="/product" className="text-black">
+              Sản phẩm
+            </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator>
             <ChevronRight className="h-4 w-4" />
           </BreadcrumbSeparator>
           <BreadcrumbItem>
-            <BreadcrumbLink className="text-black">{product.name}</BreadcrumbLink>
+            <BreadcrumbLink className="text-black">
+              {product.name}
+            </BreadcrumbLink>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
@@ -223,7 +251,9 @@ export default function ProductDetailPage() {
         <div>
           <div className="aspect-square relative rounded-lg overflow-hidden bg-white border">
             <Image
-              src={selectedImage || product.details.images?.[0] || "/laptop.png"}
+              src={
+                selectedImage || product.details.images?.[0] || "/laptop.png"
+              }
               alt={product.name}
               fill
               className="object-contain p-4"
@@ -238,7 +268,7 @@ export default function ProductDetailPage() {
                 <div
                   key={index}
                   className={`aspect-square relative rounded-md overflow-hidden border cursor-pointer
-                    ${selectedImage === img ? 'ring-2 ring-primary' : ''}`}
+                    ${selectedImage === img ? "ring-2 ring-primary" : ""}`}
                   onClick={() => setSelectedImage(img)}
                 >
                   <Image
@@ -279,18 +309,23 @@ export default function ProductDetailPage() {
             <div className="flex items-center gap-2 mt-2">
               <div className="flex">
                 {[1, 2, 3, 4, 5].map((star) => (
-                  <Star key={star} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                  <Star
+                    key={star}
+                    className="w-4 h-4 fill-yellow-400 text-yellow-400"
+                  />
                 ))}
               </div>
-              <span className="text-sm text-muted-foreground">(25 đánh giá)</span>
+              <span className="text-sm text-muted-foreground">
+                (25 đánh giá)
+              </span>
             </div>
 
             <div className="mt-4">
-              <span className="text-3xl font-bold text-primary">{formatCurrency(product.price)}</span>
+              <span className="text-3xl font-bold text-primary">
+                {formatCurrency(product.price)}
+              </span>
             </div>
           </div>
-
-
 
           <div className="flex flex-col space-y-4 mt-6">
             {/* Quantity selector */}
@@ -301,15 +336,21 @@ export default function ProductDetailPage() {
                   variant="ghost"
                   size="icon"
                   disabled={quantity <= 1}
-                  onClick={() => setQuantity(prev => Math.max(1, prev - 1))}
-                >-</Button>
+                  onClick={() => setQuantity((prev) => Math.max(1, prev - 1))}
+                >
+                  -
+                </Button>
                 <span className="w-12 text-center">{quantity}</span>
                 <Button
                   variant="ghost"
                   size="icon"
                   disabled={quantity >= product.stock}
-                  onClick={() => setQuantity(prev => Math.min(product.stock, prev + 1))}
-                >+</Button>
+                  onClick={() =>
+                    setQuantity((prev) => Math.min(product.stock, prev + 1))
+                  }
+                >
+                  +
+                </Button>
               </div>
               <span className="ml-4 text-sm text-muted-foreground">
                 {product.stock} sản phẩm có sẵn
@@ -372,47 +413,80 @@ export default function ProductDetailPage() {
                   Thông số kỹ thuật
                 </h3>
                 <div>
-                  {product.details.specifications && product.details.specifications.length > 0 ? (
+                  {product.details.specifications &&
+                  product.details.specifications.length > 0 ? (
                     <div className="overflow-hidden rounded-lg border shadow-sm">
                       <table className="w-full border-collapse">
                         <thead className="bg-primary/10">
                           <tr>
-                            <th className="p-3 text-left font-semibold text-primary border-r">Thông số</th>
-                            <th className="p-3 text-left font-semibold text-primary border-r">Giá trị</th>
-                            <th className="p-3 text-left font-semibold text-primary border-r">Thông số</th>
-                            <th className="p-3 text-left font-semibold text-primary">Giá trị</th>
+                            <th className="p-3 text-left font-semibold text-primary border-r">
+                              Thông số
+                            </th>
+                            <th className="p-3 text-left font-semibold text-primary border-r">
+                              Giá trị
+                            </th>
+                            <th className="p-3 text-left font-semibold text-primary border-r">
+                              Thông số
+                            </th>
+                            <th className="p-3 text-left font-semibold text-primary">
+                              Giá trị
+                            </th>
                           </tr>
                         </thead>
                         <tbody>
                           {/* Chia thông số thành các cặp để hiển thị theo hàng */}
-                          {Array.from({ length: Math.ceil(product.details.specifications.length / 2) }).map((_, rowIndex) => {
+                          {Array.from({
+                            length: Math.ceil(
+                              product.details.specifications.length / 2
+                            ),
+                          }).map((_, rowIndex) => {
                             // Lấy 2 thông số cho mỗi hàng
                             const startIdx = rowIndex * 2;
                             return (
                               <tr
                                 key={rowIndex}
-                                className={`${rowIndex % 2 === 0 ? 'bg-blue-50' : 'bg-gray-100'}`}
+                                className={`${
+                                  rowIndex % 2 === 0
+                                    ? "bg-blue-50"
+                                    : "bg-gray-100"
+                                }`}
                               >
                                 {/* Cột 1: Thông số đầu tiên trong hàng */}
-                                {startIdx < product.details.specifications.length && (
+                                {startIdx <
+                                  product.details.specifications.length && (
                                   <>
                                     <td className="p-3 w-1/6 font-medium text-gray-700 border-r">
-                                      {product.details.specifications[startIdx].name}
+                                      {
+                                        product.details.specifications[startIdx]
+                                          .name
+                                      }
                                     </td>
                                     <td className="p-3 w-1/3 border-r">
-                                      {product.details.specifications[startIdx].value}
+                                      {
+                                        product.details.specifications[startIdx]
+                                          .value
+                                      }
                                     </td>
                                   </>
                                 )}
 
                                 {/* Cột 2: Thông số thứ hai trong hàng (nếu có) */}
-                                {startIdx + 1 < product.details.specifications.length ? (
+                                {startIdx + 1 <
+                                product.details.specifications.length ? (
                                   <>
                                     <td className="p-3 w-1/6 font-medium text-gray-700 border-r">
-                                      {product.details.specifications[startIdx + 1].name}
+                                      {
+                                        product.details.specifications[
+                                          startIdx + 1
+                                        ].name
+                                      }
                                     </td>
                                     <td className="p-3 w-1/3">
-                                      {product.details.specifications[startIdx + 1].value}
+                                      {
+                                        product.details.specifications[
+                                          startIdx + 1
+                                        ].value
+                                      }
                                     </td>
                                   </>
                                 ) : (
@@ -429,7 +503,9 @@ export default function ProductDetailPage() {
                       </table>
                     </div>
                   ) : (
-                    <p className="text-muted-foreground">Không có thông tin thông số kỹ thuật.</p>
+                    <p className="text-muted-foreground">
+                      Không có thông tin thông số kỹ thuật.
+                    </p>
                   )}
                 </div>
               </CardContent>
@@ -448,75 +524,113 @@ export default function ProductDetailPage() {
                   {/* Format description with proper paragraphs and bullet points */}
                   {product.details.description ? (
                     <div className="space-y-6 text-base leading-relaxed">
-                      {product.details.description.split('\n\n').map((paragraph, idx) => (
-                        <div key={idx} className="text-gray-700 bg-white rounded-lg">
-                          {paragraph.split('\n').map((line, lineIdx) => {
-                            // Kiểm tra xem dòng có bắt đầu bằng dấu • hay không
-                            if (line.trim().startsWith('•')) {
-                              // Nếu là bullet point, hiển thị với padding bên trái
-                              return (
-                                <div key={lineIdx} className="flex items-start mb-3 bg-gray-50 p-2 rounded-md">
-                                  <span className="text-primary mr-2 font-bold">•</span>
-                                  <span className="text-gray-800">{line.trim().substring(1).trim()}</span>
-                                </div>
-                              );
-                            } else if (line.includes('•')) {
-                              // Nếu dòng chứa dấu • ở giữa, tách thành nhiều phần
-                              const parts = line.split('•').map(part => part.trim()).filter(Boolean);
-
-                              if (parts.length > 0) {
+                      {product.details.description
+                        .split("\n\n")
+                        .map((paragraph, idx) => (
+                          <div
+                            key={idx}
+                            className="text-gray-700 bg-white rounded-lg"
+                          >
+                            {paragraph.split("\n").map((line, lineIdx) => {
+                              // Kiểm tra xem dòng có bắt đầu bằng dấu • hay không
+                              if (line.trim().startsWith("•")) {
+                                // Nếu là bullet point, hiển thị với padding bên trái
                                 return (
-                                  <div key={lineIdx} className="space-y-3 mb-3">
-                                    {parts.map((part, partIdx) => (
-                                      partIdx === 0 ? (
-                                        // Phần đầu tiên hiển thị như văn bản thông thường
-                                        <p key={`${lineIdx}-${partIdx}`} className="font-medium text-gray-800">{part}</p>
-                                      ) : (
-                                        // Các phần sau hiển thị như bullet points
-                                        <div key={`${lineIdx}-${partIdx}`} className="flex items-start ml-4 bg-gray-50 p-2 rounded-md">
-                                          <span className="text-primary mr-2 font-bold">•</span>
-                                          <span className="text-gray-800">{part}</span>
-                                        </div>
-                                      )
-                                    ))}
+                                  <div
+                                    key={lineIdx}
+                                    className="flex items-start mb-3 bg-gray-50 p-2 rounded-md"
+                                  >
+                                    <span className="text-primary mr-2 font-bold">
+                                      •
+                                    </span>
+                                    <span className="text-gray-800">
+                                      {line.trim().substring(1).trim()}
+                                    </span>
                                   </div>
                                 );
-                              }
-                            }
+                              } else if (line.includes("•")) {
+                                // Nếu dòng chứa dấu • ở giữa, tách thành nhiều phần
+                                const parts = line
+                                  .split("•")
+                                  .map((part) => part.trim())
+                                  .filter(Boolean);
 
-                            // Dòng thông thường
-                            return (
-                              <React.Fragment key={lineIdx}>
-                                <span className="text-gray-800">{line}</span>
-                                {lineIdx < paragraph.split('\n').length - 1 && <br />}
-                              </React.Fragment>
-                            );
-                          })}
-                        </div>
-                      ))}
+                                if (parts.length > 0) {
+                                  return (
+                                    <div
+                                      key={lineIdx}
+                                      className="space-y-3 mb-3"
+                                    >
+                                      {parts.map((part, partIdx) =>
+                                        partIdx === 0 ? (
+                                          // Phần đầu tiên hiển thị như văn bản thông thường
+                                          <p
+                                            key={`${lineIdx}-${partIdx}`}
+                                            className="font-medium text-gray-800"
+                                          >
+                                            {part}
+                                          </p>
+                                        ) : (
+                                          // Các phần sau hiển thị như bullet points
+                                          <div
+                                            key={`${lineIdx}-${partIdx}`}
+                                            className="flex items-start ml-4 bg-gray-50 p-2 rounded-md"
+                                          >
+                                            <span className="text-primary mr-2 font-bold">
+                                              •
+                                            </span>
+                                            <span className="text-gray-800">
+                                              {part}
+                                            </span>
+                                          </div>
+                                        )
+                                      )}
+                                    </div>
+                                  );
+                                }
+                              }
+
+                              // Dòng thông thường
+                              return (
+                                <React.Fragment key={lineIdx}>
+                                  <span className="text-gray-800">{line}</span>
+                                  {lineIdx <
+                                    paragraph.split("\n").length - 1 && <br />}
+                                </React.Fragment>
+                              );
+                            })}
+                          </div>
+                        ))}
                     </div>
                   ) : (
                     <div className="bg-gray-50 p-4 rounded-lg text-center">
-                      <p className="text-gray-700">Không có mô tả chi tiết cho sản phẩm này.</p>
+                      <p className="text-gray-700">
+                        Không có mô tả chi tiết cho sản phẩm này.
+                      </p>
                     </div>
                   )}
 
                   {/* Keywords/tags if available */}
-                  {product.details.keywords && product.details.keywords.length > 0 && (
-                    <div className="mt-8 bg-primary/5 p-4 rounded-lg border border-primary/10">
-                      <h4 className="text-base font-medium mb-3 text-gray-800 flex items-center">
-                        <span className="w-1 h-4 bg-primary rounded-full mr-2"></span>
-                        Từ khóa liên quan
-                      </h4>
-                      <div className="flex flex-wrap gap-2">
-                        {product.details.keywords.map((keyword, idx) => (
-                          <Badge key={idx} variant="outline" className="px-3 py-1 text-sm bg-white border-primary/20 text-primary hover:bg-primary/5">
-                            {keyword}
-                          </Badge>
-                        ))}
+                  {product.details.keywords &&
+                    product.details.keywords.length > 0 && (
+                      <div className="mt-8 bg-primary/5 p-4 rounded-lg border border-primary/10">
+                        <h4 className="text-base font-medium mb-3 text-gray-800 flex items-center">
+                          <span className="w-1 h-4 bg-primary rounded-full mr-2"></span>
+                          Từ khóa liên quan
+                        </h4>
+                        <div className="flex flex-wrap gap-2">
+                          {product.details.keywords.map((keyword, idx) => (
+                            <Badge
+                              key={idx}
+                              variant="outline"
+                              className="px-3 py-1 text-sm bg-white border-primary/20 text-primary hover:bg-primary/5"
+                            >
+                              {keyword}
+                            </Badge>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
                 </div>
               </CardContent>
             </Card>
@@ -529,7 +643,9 @@ export default function ProductDetailPage() {
                   <span className="w-1 h-6 bg-primary rounded-full mr-2"></span>
                   Đánh giá sản phẩm
                 </h3>
-                <p className="text-muted-foreground">Chưa có đánh giá nào cho sản phẩm này.</p>
+                <p className="text-muted-foreground">
+                  Chưa có đánh giá nào cho sản phẩm này.
+                </p>
               </CardContent>
             </Card>
           </TabsContent>
@@ -541,7 +657,10 @@ export default function ProductDetailPage() {
         <div className="mt-16">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold">Sản phẩm liên quan</h2>
-            <Link href="/product" className="text-primary hover:underline flex items-center">
+            <Link
+              href="/product"
+              className="text-primary hover:underline flex items-center"
+            >
               <span className="text-sm font-medium">Tất cả sản phẩm</span>
               <ChevronRight className="h-4 w-4 ml-1" />
             </Link>
@@ -549,7 +668,10 @@ export default function ProductDetailPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {relatedProducts.map((relatedProduct) => (
-              <Card key={relatedProduct.id} className="overflow-hidden group transition-all duration-300 hover:shadow-md">
+              <Card
+                key={relatedProduct.id}
+                className="overflow-hidden group transition-all duration-300 hover:shadow-md"
+              >
                 <Link href={`/product/${relatedProduct.id}`} className="block">
                   <div className="aspect-square relative bg-white">
                     <Image
@@ -593,16 +715,15 @@ export default function ProductDetailPage() {
                       e.stopPropagation();
 
                       if (isAuthenticated) {
-                        toast.promise(
-                          addToCart(relatedProduct.id),
-                          {
-                            loading: "Đang thêm vào giỏ hàng...",
-                            success: "Đã thêm vào giỏ hàng",
-                            error: "Không thể thêm vào giỏ hàng"
-                          }
-                        );
+                        toast.promise(addToCart(relatedProduct.id), {
+                          loading: "Đang thêm vào giỏ hàng...",
+                          success: "Đã thêm vào giỏ hàng",
+                          error: "Không thể thêm vào giỏ hàng",
+                        });
                       } else {
-                        toast.error("Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng");
+                        toast.error(
+                          "Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng"
+                        );
                       }
                     }}
                   >
