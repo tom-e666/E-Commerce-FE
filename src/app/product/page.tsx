@@ -37,6 +37,7 @@ import { useBrand } from "@/hooks/useBrand";
 import { Skeleton } from "@/components/ui/skeleton";
 import { addToCartGA, viewItemList } from "@/lib/gtag";
 import { Product } from "@/services/product/endpoint";
+import { generateSlug } from "@/lib/slug";
 
 export default function ProductListPage() {
   const {
@@ -756,7 +757,9 @@ export default function ProductListPage() {
                     }
                   >
                     <Link
-                      href={`/product/${product.id}`}
+                      href={`/product/${generateSlug(product.name)}?id=${
+                        product.id
+                      }`}
                       className="block"
                       prefetch={true} // Prefetch the product detail page
                     >
@@ -793,7 +796,9 @@ export default function ProductListPage() {
                       className={viewMode === "list" ? "p-4 pb-2" : "p-4"}
                     >
                       <Link
-                        href={`/product/${product.id}`}
+                        href={`/product/${generateSlug(product.name)}?id=${
+                          product.id
+                        }`}
                         className="block"
                         prefetch={true} // Prefetch the product detail page
                       >
@@ -861,11 +866,12 @@ export default function ProductListPage() {
                           className="flex-1"
                         >
                           <ShoppingCart className="mr-2 h-4 w-4" />
-                          Thêm vào giỏ
                         </Button>
                         <Button variant="outline" asChild>
                           <Link
-                            href={`/product/${product.id}`}
+                            href={`/product/${generateSlug(product.name)}?id=${
+                              product.id
+                            }`}
                             prefetch={true} // Prefetch the product detail page
                           >
                             Chi tiết
