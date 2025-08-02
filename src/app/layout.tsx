@@ -7,6 +7,10 @@ import Provider from "./ApolloProvider";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Script from "next/script";
+import React, { Suspense } from "react";
+
+// Dynamic import ZaloChatWidget để tránh SSR issues
+const ClientZaloChatWidget = React.lazy(() => import("../components/ClientZaloChatWidget"));
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -157,6 +161,10 @@ export default function RootLayout({
                 </div>
               </main>
               <Footer />
+              {/* Zalo Chat Widget */}
+              <Suspense fallback={null}>
+                <ClientZaloChatWidget />
+              </Suspense>
             </div>
           </AuthProvider>
         </Provider>
