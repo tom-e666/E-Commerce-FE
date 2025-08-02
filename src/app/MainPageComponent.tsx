@@ -10,53 +10,70 @@ import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 const urlImg = [
   {
     img: 'https://res.cloudinary.com/dwbcqjupj/image/upload/v1748539875/acer_nitro_v15_xoflkj.webp',
-    alt: 'image1',
+    alt: 'Laptop Gaming Acer Nitro V15 - Hiệu năng mạnh mẽ cho game thủ',
+    title: 'Laptop Gaming Acer Nitro V15',
+    description: 'Trải nghiệm gaming đỉnh cao với laptop Acer Nitro V15'
   },
   {
     img: 'https://res.cloudinary.com/dwbcqjupj/image/upload/v1748537890/banner_maytinh_3_fp955z.jpg',
-    alt: 'image2',
+    alt: 'Bộ sưu tập máy tính gaming chất lượng cao tại EMS Electronics',
+    title: 'Máy Tính Gaming Chất Lượng Cao',
+    description: 'Khám phá bộ sưu tập máy tính gaming với cấu hình mạnh mẽ'
   },
   {
     img: 'https://res.cloudinary.com/dwbcqjupj/image/upload/v1748537889/bannermaytinh_okzxue.webp',
-    alt: 'image3',
+    alt: 'Laptop văn phòng và gaming đa dạng với giá tốt nhất',
+    title: 'Laptop Đa Dạng - Giá Tốt Nhất',
+    description: 'Tìm kiếm laptop phù hợp với nhu cầu và ngân sách của bạn'
   },
   {
     img: 'https://res.cloudinary.com/dwbcqjupj/image/upload/v1748537888/bannermatinh2_xyosjk.webp',
-    alt: 'image4',
+    alt: 'Khuyến mãi đặc biệt laptop gaming và máy tính tại EMS',
+    title: 'Khuyến Mãi Đặc Biệt',
+    description: 'Ưu đãi hấp dẫn cho laptop gaming và máy tính chính hãng'
   },
 ]
 
 const awards = [
   {
     img: 'https://d8um25gjecm9v.cloudfront.net/store-front-cms/award_1_fe08b5b4cd.svg',
-    alt: 'Quality award',
+    alt: 'Giải thưởng chất lượng sản phẩm EMS Electronics',
+    title: 'Chất Lượng Xuất Sắc'
   },
   {
     img: 'https://d8um25gjecm9v.cloudfront.net/store-front-cms/award_2_959a72e121.svg',
-    alt: 'Quality award',
+    alt: 'Giải thưởng dịch vụ khách hàng tốt nhất',
+    title: 'Dịch Vụ Tốt Nhất'
   },
   {
     img: 'https://d8um25gjecm9v.cloudfront.net/store-front-cms/award_3_298d151332.svg',
-    alt: 'Quality award',
+    alt: 'Giải thưởng cửa hàng uy tín hàng đầu',
+    title: 'Cửa Hàng Uy Tín'
   },
   {
     img: 'https://d8um25gjecm9v.cloudfront.net/store-front-cms/award_4_271868f252.svg',
-    alt: 'Customer satisfaction award',
+    alt: 'Giải thưởng sự hài lòng của khách hàng',
+    title: 'Khách Hàng Hài Lòng'
   },
   {
     img: 'https://d8um25gjecm9v.cloudfront.net/store-front-cms/award_5_83186cbade.svg',
-    alt: 'Innovation award',
+    alt: 'Giải thưởng đổi mới và sáng tạo',
+    title: 'Đổi Mới Sáng Tạo'
   },
 ]
 
 const imagePairs = [
   {
     img: 'https://res.cloudinary.com/dwbcqjupj/image/upload/v1748538335/asus_g614jv_jjzvhq.jpg',
-    alt: 'Promotion 1',
+    alt: 'Laptop ASUS ROG Strix G16 - Gaming laptop cao cấp',
+    title: 'ASUS ROG Strix G16',
+    description: 'Laptop gaming cao cấp cho game thủ chuyên nghiệp'
   },
   {
     img: 'https://res.cloudinary.com/dwbcqjupj/image/upload/v1748538492/asusrogstrixg16g614jv3_a5cbfh.jpg',
-    alt: 'Promotion 2',
+    alt: 'Chi tiết laptop ASUS ROG Strix G16 - Thiết kế gaming đẳng cấp',
+    title: 'ASUS ROG Strix G16 - Chi Tiết',
+    description: 'Khám phá thiết kế gaming đẳng cấp và hiệu năng vượt trội'
   },
 ]
 
@@ -189,7 +206,8 @@ const MainPageComponent = () => {
 
   return (
     <div className='flex flex-col bg-gradient-to-b from-purple-700 to-blue-800'>
-      <div className='h-full w-full cursor-pointer relative overflow-hidden'>
+      {/* Hero Section with SEO optimized content */}
+      <section className='h-full w-full cursor-pointer relative overflow-hidden' aria-label="Banner khuyến mãi và sản phẩm nổi bật">
         <div className='relative h-[600px]'>
           {urlImg.map((item, index) => (
             <div
@@ -199,22 +217,25 @@ const MainPageComponent = () => {
               }`}
             >
               {index === 0 ? (
-                <Link href="/product/20" className="block h-full w-full">
+                <Link href="/product/20" className="block h-full w-full" aria-label={`Xem chi tiết ${item.title}`}>
                   <div className='relative h-full overflow-hidden'>
                     <Image
                       src={item.img}
                       alt={item.alt}
+                      title={item.title}
                       fill
                       className='object-cover brightness-90'
+                      priority={index === 0}
+                      sizes="(max-width: 768px) 100vw, 100vw"
                     />
                     <div className='absolute inset-0 bg-green-600 opacity-10'></div>
                     <div className='absolute bottom-15 left-1/2 -translate-x-1/2 transform text-center'>
-                      <p className='rounded-lg bg-green-800/30 px-8 py-4 text-8xl font-semibold text-white shadow-lg backdrop-blur-[1px] md:text-4xl'>
+                      <h1 className='rounded-lg bg-green-800/30 px-8 py-4 text-8xl font-semibold text-white shadow-lg backdrop-blur-[1px] md:text-4xl'>
                         Công Nghệ Hàng Đầu <br />
                         <span className='text-3xl font-light text-white italic'>
                           Dẫn Đầu Xu Hướng - Vượt Trội Hiệu Suất
                         </span>
-                      </p>
+                      </h1>
                     </div>
                   </div>
                 </Link>
@@ -223,12 +244,14 @@ const MainPageComponent = () => {
                   <Image
                     src={item.img}
                     alt={item.alt}
+                    title={item.title}
                     fill
                     className='object-cover brightness-90'
+                    sizes="(max-width: 768px) 100vw, 100vw"
                   />
                   <div className='absolute inset-0 bg-green-600 opacity-10'></div>
                   <div className='absolute bottom-15 left-1/2 -translate-x-1/2 transform text-center'>
-                    <p className='rounded-lg bg-green-800/30 px-8 py-4 text-8xl font-semibold text-white shadow-lg backdrop-blur-[1px] md:text-4xl'>
+                    <h2 className='rounded-lg bg-green-800/30 px-8 py-4 text-8xl font-semibold text-white shadow-lg backdrop-blur-[1px] md:text-4xl'>
                       {index === 1 ? (
                         <>
                           Chất Lượng Đỉnh Cao <br />
@@ -236,15 +259,22 @@ const MainPageComponent = () => {
                             Từ những thương hiệu uy tín toàn cầu
                           </span>
                         </>
+                      ) : index === 2 ? (
+                        <>
+                          Laptop Đa Dạng - Giá Tốt Nhất <br />
+                          <span className='text-3xl font-light text-white italic'>
+                            {item.description}
+                          </span>
+                        </>
                       ) : (
                         <>
-                          Khám Phá Thế Giới Công Nghệ – Trải Nghiệm Không Giới Hạn <br />
+                          Khuyến Mãi Đặc Biệt <br />
                           <span className='text-3xl font-light text-white italic'>
-                            Khám phá ngay
+                            {item.description}
                           </span>
                         </>
                       )}
-                    </p>
+                    </h2>
                   </div>
                 </div>
               )}
@@ -252,36 +282,64 @@ const MainPageComponent = () => {
           ))}
         </div>
         
-        <div className='absolute bottom-4 left-1/2 flex -translate-x-1/2 space-x-2'>
-          {urlImg.map((_, index) => (
+        <div className='absolute bottom-4 left-1/2 flex -translate-x-1/2 space-x-2' role="tablist" aria-label="Điều hướng banner">
+          {urlImg.map((item, index) => (
             <button
               key={index}
               onClick={() => setCurrentSlide(index)}
               className={`h-2 w-2 rounded-full transition-all ${
                 currentSlide === index ? 'bg-white scale-125' : 'bg-white/50'
               }`}
+              role="tab"
+              aria-selected={currentSlide === index}
+              aria-label={`Chuyển đến slide ${index + 1}: ${item.title}`}
             />
           ))}
         </div>
-      </div>
+      </section>
 
-      <div className='grid grid-cols-5 bg-blue-900 md:grid-cols-5'>
+      {/* Awards Section with SEO optimized content */}
+      <section className='grid grid-cols-5 bg-blue-900 md:grid-cols-5 py-4' aria-label="Giải thưởng và chứng nhận">
+        <h2 className="sr-only">Giải thưởng và chứng nhận chất lượng EMS Electronics</h2>
         {awards.map((item, index) => (
-          <div key={index} className='col-span-1'>
-            <Image src={item.img} alt={item.alt} width={90} height={100} className='h-25 w-90' />
-          </div>
-        ))}
-      </div>
-
-      <div className='relative flex w-full h-[600px]'>
-        {imagePairs.map((item, index) => (
-          <div key={index} className='w-1/2 h-full relative'>
+          <div key={index} className='col-span-1 flex justify-center items-center'>
             <Image 
               src={item.img} 
               alt={item.alt} 
-              fill
-              className='object-cover'
+              title={item.title}
+              width={90} 
+              height={100} 
+              className='h-25 w-90 object-contain'
             />
+          </div>
+        ))}
+      </section>
+
+      {/* Promotion Section with SEO optimized content */}
+      <section className='relative flex w-full h-[600px]' aria-label="Sản phẩm khuyến mãi đặc biệt">
+        <h2 className="sr-only">Sản phẩm laptop gaming khuyến mãi đặc biệt</h2>
+        {imagePairs.map((item, index) => (
+          <div key={index} className='w-1/2 h-full relative group'>
+            <Image 
+              src={item.img} 
+              alt={item.alt}
+              title={item.title}
+              fill
+              className='object-cover transition-transform duration-300 group-hover:scale-105'
+              sizes="(max-width: 768px) 100vw, 50vw"
+            />
+            <div className='absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center'>
+              <div className='text-center text-white'>
+                <h3 className='text-3xl font-bold mb-2'>{item.title}</h3>
+                <p className='text-lg opacity-90'>{item.description}</p>
+                <Link 
+                  href="/product" 
+                  className='inline-block mt-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors duration-300'
+                >
+                  Khám Phá Ngay
+                </Link>
+              </div>
+            </div>
           </div>
         ))}
         <div className='absolute inset-0 left-1/2 flex flex-col items-center justify-center text-white'>
@@ -300,47 +358,68 @@ const MainPageComponent = () => {
             <hr className='mt-2 w-96 border-cyan-400/50 px-2' />
           </div>
         </div>
-      </div>
+      </section>
 
-      <div className='mt-10'>
+      {/* Featured Products Section with SEO optimized content */}
+      <section className='mt-10' aria-labelledby="featured-products-heading">
         <div className='flex w-full flex-col items-center justify-center p-10 text-white'>
-          <p className='text-5xl font-semibold'>Sản phẩm nổi bật</p>
+          <h2 id="featured-products-heading" className='text-5xl font-semibold mb-4'>Sản phẩm nổi bật</h2>
+          <p className='text-xl text-gray-300 text-center mb-8'>Khám phá những sản phẩm laptop gaming được yêu thích nhất</p>
 
           <div className='mt-12 w-full relative'>
             <div 
               ref={carouselRef}
               className='w-full overflow-x-auto pb-6 scroll-smooth snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]'
+              role="region"
+              aria-label="Danh sách sản phẩm nổi bật"
             >
               <div className='flex min-w-max gap-6'>
                 {featuredProducts.length > 0 ? featuredProducts.map((product) => (
-                  <Link 
-                    href={`/product/${product.id}`} 
+                  <article 
                     key={product.id}
                     className='group h-[285px] w-[510px] flex-none cursor-pointer overflow-hidden rounded-lg shadow-lg transition-all duration-300 hover:shadow-xl relative snap-start'
                   >
-                    <Image
-                      src={product.details?.images?.[1] || product.details?.images?.[0] || '/placeholder-image.jpg'}
-                      alt={product.name || 'Product image'}
-                      fill
-                      className='object-cover transition-transform duration-300 group-hover:scale-110'
-                      sizes='510px'
-                      onError={(e) => {
-                        e.currentTarget.src = '/placeholder-image.jpg';
-                      }}
-                    />
-                    
-                    <div className='absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 z-20'>
-                      <p className='text-lg font-medium text-white'>{product.name || 'Tên sản phẩm'}</p>
-                      <p className='text-sm text-gray-300'>
-                        {product.details?.specifications?.find(spec => spec.name === 'CPU')?.value || 'Thông số kỹ thuật'}
-                      </p>
-                    </div>
-                  </Link>
+                    <Link 
+                      href={`/product/${product.id}`}
+                      aria-label={`Xem chi tiết ${product.name}`}
+                      className="block h-full w-full"
+                    >
+                      <Image
+                        src={product.details?.images?.[1] || product.details?.images?.[0] || '/placeholder-image.jpg'}
+                        alt={`${product.name} - Laptop gaming chất lượng cao`}
+                        title={product.name}
+                        fill
+                        className='object-cover transition-transform duration-300 group-hover:scale-110'
+                        sizes='510px'
+                        onError={(e) => {
+                          e.currentTarget.src = '/placeholder-image.jpg';
+                        }}
+                      />
+                      
+                      <div className='absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 z-20'>
+                        <h3 className='text-lg font-medium text-white'>{product.name || 'Tên sản phẩm'}</h3>
+                        <p className='text-sm text-gray-300'>
+                          {product.details?.specifications?.find((spec: ProductSpecification) => spec.name === 'CPU')?.value || 'Thông số kỹ thuật'}
+                        </p>
+                        <div className='mt-2 flex items-center justify-between'>
+                          <span className='text-yellow-400 font-semibold'>
+                            {product.price ? new Intl.NumberFormat('vi-VN', { 
+                              style: 'currency', 
+                              currency: 'VND' 
+                            }).format(product.price) : 'Liên hệ'}
+                          </span>
+                          <span className='text-xs bg-blue-600 px-2 py-1 rounded'>Xem chi tiết</span>
+                        </div>
+                      </div>
+                    </Link>
+                  </article>
                 )) : (
                   Array.from({ length: 8 }).map((_, index) => (
                     <div 
                       key={index}
                       className='h-[285px] w-[510px] flex-none bg-gray-300 animate-pulse rounded-lg'
+                      role="presentation"
+                      aria-label="Đang tải sản phẩm"
                     >
                       <div className='w-full h-full bg-gradient-to-br from-gray-200 to-gray-400 rounded-lg flex items-center justify-center'>
                         <span className='text-gray-500'>Đang tải...</span>
@@ -354,12 +433,16 @@ const MainPageComponent = () => {
             <button 
               onClick={scrollLeft}
               className='absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 rounded-full p-2 z-30 hover:bg-black/80 transition-all'
+              aria-label="Xem sản phẩm trước đó"
+              type="button"
             >
               <ChevronLeftIcon className='h-6 w-6 text-white' />
             </button>
             <button 
               onClick={scrollRight}
               className='absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 rounded-full p-2 z-30 hover:bg-black/80 transition-all'
+              aria-label="Xem sản phẩm tiếp theo"
+              type="button"
             >
               <ChevronRightIcon className='h-6 w-6 text-white' />
             </button>
@@ -369,26 +452,33 @@ const MainPageComponent = () => {
             <hr className='mt-1 w-full rounded-full border-4 border-white font-bold' />
           </div>
         </div>
-      </div>
+      </section>
 
-      <div className='mt-5 mb-5 flex flex-col items-center justify-center'>
+      {/* Business Computers Section */}
+      <section className='mt-5 mb-5 flex flex-col items-center justify-center' aria-labelledby="business-computers-heading">
         <div className='mb-4 flex w-full flex-col justify-between gap-6 p-4 text-white md:flex-row md:p-10'>
-          <p className='text-3xl font-semibold md:text-5xl'>
-            Máy tính <br className='hidden md:block' /> doanh nghiệp
-          </p>
-          <p className='p-2 text-lg italic md:p-4 md:text-xl'>
-            Hiệu suất vượt trội, bảo mật tối ưu <br className='hidden md:block' /> Giải pháp hoàn hảo cho môi trường làm việc chuyên nghiệp
-          </p>
+          <div>
+            <h2 id="business-computers-heading" className='text-3xl font-semibold md:text-5xl'>
+              Máy tính <br className='hidden md:block' /> doanh nghiệp
+            </h2>
+          </div>
+          <div>
+            <p className='p-2 text-lg italic md:p-4 md:text-xl'>
+              Hiệu suất vượt trội, bảo mật tối ưu <br className='hidden md:block' /> 
+              Giải pháp hoàn hảo cho môi trường làm việc chuyên nghiệp
+            </p>
+          </div>
         </div>
 
         <div className='w-full px-4 md:px-10'>
           <div className='grid grid-cols-1 gap-8 lg:grid-cols-2'>
-            <div className='relative h-[400px] overflow-hidden rounded-2xl md:h-[570px]'>
-              <Link href={`/product/${largeProducts[0]?.id || '6'}`}>
+            <article className='relative h-[400px] overflow-hidden rounded-2xl md:h-[570px]'>
+              <Link href={`/product/${largeProducts[0]?.id || '6'}`} aria-label={`Xem chi tiết ${largeProducts[0]?.name || 'máy tính doanh nghiệp'}`}>
                 <div className='group relative h-full w-full'>
                   <Image
                     src={largeProducts[0]?.details?.images?.[0] || products.find(p => p.id === '6')?.details?.images?.[0] || 'https://res.cloudinary.com/dwbcqjupj/image/upload/v1748538335/asus_g614jv_jjzvhq.jpg'}
-                    alt="Office Computer"
+                    alt={`${largeProducts[0]?.name || 'Máy tính doanh nghiệp'} - Giải pháp công nghệ cho doanh nghiệp`}
+                    title={largeProducts[0]?.name || 'Máy tính doanh nghiệp'}
                     fill
                     className='object-cover transition-transform duration-500 group-hover:scale-110'
                     sizes='(max-width: 768px) 100vw, 50vw'
@@ -413,9 +503,9 @@ const MainPageComponent = () => {
                   </div>
                 </div>
               </Link>
-            </div>
+            </article>
 
-            <div className='flex flex-col justify-between gap-6'>
+            <article className='flex flex-col justify-between gap-6'>
               <div className='rounded-2xl bg-gradient-to-br from-gray-800 to-gray-900 p-6 text-white md:p-8'>
                 <h3 className='mb-4 text-xl font-bold text-purple-300 md:mb-6 md:text-2xl'>Thông số nổi bật</h3>
                 <div className='space-y-3 md:space-y-4'>
@@ -435,10 +525,10 @@ const MainPageComponent = () => {
                     }
                     
                     const fallbackSpecs = [
-                      { name: 'CPU', value: product?.details?.specifications?.find(spec => spec.name === 'CPU')?.value || 'Intel Core i7-13700' },
-                      { name: 'RAM', value: product?.details?.specifications?.find(spec => spec.name === 'RAM')?.value || '16GB DDR4' },
-                      { name: 'Storage', value: product?.details?.specifications?.find(spec => spec.name === 'Storage')?.value || '512GB SSD' },
-                      { name: 'GPU', value: product?.details?.specifications?.find(spec => spec.name === 'GPU')?.value || 'Intel UHD Graphics' }
+                      { name: 'CPU', value: product?.details?.specifications?.find((spec: ProductSpecification) => spec.name === 'CPU')?.value || 'Intel Core i7-13700' },
+                      { name: 'RAM', value: product?.details?.specifications?.find((spec: ProductSpecification) => spec.name === 'RAM')?.value || '16GB DDR4' },
+                      { name: 'Storage', value: product?.details?.specifications?.find((spec: ProductSpecification) => spec.name === 'Storage')?.value || '512GB SSD' },
+                      { name: 'GPU', value: product?.details?.specifications?.find((spec: ProductSpecification) => spec.name === 'GPU')?.value || 'Intel UHD Graphics' }
                     ];
                     
                     return fallbackSpecs.map((spec, index) => (
@@ -497,7 +587,7 @@ const MainPageComponent = () => {
                   </div>
                 </div>
               </div>
-            </div>
+            </article>
           </div>
 
           <div className='mt-6 flex flex-col items-center justify-between gap-6 rounded-2xl bg-gradient-to-r from-purple-900 to-blue-900 p-6 text-white md:mt-8 md:flex-row md:p-8'>
@@ -529,7 +619,7 @@ const MainPageComponent = () => {
             </div>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   )
 }
