@@ -119,6 +119,8 @@ export default function CheckoutSuccessPage() {
       ? "Thẻ ATM nội địa"
       : paymentMethod === "mbanking"
       ? "Ứng dụng Mobile Banking"
+      : paymentMethod === "stripe"
+      ? "Thanh toán qua Stripe"
       : "Không xác định";
 
   return (

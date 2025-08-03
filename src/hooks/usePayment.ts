@@ -4,11 +4,13 @@ import {
   createCODPayment as apiCreateCODPayment,
   createZaloPayPayment as apiCreateZaloPayPayment,
   createVNPayPayment as apiCreateVNPayPayment,
+  createStripePayment as apiCreateStripePayment,
   Payment,
   PaymentResponse,
   CODPaymentResponse,
   ZaloPayPaymentResponse,
-  VNPayPaymentResponse
+  VNPayPaymentResponse,
+  StripePaymentResponse
 } from '../services/payment/endpoints';
 
 export interface PaymentHookReturn {
@@ -24,6 +26,11 @@ export interface PaymentHookReturn {
     orderType: string,
     bankCode: string
   ) => Promise<VNPayPaymentResponse>;
+  createStripePayment: (
+    orderId: string,
+    successUrl: string,
+    cancelUrl: string
+  ) => Promise<StripePaymentResponse>;
   isPaymentComplete: (orderId: string) => Promise<boolean>;
   verifyPayment: (orderId: string, transaction_id: string) => Promise<boolean>;
 }
@@ -128,6 +135,32 @@ export const usePayment = (): PaymentHookReturn => {
   };
 
   /**
+   * Create a new Stripe checkout session for an order
+   */
+  const createStripePayment = async (
+    orderId: string,
+    successUrl: string,
+    cancelUrl: string
+  ): Promise<StripePaymentResponse> => {
+    setLoading(true);
+    try {
+      const response = await apiCreateStripePayment(orderId, successUrl, cancelUrl);
+      
+      if (response.code === 200 && response.transaction_id) {
+        // Store transaction ID for later verification
+        localStorage.setItem(`payment_transaction_${orderId}`, response.transaction_id);
+      }
+      
+      return response;
+    } catch (error) {
+      console.error("Error creating Stripe payment:", error);
+      throw new Error(error instanceof Error ? error.message : "Lỗi khi tạo thanh toán Stripe");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
    * Check if payment is complete for an order
    */
   const isPaymentComplete = async (orderId: string): Promise<boolean> => {
@@ -183,6 +216,7 @@ export const usePayment = (): PaymentHookReturn => {
     createCODPayment,
     createZaloPayPayment,
     createVNPayPayment,
+    createStripePayment,
     isPaymentComplete,
     verifyPayment
   };
