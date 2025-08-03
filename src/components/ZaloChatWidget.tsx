@@ -50,7 +50,7 @@ const ZaloChatWidget: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [inputMessage, setInputMessage] = useState('');
   const [showQuickActions, setShowQuickActions] = useState(true);
-  const [hasAutoOpened, setHasAutoOpened] = useState(false);
+
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
