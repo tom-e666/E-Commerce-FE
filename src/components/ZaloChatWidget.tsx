@@ -78,16 +78,17 @@ const ZaloChatWidget: React.FC = () => {
     }
   }, [isOpen]);
 
-  // Auto open chat after delay (only once per session)
+  // Auto open chat after delay (only once per session) - DISABLED
   useEffect(() => {
-    if (!hasAutoOpened && chatConfig.autoOpenDelay > 0) {
-      const timer = setTimeout(() => {
-        setIsOpen(true);
-        setHasAutoOpened(true);
-      }, chatConfig.autoOpenDelay);
+    // Disabled auto-open functionality
+    // if (!hasAutoOpened && chatConfig.autoOpenDelay > 0) {
+    //   const timer = setTimeout(() => {
+    //     setIsOpen(true);
+    //     setHasAutoOpened(true);
+    //   }, chatConfig.autoOpenDelay);
 
-      return () => clearTimeout(timer);
-    }
+    //   return () => clearTimeout(timer);
+    // }
   }, [hasAutoOpened, chatConfig.autoOpenDelay]);
 
   // Mark messages as read when chat is opened

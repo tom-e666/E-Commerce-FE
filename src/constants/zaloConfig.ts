@@ -1,6 +1,4 @@
-// Zalo Chat Configuration
 export const ZALO_CONFIG = {
-  // Zalo Official Account ID (thay đổi thành OA ID thực tế của bạn)
   OA_ID: '4291017113463940775',
   
   // Số điện thoại hỗ trợ
@@ -39,7 +37,6 @@ export const ZALO_CONFIG = {
   }
 };
 
-// Các template tin nhắn nhanh
 export const QUICK_MESSAGE_TEMPLATES = {
   PRODUCT_INQUIRY: {
     laptop: 'Tôi muốn tư vấn về laptop gaming trong tầm giá {price}',
