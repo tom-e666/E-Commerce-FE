@@ -123,7 +123,8 @@ const PaymentForm = React.memo(({ orderId, totalAmount, onBack, onComplete }: Pa
 
                 case 'stripe':
                   try {
-                    const successUrl = `${window.location.origin}/checkout/success/${orderId}/stripe`;
+                    // Use query parameter format that matches Stripe's convention
+                    const successUrl = `${window.location.origin}/checkout/success?orderId=${orderId}&method=stripe`;
                     const cancelUrl = `${window.location.origin}/checkout/cancel`;
                     
                     const stripeResponse = await createStripePayment(
@@ -195,11 +196,11 @@ const PaymentForm = React.memo(({ orderId, totalAmount, onBack, onComplete }: Pa
                     >
                         <div className="w-12 h-12 flex-shrink-0 mr-4 opacity-50">
                             <Image
-                                src="https://stc-zalopay.zdn.vn/zf/p/zalopay-identity/images/logo_zalopay.svg"
+                                src="/zalopay.jpeg"
                                 alt="ZaloPay"
                                 width={48}
                                 height={48}
-                                className="rounded"
+                                className="rounded grayscale"
                             />
                         </div>
                         <div className="flex-1 opacity-50">

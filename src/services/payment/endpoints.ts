@@ -3,7 +3,7 @@ import { apolloClient } from '../apollo/client';
 
 // Define GraphQL Queries and Mutations
 export const GET_PAYMENT = gql`
-  query GetPayment($orderId: String!) {
+  query GetPayment($orderId: ID!) {
     getPayment(order_id: $orderId) {
       code
       message
@@ -22,7 +22,7 @@ export const GET_PAYMENT = gql`
 `;
 
 export const CREATE_COD_PAYMENT = gql`
-  mutation CreateCODPayment($orderId: String!) {
+  mutation CreateCODPayment($orderId: ID!) {
     createPaymentCOD(order_id: $orderId) {
       code
       message
@@ -32,7 +32,7 @@ export const CREATE_COD_PAYMENT = gql`
 `;
 
 export const CREATE_ZALOPAY_PAYMENT = gql`
-  mutation CreateZaloPayPayment($orderId: String!) {
+  mutation CreateZaloPayPayment($orderId: ID!) {
     createPaymentZalopay(order_id: $orderId) {
       code
       message
@@ -44,7 +44,7 @@ export const CREATE_ZALOPAY_PAYMENT = gql`
 
 export const CREATE_VNPAY_PAYMENT = gql`
   mutation createPaymentVNPay(
-    $orderId: String!
+    $orderId: ID!
     $orderType: String!
     $bankCode: String!
   ) {
@@ -62,7 +62,7 @@ export const CREATE_VNPAY_PAYMENT = gql`
 
 export const CREATE_STRIPE_PAYMENT = gql`
   mutation CreateStripePayment(
-    $orderId: String!
+    $orderId: ID!
     $successUrl: String!
     $cancelUrl: String!
   ) {
@@ -208,7 +208,13 @@ export const createStripePayment = async (
         requiresAuth: true
       }
     });
-    return response.data.createStripeCheckoutSession;
+    
+    // Fix: Check if the response data exists and has the correct structure
+    if (response.data && response.data.createStripeCheckoutSession) {
+      return response.data.createStripeCheckoutSession;
+    } else {
+      throw new Error('Invalid response structure from Stripe payment API');
+    }
   } catch (error) {
     console.error('Error creating Stripe payment:', error);
     throw error;

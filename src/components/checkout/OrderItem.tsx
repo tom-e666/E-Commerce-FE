@@ -10,12 +10,16 @@ const OrderItem = React.memo(({ item }: OrderItemProps) => (
     <div className="flex items-center p-2 border-b">
         <div className="h-16 w-16 relative rounded overflow-hidden flex-shrink-0 mr-4">
             <Image
-                src={item.image}
+                src={item.image && item.image.trim() !== '' ? item.image : "/laptop.png"}
                 alt={item.name || "Sản phẩm"}
                 width={64}
                 height={64}
                 className="object-cover"
                 loading="lazy"
+                onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = "/laptop.png";
+                }}
             />
         </div>
         <div className="flex-1">
