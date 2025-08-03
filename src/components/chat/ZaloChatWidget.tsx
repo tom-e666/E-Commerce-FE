@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
+import { getResponse, getRandomResponse } from '@/utils/chatResponses';
 
 interface Message {
   id: string;
@@ -32,7 +33,7 @@ export default function ZaloChatWidget({
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: 'Xin chào! Chúng tôi có thể hỗ trợ gì cho bạn?',
+      text: 'Xin chào! Tôi là trợ lý ảo của EMS Electronics. Tôi có thể hỗ trợ gì cho bạn hôm nay? 😊',
       isUser: false,
       timestamp: new Date()
     }
@@ -59,17 +60,34 @@ export default function ZaloChatWidget({
     };
 
     setMessages(prev => [...prev, newMessage]);
+    const userInput = inputMessage;
     setInputMessage('');
 
-    // Mô phỏng phản hồi tự động
+    // Sử dụng hệ thống phản hồi thông minh
     setTimeout(() => {
+      const responseData = getResponse(userInput);
+      const responseText = getRandomResponse(responseData.responses);
+      
       const botResponse: Message = {
         id: (Date.now() + 1).toString(),
-        text: 'Cảm ơn bạn đã liên hệ! Chúng tôi sẽ hỗ trợ bạn ngay. Bạn có thể chọn một trong các tùy chọn bên dưới hoặc liên hệ trực tiếp qua Zalo.',
+        text: responseText,
         isUser: false,
         timestamp: new Date()
       };
       setMessages(prev => [...prev, botResponse]);
+
+      // Thêm follow-up suggestions nếu có
+      if (responseData.followUp && responseData.followUp.length > 0) {
+        setTimeout(() => {
+          const followUpMessage: Message = {
+            id: (Date.now() + 2).toString(),
+            text: `Bạn có thể quan tâm đến:\n${responseData.followUp!.map(item => `• ${item}`).join('\n')}`,
+            isUser: false,
+            timestamp: new Date()
+          };
+          setMessages(prev => [...prev, followUpMessage]);
+        }, 800);
+      }
     }, 1000);
   };
 
@@ -86,10 +104,48 @@ export default function ZaloChatWidget({
   };
 
   const quickActions = [
-    { label: 'Tư vấn sản phẩm', action: () => setInputMessage('Tôi cần tư vấn sản phẩm') },
-    { label: 'Kiểm tra đơn hàng', action: () => setInputMessage('Tôi muốn kiểm tra đơn hàng') },
-    { label: 'Hỗ trợ kỹ thuật', action: () => setInputMessage('Tôi cần hỗ trợ kỹ thuật') },
+    { label: 'Tư vấn sản phẩm', action: () => { setInputMessage('Tôi cần tư vấn sản phẩm'); handleQuickAction('Tôi cần tư vấn sản phẩm'); } },
+    { label: 'Kiểm tra đơn hàng', action: () => { setInputMessage('Tôi muốn kiểm tra đơn hàng'); handleQuickAction('Tôi muốn kiểm tra đơn hàng'); } },
+    { label: 'Hỗ trợ kỹ thuật', action: () => { setInputMessage('Tôi cần hỗ trợ kỹ thuật'); handleQuickAction('Tôi cần hỗ trợ kỹ thuật'); } },
   ];
+
+  const handleQuickAction = (message: string) => {
+    const newMessage: Message = {
+      id: Date.now().toString(),
+      text: message,
+      isUser: true,
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, newMessage]);
+
+    // Sử dụng hệ thống phản hồi thông minh
+    setTimeout(() => {
+      const responseData = getResponse(message);
+      const responseText = getRandomResponse(responseData.responses);
+      
+      const botResponse: Message = {
+        id: (Date.now() + 1).toString(),
+        text: responseText,
+        isUser: false,
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, botResponse]);
+
+      // Thêm follow-up suggestions nếu có
+      if (responseData.followUp && responseData.followUp.length > 0) {
+        setTimeout(() => {
+          const followUpMessage: Message = {
+            id: (Date.now() + 2).toString(),
+            text: `Bạn có thể quan tâm đến:\n${responseData.followUp!.map(item => `• ${item}`).join('\n')}`,
+            isUser: false,
+            timestamp: new Date()
+          };
+          setMessages(prev => [...prev, followUpMessage]);
+        }, 800);
+      }
+    }, 1000);
+  };
 
   const positionClasses = position === 'bottom-right' 
     ? 'bottom-4 right-4' 

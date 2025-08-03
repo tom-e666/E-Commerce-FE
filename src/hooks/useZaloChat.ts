@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
+import { getResponse, getRandomResponse } from '@/utils/chatResponses';
+import { getNewestProducts, getGamingLaptops, type Product } from '@/services/product/endpoint';
 
 export interface ChatMessage {
   id: string;
@@ -38,8 +40,8 @@ const defaultConfig: ZaloChatConfig = {
   enableOfflineForm: true,
   autoOpenDelay: 3000,
   workingHours: {
-    start: '08:00',
-    end: '21:00',
+    start: '00:00',
+    end: '23:59',
     timezone: 'Asia/Ho_Chi_Minh'
   }
 };
@@ -65,6 +67,32 @@ export const useZaloChat = (config: Partial<ZaloChatConfig> = {}) => {
     return now >= startTime && now <= endTime;
   }, [chatConfig.workingHours]);
 
+  // Format danh sách sản phẩm thành tin nhắn
+  const formatProductsMessage = (products: Product[], title: string = "DANH SÁCH SẢN PHẨM MỚI NHẤT"): string => {
+    if (products.length === 0) {
+      return "😔 Hiện tại chưa có sản phẩm nào. Vui lòng quay lại sau!";
+    }
+
+    let message = `🆕 **${title}**\n\n`;
+    
+    products.slice(0, 5).forEach((product, index) => {
+      const price = product.price.toLocaleString('vi-VN');
+      message += `**${index + 1}. ${product.name}**\n`;
+      message += `💰 Giá: ${price} VNĐ\n`;
+      if (product.stock > 0) {
+        message += `📦 Còn hàng: ${product.stock} sản phẩm\n`;
+      } else {
+        message += `❌ Hết hàng\n`;
+      }
+      message += `🔗 ID: ${product.id}\n\n`;
+    });
+
+    message += "💬 Nhắn tên sản phẩm hoặc ID để xem chi tiết!\n";
+    message += "📞 Hoặc gọi hotline: 0899-888-999 để được tư vấn trực tiếp.";
+    
+    return message;
+  };
+
   // Khởi tạo session chat
   const startChatSession = useCallback(() => {
     const newSession: ChatSession = {
@@ -75,9 +103,7 @@ export const useZaloChat = (config: Partial<ZaloChatConfig> = {}) => {
       messages: [
         {
           id: 'welcome_msg',
-          text: isWorkingHours() 
-            ? 'Xin chào! Chúng tôi có thể hỗ trợ gì cho bạn?' 
-            : 'Chào bạn! Hiện tại ngoài giờ làm việc. Bạn có thể để lại tin nhắn hoặc liên hệ qua Zalo.',
+          text: 'Xin chào! Tôi là trợ lý ảo của EMS Electronics. Tôi có thể hỗ trợ gì cho bạn hôm nay? 😊',
           isUser: false,
           timestamp: new Date(),
           type: 'text',
@@ -88,7 +114,7 @@ export const useZaloChat = (config: Partial<ZaloChatConfig> = {}) => {
     
     setSession(newSession);
     localStorage.setItem('zalo_chat_session', JSON.stringify(newSession));
-  }, [isWorkingHours]);
+  }, []);
 
   // Gửi tin nhắn
   const sendMessage = useCallback((text: string, type: 'text' | 'image' | 'file' = 'text') => {
@@ -125,29 +151,81 @@ export const useZaloChat = (config: Partial<ZaloChatConfig> = {}) => {
       setSession(sessionWithSentMessage);
       localStorage.setItem('zalo_chat_session', JSON.stringify(sessionWithSentMessage));
 
-      // Phản hồi tự động nếu ngoài giờ làm việc
-      if (!isWorkingHours()) {
-        setTimeout(() => {
-          const autoReply: ChatMessage = {
-            id: `auto_reply_${Date.now()}`,
-            text: 'Cảm ơn bạn đã liên hệ! Chúng tôi sẽ phản hồi trong thời gian sớm nhất. Để được hỗ trợ nhanh hơn, bạn có thể liên hệ trực tiếp qua Zalo.',
-            isUser: false,
-            timestamp: new Date(),
-            type: 'text',
-            status: 'sent'
-          };
+      // Phản hồi tự động thông minh (24/7)
+      setTimeout(async () => {
+        // Sử dụng hệ thống phản hồi thông minh
+        const responseData = getResponse(text);
+        let autoReplyText = getRandomResponse(responseData.responses);
 
-          const finalSession = {
-            ...sessionWithSentMessage,
-            messages: [...sessionWithSentMessage.messages, autoReply]
-          };
+        // Xử lý action đặc biệt
+        if (responseData.action === 'show_newest_products') {
+          try {
+            const productsResponse = await getNewestProducts(5);
+            if (productsResponse.code === 200 && productsResponse.products.length > 0) {
+              autoReplyText = formatProductsMessage(productsResponse.products, "DANH SÁCH SẢN PHẨM MỚI NHẤT");
+            } else {
+              autoReplyText = "😔 Hiện tại không thể tải danh sách sản phẩm mới. Vui lòng thử lại sau hoặc liên hệ hotline: 0899-888-999";
+            }
+          } catch (error) {
+            console.error('Error fetching newest products:', error);
+            autoReplyText = "❌ Có lỗi xảy ra khi tải sản phẩm. Vui lòng thử lại sau hoặc liên hệ trực tiếp qua Zalo.";
+          }
+        } else if (responseData.action === 'show_gaming_laptops') {
+          try {
+            const gamingResponse = await getGamingLaptops(5);
+            if (gamingResponse.code === 200 && gamingResponse.products.length > 0) {
+              autoReplyText = formatProductsMessage(gamingResponse.products, "🎮 DANH SÁCH LAPTOP GAMING");
+            } else {
+              autoReplyText = "😔 Hiện tại không thể tải danh sách laptop gaming. Vui lòng thử lại sau hoặc liên hệ hotline: 0899-888-999";
+            }
+          } catch (error) {
+            console.error('Error fetching gaming laptops:', error);
+            autoReplyText = "❌ Có lỗi xảy ra khi tải laptop gaming. Vui lòng thử lại sau hoặc liên hệ trực tiếp qua Zalo.";
+          }
+        }
 
-          setSession(finalSession);
-          localStorage.setItem('zalo_chat_session', JSON.stringify(finalSession));
-        }, 1500);
-      }
+        const autoReply: ChatMessage = {
+          id: `auto_reply_${Date.now()}`,
+          text: autoReplyText,
+          isUser: false,
+          timestamp: new Date(),
+          type: 'text',
+          status: 'sent'
+        };
+
+        const finalSession = {
+          ...sessionWithSentMessage,
+          messages: [...sessionWithSentMessage.messages, autoReply]
+        };
+
+        setSession(finalSession);
+        localStorage.setItem('zalo_chat_session', JSON.stringify(finalSession));
+
+        // Thêm follow-up suggestions nếu có (trừ khi đã hiển thị sản phẩm hoặc thông tin hỗ trợ đầy đủ)
+        if (responseData.followUp && responseData.followUp.length > 0 && 
+            !['show_newest_products', 'show_gaming_laptops'].includes(responseData.action || '')) {
+          setTimeout(() => {
+            const followUpMessage: ChatMessage = {
+              id: `followup_${Date.now()}`,
+              text: `Bạn có thể quan tâm đến:\n${responseData.followUp!.map(item => `• ${item}`).join('\n')}`,
+              isUser: false,
+              timestamp: new Date(),
+              type: 'text',
+              status: 'sent'
+            };
+
+            const sessionWithFollowUp = {
+              ...finalSession,
+              messages: [...finalSession.messages, followUpMessage]
+            };
+
+            setSession(sessionWithFollowUp);
+            localStorage.setItem('zalo_chat_session', JSON.stringify(sessionWithFollowUp));
+          }, 1000);
+        }
+      }, 1500);
     }, 1000);
-  }, [session, isWorkingHours]);
+  }, [session]);
 
   // Lấy tin nhắn chưa đọc
   const getUnreadMessages = useCallback(() => {
