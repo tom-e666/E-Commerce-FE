@@ -802,9 +802,9 @@ export default function ProductListPage() {
                         className="block"
                         prefetch={true} // Prefetch the product detail page
                       >
-                        <h3 className="font-medium text-lg mb-1 hover:underline line-clamp-2">
+                        <h1 className="font-medium text-lg mb-1 hover:underline line-clamp-2">
                           {product.name}
-                        </h3>
+                        </h1>
                       </Link>
                       <div className="mb-2">
                         {product.default_price &&
