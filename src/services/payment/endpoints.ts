@@ -1,5 +1,5 @@
-import { gql } from '@apollo/client';
-import { apolloClient } from '../apollo/client';
+import { gql } from "@apollo/client";
+import { apolloClient } from "../apollo/client";
 
 // Define GraphQL Queries and Mutations
 export const GET_PAYMENT = gql`
@@ -44,7 +44,7 @@ export const CREATE_ZALOPAY_PAYMENT = gql`
 
 export const CREATE_VNPAY_PAYMENT = gql`
   mutation createPaymentVNPay(
-    $orderId: ID!
+    $orderId: String!
     $orderType: String!
     $bankCode: String!
   ) {
@@ -86,7 +86,7 @@ export interface Payment {
   order_id: string;
   amount: number;
   payment_method: string;
-  payment_status: 'pending' | 'completed' | 'failed';
+  payment_status: "pending" | "completed" | "failed";
   created_at: string;
   payment_time?: string;
   transaction_id?: string;
@@ -131,46 +131,50 @@ export const getPayment = async (orderId: string): Promise<PaymentResponse> => {
     const response = await apolloClient.query({
       query: GET_PAYMENT,
       variables: { orderId },
-      fetchPolicy: 'network-only',
+      fetchPolicy: "network-only",
       context: {
-        requiresAuth: true
-      }
+        requiresAuth: true,
+      },
     });
     return response.data.getPayment;
   } catch (error) {
-    console.error('Error fetching payment:', error);
+    console.error("Error fetching payment:", error);
     throw error;
   }
 };
 
-export const createCODPayment = async (orderId: string): Promise<CODPaymentResponse> => {
+export const createCODPayment = async (
+  orderId: string
+): Promise<CODPaymentResponse> => {
   try {
     const response = await apolloClient.mutate({
       mutation: CREATE_COD_PAYMENT,
       variables: { orderId },
       context: {
-        requiresAuth: true
-      }
+        requiresAuth: true,
+      },
     });
     return response.data.createPaymentCOD;
   } catch (error) {
-    console.error('Error creating COD payment:', error);
+    console.error("Error creating COD payment:", error);
     throw error;
   }
 };
 
-export const createZaloPayPayment = async (orderId: string): Promise<ZaloPayPaymentResponse> => {
+export const createZaloPayPayment = async (
+  orderId: string
+): Promise<ZaloPayPaymentResponse> => {
   try {
     const response = await apolloClient.mutate({
       mutation: CREATE_ZALOPAY_PAYMENT,
       variables: { orderId },
       context: {
-        requiresAuth: true
-      }
+        requiresAuth: true,
+      },
     });
     return response.data.createPaymentZalopay;
   } catch (error) {
-    console.error('Error creating ZaloPay payment:', error);
+    console.error("Error creating ZaloPay payment:", error);
     throw error;
   }
 };
@@ -188,9 +192,10 @@ export const createVNPayPayment = async (
       variables: { orderId, amount, orderInfo, orderType, bankCode },
       context: { requiresAuth: true },
     });
+    console.log("1233123:", response);
     return response.data.createPaymentVNPay;
   } catch (error) {
-    console.error('Error creating VNPay payment:', error);
+    console.error("Error creating VNPay payment:", error);
     throw error;
   }
 };
@@ -205,18 +210,18 @@ export const createStripePayment = async (
       mutation: CREATE_STRIPE_PAYMENT,
       variables: { orderId, successUrl, cancelUrl },
       context: {
-        requiresAuth: true
-      }
+        requiresAuth: true,
+      },
     });
-    
+
     // Fix: Check if the response data exists and has the correct structure
     if (response.data && response.data.createStripeCheckoutSession) {
       return response.data.createStripeCheckoutSession;
     } else {
-      throw new Error('Invalid response structure from Stripe payment API');
+      throw new Error("Invalid response structure from Stripe payment API");
     }
   } catch (error) {
-    console.error('Error creating Stripe payment:', error);
+    console.error("Error creating Stripe payment:", error);
     throw error;
   }
 };
