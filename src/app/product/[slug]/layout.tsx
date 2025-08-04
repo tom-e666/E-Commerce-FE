@@ -26,30 +26,37 @@ interface ExtendedProduct {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
     const response = await getProduct(params.product_id);
-    
+
     if (response.code === 200 && response.product) {
       const product = response.product as ExtendedProduct;
-      const productImage = product.details?.images?.[0] || '/laptop.png';
-      const brandName = product.brand?.name || '';
-      const price = product.price ? new Intl.NumberFormat('vi-VN', { 
-        style: 'currency', 
-        currency: 'VND' 
-      }).format(product.price) : '';
+      const productImage = product.details?.images?.[0] || "/laptop.png";
+      const brandName = product.brand?.name || "";
+      const price = product.price
+        ? new Intl.NumberFormat("vi-VN", {
+            style: "currency",
+            currency: "VND",
+          }).format(product.price)
+        : "";
 
       return {
         title: `${product.name} - ${brandName}`,
-        description: `Mua ${product.name} ${brandName} với giá ${price} tại EMS Electronics. ${product.description || 'Sản phẩm chính hãng, bảo hành uy tín, giao hàng miễn phí toàn quốc.'}`,
+        description: `Mua ${
+          product.name
+        } ${brandName} với giá ${price} tại EMS Electronics. ${
+          product.description ||
+          "Sản phẩm chính hãng, bảo hành uy tín, giao hàng miễn phí toàn quốc."
+        }`,
         keywords: [
           product.name,
           brandName,
-          'laptop gaming',
-          'máy tính',
-          'laptop chính hãng',
-          'mua laptop',
-          product.details?.processor || '',
-          product.details?.ram || '',
-          product.details?.storage || '',
-          product.details?.graphics || '',
+          "laptop gaming",
+          "máy tính",
+          "laptop chính hãng",
+          "mua laptop",
+          product.details?.processor || "",
+          product.details?.ram || "",
+          product.details?.storage || "",
+          product.details?.graphics || "",
         ].filter(Boolean),
         openGraph: {
           title: `${product.name} - ${brandName} | EMS Electronics`,
@@ -62,10 +69,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
               alt: `${product.name} - ${brandName}`,
             },
           ],
-          type: 'website',
+          type: "website",
         },
         twitter: {
-          card: 'summary_large_image',
+          card: "summary_large_image",
           title: `${product.name} - ${brandName}`,
           description: `Mua ${product.name} ${brandName} với giá ${price} tại EMS Electronics`,
           images: [productImage],
@@ -74,26 +81,30 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
           canonical: `/product/${params.product_id}`,
         },
         other: {
-          'product:price:amount': product.price?.toString() || '',
-          'product:price:currency': 'VND',
-          'product:availability': product.stock > 0 ? 'in stock' : 'out of stock',
-          'product:brand': brandName,
-          'product:category': 'Electronics > Computers > Laptops',
+          "product:price:amount": product.price?.toString() || "",
+          "product:price:currency": "VND",
+          "product:availability":
+            product.stock > 0 ? "in stock" : "out of stock",
+          "product:brand": brandName,
+          "product:category": "Electronics > Computers > Laptops",
         },
       };
     }
   } catch (error) {
-    console.error('Error generating metadata:', error);
+    console.error("Error generating metadata:", error);
   }
 
   // Fallback metadata
   return {
     title: "Chi Tiết Sản Phẩm",
-    description: "Xem chi tiết sản phẩm laptop gaming và máy tính tại EMS Electronics. Sản phẩm chính hãng, giá tốt, bảo hành uy tín.",
+    description:
+      "Xem chi tiết sản phẩm laptop gaming và máy tính tại EMS Electronics. Sản phẩm chính hãng, giá tốt, bảo hành uy tín.",
     openGraph: {
       title: "Chi Tiết Sản Phẩm - EMS Electronics",
-      description: "Xem chi tiết sản phẩm laptop gaming và máy tính tại EMS Electronics",
-      images: ['/laptop.png'],
+      description:
+        "Xem chi tiết sản phẩm laptop gaming và máy tính tại EMS Electronics",
+      images: ["/laptop.png"],
+      type: "website",
     },
   };
 }

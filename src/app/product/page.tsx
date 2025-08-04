@@ -278,7 +278,7 @@ export default function ProductListPage() {
         <div className="hidden md:block w-full md:w-64 lg:w-72 flex-shrink-0">
           <div className="bg-card rounded-lg border p-4 sticky top-20">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">Bộ lọc</h2>
+              <h1 className="text-lg font-semibold">Bộ lọc</h1>
               {hasActiveFilters && (
                 <Button
                   variant="ghost"
@@ -293,7 +293,7 @@ export default function ProductListPage() {
 
             {/* Brand filter */}
             <div className="mb-6">
-              <h3 className="font-medium mb-3">Thương hiệu</h3>
+              <h2 className="font-medium mb-3">Thương hiệu</h2>
               <div className="space-y-2">
                 {brands.map((brand) => (
                   <div key={brand.id} className="flex items-center">
@@ -320,7 +320,7 @@ export default function ProductListPage() {
 
             {/* Price range filter */}
             <div className="mb-6">
-              <h3 className="font-medium mb-3">Giá</h3>
+              <h2 className="font-medium mb-3">Giá</h2>
               <div className="px-2">
                 <Slider
                   defaultValue={[0, 50000000]}
