@@ -10,7 +10,9 @@ import Script from "next/script";
 import React, { Suspense } from "react";
 
 // Dynamic import ZaloChatWidget để tránh SSR issues
-const ClientZaloChatWidget = React.lazy(() => import("../components/ClientZaloChatWidget"));
+const ClientZaloChatWidget = React.lazy(
+  () => import("../components/ClientZaloChatWidget")
+);
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,10 +27,25 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: {
     default: "EMS Electronics | Laptop Gaming & Máy Tính Chất Lượng Cao",
-    template: "%s | EMS Electronics"
+    template: "%s | EMS Electronics",
   },
-  description: "Cửa hàng laptop gaming, máy tính và phụ kiện công nghệ hàng đầu Việt Nam. Sản phẩm chính hãng, giá tốt, bảo hành uy tín. Miễn phí giao hàng toàn quốc.",
-  keywords: ["laptop gaming", "máy tính", "laptop", "gaming", "MSI", "Acer", "ASUS", "Dell", "HP", "phụ kiện gaming", "màn hình gaming", "bàn phím gaming", "chuột gaming"],
+  description:
+    "Cửa hàng laptop gaming, máy tính và phụ kiện công nghệ hàng đầu Việt Nam. Sản phẩm chính hãng, giá tốt, bảo hành uy tín. Miễn phí giao hàng toàn quốc.",
+  keywords: [
+    "laptop gaming",
+    "máy tính",
+    "laptop",
+    "gaming",
+    "MSI",
+    "Acer",
+    "ASUS",
+    "Dell",
+    "HP",
+    "phụ kiện gaming",
+    "màn hình gaming",
+    "bàn phím gaming",
+    "chuột gaming",
+  ],
   authors: [{ name: "EMS Electronics" }],
   creator: "EMS Electronics",
   publisher: "EMS Electronics",
@@ -37,31 +54,35 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://ems-electronics.com'),
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_BASE_URL || "https://tempure.id.vn"
+  ),
   alternates: {
-    canonical: '/',
+    canonical: "/",
   },
   openGraph: {
     title: "EMS Electronics | Laptop Gaming & Máy Tính Chất Lượng Cao",
-    description: "Cửa hàng laptop gaming, máy tính và phụ kiện công nghệ hàng đầu Việt Nam. Sản phẩm chính hãng, giá tốt, bảo hành uy tín.",
-    url: '/',
-    siteName: 'EMS Electronics',
+    description:
+      "Cửa hàng laptop gaming, máy tính và phụ kiện công nghệ hàng đầu Việt Nam. Sản phẩm chính hãng, giá tốt, bảo hành uy tín.",
+    url: "/",
+    siteName: "EMS Electronics",
     images: [
       {
-        url: '/logo.png',
+        url: "/logo.png",
         width: 1200,
         height: 630,
-        alt: 'EMS Electronics - Laptop Gaming và Máy Tính',
+        alt: "EMS Electronics - Laptop Gaming và Máy Tính",
       },
     ],
-    locale: 'vi_VN',
-    type: 'website',
+    locale: "vi_VN",
+    type: "website",
   },
   twitter: {
-    card: 'summary_large_image',
+    card: "summary_large_image",
     title: "EMS Electronics | Laptop Gaming & Máy Tính Chất Lượng Cao",
-    description: "Cửa hàng laptop gaming, máy tính và phụ kiện công nghệ hàng đầu Việt Nam. Sản phẩm chính hãng, giá tốt, bảo hành uy tín.",
-    images: ['/logo.png'],
+    description:
+      "Cửa hàng laptop gaming, máy tính và phụ kiện công nghệ hàng đầu Việt Nam. Sản phẩm chính hãng, giá tốt, bảo hành uy tín.",
+    images: ["/logo.png"],
   },
   robots: {
     index: true,
@@ -69,9 +90,9 @@ export const metadata: Metadata = {
     googleBot: {
       index: true,
       follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
     },
   },
   verification: {
@@ -102,46 +123,55 @@ export default function RootLayout({
             });
           `}
         </Script>
-        
+
         {/* Preconnect to external domains */}
         <link rel="preconnect" href="https://res.cloudinary.com" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+
         {/* Favicon */}
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" href="/logo.png" type="image/png" />
         <link rel="apple-touch-icon" href="/logo.png" />
-        
+
         {/* Theme color */}
         <meta name="theme-color" content="#2563eb" />
         <meta name="msapplication-TileColor" content="#2563eb" />
-        
+
         {/* Additional SEO meta tags */}
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=5"
+        />
         <meta name="language" content="Vietnamese" />
         <meta name="geo.region" content="VN" />
         <meta name="geo.country" content="Vietnam" />
-        
+
         {/* Schema.org structured data */}
         <Script id="structured-data" type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
             "@type": "Organization",
-            "name": "EMS Electronics",
-            "url": process.env.NEXT_PUBLIC_BASE_URL || "https://ems-electronics.com",
-            "logo": `${process.env.NEXT_PUBLIC_BASE_URL || "https://ems-electronics.com"}/logo.png`,
-            "sameAs": [
+            name: "EMS Electronics",
+            url: process.env.NEXT_PUBLIC_BASE_URL || "https://tempure.id.vn/",
+            logo: `${
+              process.env.NEXT_PUBLIC_BASE_URL || "https://tempure.id.vn/"
+            }/logo.png`,
+            sameAs: [
               "https://www.facebook.com/emselectronics",
-              "https://zalo.me/emselectronics"
+              "https://zalo.me/emselectronics",
             ],
-            "contactPoint": {
+            contactPoint: {
               "@type": "ContactPoint",
-              "telephone": "+84-xxx-xxx-xxx",
-              "contactType": "customer service",
-              "areaServed": "VN",
-              "availableLanguage": "Vietnamese"
-            }
+              telephone: "+84-xxx-xxx-xxx",
+              contactType: "customer service",
+              areaServed: "VN",
+              availableLanguage: "Vietnamese",
+            },
           })}
         </Script>
       </head>
